@@ -249,7 +249,8 @@ function parseRows(rows){
   const col=name=>hdr.findIndex(h=>h.includes(name));
   const cGroup=Math.max(col("group"),0), cCard=col("card")>-1?col("card"):1,
         cNum=col("number"), cVar=col("variant"), cSrc=col("source"),
-        cPrice=col("price"), cStatus=col("status"), cHave=col("have");
+        cPrice=col("price"), cStatus=col("status"), cHave=col("have"),
+        cImg=col("image");
   const get=(r,c)=>c>-1?String(r[c]||"").trim():"";
   items=[]; let group="Ungrouped";
   for(let i=1;i<rows.length;i++){
@@ -262,7 +263,8 @@ function parseRows(rows){
     if(/^\d+$/.test(have)) qty=parseInt(have,10);
     else if(have && !["false","no","n","-","–","0"].includes(have)) qty=1;
     items.push({group, card, num:get(r,cNum), variant:get(r,cVar),
-      src:get(r,cSrc), price:get(r,cPrice), status:get(r,cStatus), qty});
+      src:get(r,cSrc), price:get(r,cPrice), status:get(r,cStatus), qty,
+      img:get(r,cImg)});
   }
   buildGroupSel(); render();
   document.getElementById('stats').style.display='grid';
@@ -277,6 +279,7 @@ function priceMid(p){
 }
 
 function imgUrl(it){
+  if(it.img && /^https?:\/\//i.test(it.img)) return it.img;
   let m=it.num.match(/^SVP\s*(\d+)/i);
   if(m) return "https://images.pokemontcg.io/svp/"+parseInt(m[1],10)+".png";
   m=it.num.match(/^(\d+)\s*\/\s*142/);
