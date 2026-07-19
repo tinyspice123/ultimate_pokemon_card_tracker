@@ -55,6 +55,9 @@
   footer{max-width:900px;margin:44px auto 0;text-align:center;font-size:11px;color:var(--faint)}
   footer a{color:var(--dim)}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0920">
+<link rel="icon" href="assets/icon-192.png">
 </head>
 <body>
 <header>
@@ -162,6 +165,9 @@ document.getElementById('setSearch').addEventListener('input', e=>{
   });
   document.getElementById('noResults').style.display = visible? 'none':'block';
 });
+</script>
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>

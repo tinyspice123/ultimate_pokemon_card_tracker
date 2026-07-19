@@ -60,5 +60,15 @@ for (const file of ['index.html', 'tracker.html']) {
   if (!missing) ok('required element ids present');
 }
 
+// ---------- PWA files ----------
+console.log('pwa');
+for (const f of ['manifest.json', 'sw.js', 'assets/icon-192.png', 'assets/icon-512.png']) {
+  if (!fs.existsSync(f)) fail('missing ' + f); 
+}
+try { JSON.parse(fs.readFileSync('manifest.json', 'utf8')); ok('manifest.json is valid JSON'); }
+catch (e) { fail('manifest.json invalid: ' + e.message); }
+try { new Function(fs.readFileSync('sw.js', 'utf8').replace(/\bself\./g,'__s.').replace(/\blocation\./g,'__l.').replace(/\bcaches\./g,'__c.')); ok('sw.js syntax OK'); }
+catch (e) { fail('sw.js syntax error: ' + e.message); }
+
 console.log(failures ? `\n${failures} check(s) FAILED` : '\nAll checks passed');
 process.exit(failures ? 1 : 0);

@@ -149,6 +149,10 @@
   .exportbtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);
     border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
   .exportbtn:hover{border-color:var(--tera2)}
+  .grouphead{cursor:pointer;user-select:none}
+  .grouphead .chev{display:inline-block;width:18px;color:var(--tera2)}
+  .grouphead.folded{opacity:.75}
+  .grouphead:hover h2{color:var(--tera2)}
   .exportmenu{position:absolute;top:calc(100% + 6px);right:0;z-index:40;min-width:170px;
     background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px;
     display:none;box-shadow:0 10px 30px rgba(0,0,0,.4)}
@@ -172,6 +176,9 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0920">
+<link rel="icon" href="assets/icon-192.png">
 </head>
 <body>
 
@@ -470,6 +477,16 @@ function sortItems(list){
   return arr;
 }
 
+// ---- collapsible groups (state kept per set) ----
+const COLLAPSE_KEY='collapse:'+SET_ID;
+let collapsed=new Set();
+try{ collapsed=new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY)||'[]')); }catch(e){}
+function toggleGroup(g){
+  collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g);
+  try{ localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...collapsed])); }catch(e){}
+  render();
+}
+
 const WRITE_OK = (typeof WRITE_URL!=="undefined") && WRITE_URL;
 let toastTimer=null;
 function toast(msg){
@@ -512,9 +529,13 @@ function render(){
   [...new Set(shown.map(i=>i.group))].forEach(g=>{
     const list=sortItems(shown.filter(i=>i.group===g));
     const own=list.filter(i=>i.qty>0).length;
-    const gh=document.createElement('div'); gh.className='grouphead';
-    gh.innerHTML=`<h2>${esc(g)}</h2><span class="count">${own}/${list.length} owned</span>`;
+    const folded=collapsed.has(g);
+    const gh=document.createElement('div'); gh.className='grouphead'+(folded?' folded':'');
+    gh.innerHTML=`<h2><span class="chev">${folded?'\u25b8':'\u25be'}</span>${esc(g)}</h2>
+      <span class="count">${own}/${list.length} owned</span>`;
+    gh.addEventListener('click',()=>{ toggleGroup(g); });
     main.appendChild(gh);
+    if(folded) return;
     const grid=document.createElement('div'); grid.className='grid';
     list.forEach(it=>grid.appendChild(cardEl(it)));
     main.appendChild(grid);
@@ -569,12 +590,16 @@ function cardEl(it){
     d.querySelector('[data-dec]').addEventListener('click',()=>changeQty(it,-1,d));
     d.querySelector('[data-inc]').addEventListener('click',()=>changeQty(it,+1,d));
   }
+  d.__item=it;
   return d;
 }
 
 
 const lb=document.getElementById('lightbox'), lbImg=document.getElementById('lbImg');
+let lbList=[], lbIndex=-1;
 function openLightbox(it,shownSrc){
+  lbList=[...document.querySelectorAll('.imgwrap img')];
+  lbIndex=lbList.findIndex(im=>im.src===shownSrc);
   lb.querySelector('figure').classList.toggle('rh', /reverse\s*holo/i.test(it.variant));
   document.getElementById('lbName').textContent=it.card;
   document.getElementById('lbNum').textContent=it.num;
@@ -592,7 +617,30 @@ function closeLightbox(){
 }
 lb.addEventListener('click',closeLightbox);
 lb.querySelector('.lb-close').addEventListener('click',closeLightbox);
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&lb.classList.contains('open')) closeLightbox(); });
+function lbStep(dir){
+  if(!lbList.length) return;
+  lbIndex=(lbIndex+dir+lbList.length)%lbList.length;
+  const im=lbList[lbIndex];
+  const card=im.closest('.item');
+  if(card && card.__item) openLightboxKeepList(card.__item, im.src);
+}
+function openLightboxKeepList(it,src){
+  const keepL=lbList, keepI=lbIndex;
+  openLightbox(it,src);
+  lbList=keepL; lbIndex=keepI;
+}
+document.addEventListener('keydown',e=>{
+  const typing=/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+  if(lb.classList.contains('open')){
+    if(e.key==='Escape') closeLightbox();
+    else if(e.key==='ArrowRight'){ e.preventDefault(); lbStep(1); }
+    else if(e.key==='ArrowLeft'){ e.preventDefault(); lbStep(-1); }
+    return;
+  }
+  if(typing){ if(e.key==='Escape') document.activeElement.blur(); return; }
+  if(e.key==='/'){ e.preventDefault(); document.getElementById('q').focus(); }
+  else if(e.key==='m'||e.key==='M'){ const c=document.getElementById('missOnly'); c.checked=!c.checked; render(); }
+});
 
 function stats(){
   const total=items.length, own=items.filter(i=>i.qty>0).length;
@@ -676,6 +724,9 @@ document.getElementById('missOnly').addEventListener('change',render);
 document.getElementById('sortSel').addEventListener('change',render);
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+</script>
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>

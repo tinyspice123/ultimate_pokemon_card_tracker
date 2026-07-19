@@ -20,6 +20,10 @@ A multi-set, template-driven card checklist site. A home page lists your sets wi
 - **Offline fallback** — Optional local `.xlsx` per set if the sheet is unreachable
 - **Optional write-back** — With a small Apps Script deployed on the spreadsheet, +/− buttons on each card edit the Have column from the website
 - **Self-hosted assets** — `download_assets.py` mirrors set logos into the repo; the site prefers local copies
+- **Collapsible groups** — Click any group header to fold/unfold it; state remembered per set
+- **Keyboard shortcuts** — `/` focuses search, `m` toggles Missing only, ←/→ browse cards in the lightbox, Esc closes
+- **Installable PWA** — Add to home screen on mobile; pages and images cached for offline browsing (sheet data still needs a connection to refresh)
+- **Weekly collection history** — A scheduled Action snapshots every sheet into `backups/`; git history gives diffable, restorable records of your collection over time
 - **CI** — GitHub Actions runs site checks (sets.js validity, HTML script sanity) and Python unit tests on every push/PR
 
 ---
@@ -160,7 +164,9 @@ git add img/ && git commit -m "Mirror card images" && git push
 - **Sort**: dropdown in the toolbar — sheet order / name / price ↑↓, applied within each group
 - **Filter**: search box, group dropdown, Missing Only
 - **Export**: ⤓ Missing / ⤓ Owned buttons — Copy list (forum/eBay-ready text) or Download CSV; search and group filters apply, the Missing-only toggle doesn't
-- **Zoom**: click any card image; Esc, ✕, or clicking closes
+- **Zoom**: click any card image; ←/→ step between cards, Esc/✕/click closes
+- **Fold**: click a group header to collapse it (remembered next visit)
+- **Keys**: `/` → search, `m` → missing-only toggle
 - **Stats**: completion ring, owned/missing, total copies, £ value owned, £ cost of gaps
 
 ---
@@ -194,6 +200,10 @@ repo/
 ├── apps-script/Code.gs     # Optional write-back endpoint (paste into Apps Script)
 ├── tests/                  # CI checks (node) + unit tests (python)
 ├── .github/workflows/static.yml   # tests → deploy pipeline
+├── .github/workflows/backup.yml   # weekly sheet snapshots → backups/
+├── backup_sheets.py        # fetches all sheets into backups/ (used by the Action)
+├── manifest.json           # PWA manifest
+├── sw.js                   # service worker (offline caching)
 ├── img/<set-id>/           # Per-set downloaded card images + manifest.txt
 ├── assets/logos/           # Self-hosted set logos
 ├── checklist.xlsx          # Optional local fallback data

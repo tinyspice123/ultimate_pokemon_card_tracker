@@ -1,0 +1,34 @@
+# Collection history: snapshots every set's sheet into backups/ weekly.
+# Git history makes each snapshot diffable — you can see exactly which
+# cards were added between any two weeks, and restore any past state.
+name: Backup collection sheets
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"     # every Sunday 03:00 UTC
+  workflow_dispatch:         # and on demand from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch all sheets
+        run: python backup_sheets.py
+      - name: Commit if changed
+        run: |
+          git config user.name "collection-backup[bot]"
+          git config user.email "actions@github.com"
+          git add backups/
+          if git diff --cached --quiet; then
+            echo "No changes since last backup"
+          else
+            git commit -m "Weekly collection backup [skip ci]"
+            git push
+          fi
