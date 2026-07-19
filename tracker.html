@@ -145,6 +145,17 @@
   .qtytag{border-top:1px solid var(--line);padding:7px 0;text-align:center;
     font-family:"Unbounded",sans-serif;font-size:12px}
   .qtytag.zero{color:var(--faint)}
+  .exportwrap{position:relative;display:inline-block}
+  .exportbtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
+  .exportbtn:hover{border-color:var(--tera2)}
+  .exportmenu{position:absolute;top:calc(100% + 6px);right:0;z-index:40;min-width:170px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px;
+    display:none;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .exportmenu.open{display:block}
+  .exportmenu button{display:block;width:100%;text-align:left;background:none;border:0;
+    color:var(--ink);font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer}
+  .exportmenu button:hover{background:var(--panel)}
   .qtyctl{border-top:1px solid var(--line);padding:5px 0;display:flex;align-items:center;justify-content:center;gap:8px}
   .qtyctl button{width:24px;height:24px;border-radius:8px;border:1px solid var(--line);
     background:var(--panel);color:var(--ink);font-size:14px;line-height:1;cursor:pointer}
@@ -214,6 +225,20 @@
     <option value="price-asc">Price low → high</option>
   </select>
   <label class="toggle"><input type="checkbox" id="missOnly"> Missing only</label>
+  <span class="exportwrap">
+    <button type="button" class="exportbtn" id="exportMissing">⤓ Missing</button>
+    <div class="exportmenu" data-menu>
+      <button type="button" data-act="copy">Copy list</button>
+      <button type="button" data-act="csv">Download CSV</button>
+    </div>
+  </span>
+  <span class="exportwrap">
+    <button type="button" class="exportbtn" id="exportOwned">⤓ Owned</button>
+    <div class="exportmenu" data-menu>
+      <button type="button" data-act="copy">Copy list</button>
+      <button type="button" data-act="csv">Download CSV</button>
+    </div>
+  </span>
 </div>
 
 <main id="main"></main>
@@ -587,6 +612,66 @@ function stats(){
 
 document.getElementById('q').addEventListener('input',render);
 document.getElementById('groupSel').addEventListener('change',render);
+// ---- export missing / owned ----
+function exportItems(kind){ // respects search + group filters; ignores the Missing-only toggle
+  const q=(document.getElementById('q')?.value||"").trim().toLowerCase();
+  const gsel=document.getElementById('groupSel').value;
+  return items.filter(it=>{
+    if(!it.card) return false;
+    if(gsel && it.group!==gsel) return false;
+    if(q && !(it.card+" "+it.num+" "+it.variant).toLowerCase().includes(q)) return false;
+    return kind==='missing' ? !(it.qty>0) : it.qty>0;
+  });
+}
+function exportText(kind,list){
+  const head=`${cfg.name} \u2014 ${kind} (${list.length} card${list.length===1?'':'s'})`;
+  const lines=list.map(it=>{
+    let l=`- ${it.card} ${it.num}`;
+    if(it.variant && it.variant.toLowerCase()!=='regular') l+=` (${it.variant})`;
+    if(kind==='owned' && it.qty>1) l+=` \u00d7${it.qty}`;
+    if(it.price) l+=` \u2014 ${it.price}`;
+    return l;
+  });
+  return head+"\n"+lines.join("\n");
+}
+function exportCsv(kind,list){
+  const esc=v=>/[",\n]/.test(v)?'"'+String(v).replace(/"/g,'""')+'"':String(v);
+  const rows=[["Card","Number","Variant","Group","Price"].concat(kind==='owned'?["Have"]:[])];
+  list.forEach(it=>rows.push(
+    [it.card,it.num,it.variant,it.group,it.price].concat(kind==='owned'?[it.qty]:[])));
+  return rows.map(r=>r.map(esc).join(",")).join("\n");
+}
+function doExport(kind,act){
+  const list=exportItems(kind);
+  if(!list.length){ toast(`No ${kind} cards match the current filters`); return; }
+  if(act==='copy'){
+    navigator.clipboard.writeText(exportText(kind,list))
+      .then(()=>toast(`Copied ${list.length} ${kind} card${list.length===1?'':'s'}`))
+      .catch(()=>toast('Copy failed \u2014 browser blocked clipboard'));
+  }else{
+    const blob=new Blob([exportCsv(kind,list)],{type:'text/csv'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`${SET_ID}-${kind}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(`Downloaded ${list.length} ${kind} card${list.length===1?'':'s'}`);
+  }
+}
+document.querySelectorAll('.exportwrap').forEach(wrap=>{
+  const btn=wrap.querySelector('.exportbtn'), menu=wrap.querySelector('[data-menu]');
+  const kind=btn.id==='exportMissing'?'missing':'owned';
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    document.querySelectorAll('.exportmenu.open').forEach(m=>{ if(m!==menu) m.classList.remove('open'); });
+    menu.classList.toggle('open');
+  });
+  menu.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation(); menu.classList.remove('open'); doExport(kind,b.dataset.act);
+  }));
+});
+document.addEventListener('click',()=>document.querySelectorAll('.exportmenu.open').forEach(m=>m.classList.remove('open')));
+
 document.getElementById('missOnly').addEventListener('change',render);
 document.getElementById('sortSel').addEventListener('change',render);
 

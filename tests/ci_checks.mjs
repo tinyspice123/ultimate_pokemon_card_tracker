@@ -52,7 +52,7 @@ for (const file of ['index.html', 'tracker.html']) {
 
   const requiredIds = file === 'index.html'
     ? ['sets', 'setSearch', 'noResults']
-    : ['setLogo', 'eyebrowText', 'titleFallback', 'groupSel', 'missOnly', 'sortSel', 'lightbox', 'notice'];
+    : ['setLogo', 'eyebrowText', 'titleFallback', 'groupSel', 'missOnly', 'sortSel', 'lightbox', 'notice', 'exportMissing', 'exportOwned'];
   let missing = false;
   for (const id of requiredIds) {
     if (!html.includes(`id="${id}"`)) { fail(`missing element id="${id}"`); missing = true; }

@@ -13,10 +13,14 @@ A multi-set, template-driven card checklist site. A home page lists your sets wi
 - **Price stats in £** — Value owned and cost of gaps from the Price column; ranges like `~£4-11` are averaged
 - **Sorting** — Sheet order, name A–Z, or price high↔low (within each group; unpriced cards sink)
 - **Filtering** — Search, group dropdown, Missing Only toggle
+- **Export missing / owned** — Copy a plain-text want/have list to the clipboard, or download it as CSV; respects the active search and group filter
 - **Lightbox viewer** — Click any card to zoom; hi-res scans load where available; Esc or click to close
 - **Two image APIs + fallback chain** — pokemontcg.io for older sets, TCGdex for newer ones (Mega era onward); each image tries its sources in order and heals itself if one is down
 - **Custom images** — Per-row Image URLs in the sheet always win; an image downloader mirrors them into the repo
 - **Offline fallback** — Optional local `.xlsx` per set if the sheet is unreachable
+- **Optional write-back** — With a small Apps Script deployed on the spreadsheet, +/− buttons on each card edit the Have column from the website
+- **Self-hosted assets** — `download_assets.py` mirrors set logos into the repo; the site prefers local copies
+- **CI** — GitHub Actions runs site checks (sets.js validity, HTML script sanity) and Python unit tests on every push/PR
 
 ---
 
@@ -94,6 +98,42 @@ Reverse holos: no API hosts true RH scans, so RH rows render the regular art wit
 
 ---
 
+## Template Sheet
+
+`template.csv` shows exactly what a set tab should look like — import it into a new tab (File → Import → Insert new sheet) and replace the example rows. It demonstrates group headers, regular + reverse holo pairs, quantities vs. TRUE, the Verify status, a promo with an SVP number, and a custom Image URL.
+
+---
+
+## Editing Quantities from the Website (optional)
+
+By default the site is read-only. To enable the +/− buttons on cards:
+
+1. Open the spreadsheet → Extensions → Apps Script → paste `apps-script/Code.gs`
+2. Deploy → New deployment → Web app → *Execute as: Me* · *Access: Anyone*
+3. Copy the web-app URL into `WRITE_URL` at the top of `sets.js`
+4. Ensure every set entry's `tab` matches its exact Google tab name
+
+Edits are optimistic (instant on screen) and written to the sheet in the background; the Google publish cache still means a page *reload* can show values up to ~5 min old. **Treat the URL like a password** — anyone holding it can edit Have values. Revoke anytime by deleting the deployment.
+
+---
+
+## Self-Hosting Assets (`download_assets.py`)
+
+`python3 download_assets.py` reads sets.js and saves each active set's logo to `assets/logos/<set-id>.png`, trying your custom `logo`, then pokemontcg.io, then TCGdex. Commit the folder; both pages check the local path before any API. Re-run after adding sets. Card *artwork* still comes from the APIs (mirroring thousands of card images into a repo isn't practical) — for specific cards you want pinned locally, use the Image column + `download_images.py`.
+
+---
+
+## CI
+
+`.github/workflows/static.yml` is a single pipeline — tests, then deploy. On every push to `main` and every PR:
+- **Site checks** (`tests/ci_checks.mjs`, zero dependencies): sets.js parses; set ids aren't purely numeric; sheet links are CSV links with no leftover `PASTE_TAB_GID`; no two sets share a gid; inline scripts in both pages are syntactically valid; no code trapped inside `<script src>` tags; required element ids exist
+- **Python tests** (`tests/test_download_images.py`): header auto-detection, manifest format, duplicate reporting, failed-download exclusion, shared-URL handling
+- **Deploy** publishes the repo to GitHub Pages **only if both test jobs pass** (skipped on PRs), so a broken commit can't take the live site down
+
+Run locally: `node tests/ci_checks.mjs` and `python3 -m unittest discover -s tests`.
+
+---
+
 ## Image Downloader (`download_images.py`)
 
 Mirrors every Image-column URL into the repo so GitHub Pages serves them (faster, immune to link rot).
@@ -119,6 +159,7 @@ git add img/ && git commit -m "Mirror card images" && git push
 - **Track**: edit the Have column in the sheet — the site is read-only by design and re-syncs within ~5 minutes
 - **Sort**: dropdown in the toolbar — sheet order / name / price ↑↓, applied within each group
 - **Filter**: search box, group dropdown, Missing Only
+- **Export**: ⤓ Missing / ⤓ Owned buttons — Copy list (forum/eBay-ready text) or Download CSV; search and group filters apply, the Missing-only toggle doesn't
 - **Zoom**: click any card image; Esc, ✕, or clicking closes
 - **Stats**: completion ring, owned/missing, total copies, £ value owned, £ cost of gaps
 
@@ -144,13 +185,17 @@ git add img/ && git commit -m "Mirror card images" && git push
 
 ```
 repo/
-├── index.html              # Home page — set tiles w/ logos + progress
+├── index.html              # Home page — set tiles w/ logos, search, progress
 ├── tracker.html            # Tracker template (all sets share it; never edited per set)
-├── sets.js                 # ★ Set registry — the only file you edit to add sets
+├── sets.js                 # ★ Set registry + WRITE_URL — the only file you configure
+├── template.csv            # Example sheet tab to copy for new sets
 ├── download_images.py      # Mirrors sheet Image URLs into img/<set-id>/
-├── img/
-│   └── stellar-crown/      # Per-set downloaded images
-│       └── manifest.txt    # Card|Number|Variant → filename map
+├── download_assets.py      # Mirrors set logos into assets/logos/
+├── apps-script/Code.gs     # Optional write-back endpoint (paste into Apps Script)
+├── tests/                  # CI checks (node) + unit tests (python)
+├── .github/workflows/static.yml   # tests → deploy pipeline
+├── img/<set-id>/           # Per-set downloaded card images + manifest.txt
+├── assets/logos/           # Self-hosted set logos
 ├── checklist.xlsx          # Optional local fallback data
 └── README.md
 ```
