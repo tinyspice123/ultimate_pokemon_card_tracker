@@ -209,6 +209,7 @@ document.getElementById('fnameCode').textContent = SHEET_URL ? "your Google Shee
 document.getElementById('fnameFoot').textContent = SHEET_URL ? "your Google Sheet" : FILE;
 
 window.addEventListener('DOMContentLoaded', async ()=>{
+  await loadImgManifest();
   try{
     if(SHEET_URL){
       const res = await fetch(SHEET_URL, {cache:"no-store"});
@@ -312,8 +313,30 @@ function priceMid(p){
   return p.includes("$") ? mid*USD_TO_LOCAL : mid;
 }
 
+// ---- img folder manifest (downloaded copies of sheet Image URLs)
+let imgMap = new Map(); // "card|number|variant" -> filename in img/
+async function loadImgManifest(){
+  try{
+    const res=await fetch('img/manifest.txt', {cache:"no-store"});
+    if(!res.ok) return;
+    (await res.text()).split('\n').forEach(line=>{
+      if(!line.trim()) return;
+      const parts=line.split('|');
+      if(parts.length>=4){ // card|number|variant|filename
+        const file=parts[parts.length-1];
+        imgMap.set(parts.slice(0,-1).join('|'), file);
+      }
+    });
+  }catch(e){}
+}
+
 function imgUrl(it){
+  // 1) Image column in the sheet is the source of truth
   if(it.img && /^https?:\/\//i.test(it.img)) return it.img;
+  // 2) downloaded copy in the repo's img/ folder (via img/manifest.txt)
+  const localFile = imgMap.get(`${it.card}|${it.num}|${it.variant}`);
+  if(localFile) return "img/"+localFile;
+  // 3) fall back to pokemontcg.io base card art
   let m=it.num.match(/^SVP\s*(\d+)/i);
   if(m) return "https://images.pokemontcg.io/svp/"+parseInt(m[1],10)+".png";
   m=it.num.match(/^(\d+)\s*\/\s*142/);
@@ -381,6 +404,7 @@ function cardEl(it){
   if(img) img.addEventListener('click',()=>openLightbox(it,img.src));
   return d;
 }
+
 
 const lb=document.getElementById('lightbox'), lbImg=document.getElementById('lbImg');
 function openLightbox(it,shownSrc){

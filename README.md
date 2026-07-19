@@ -15,6 +15,7 @@ A live web-based checklist for tracking Pokémon TCG Stellar Crown promotional a
 - **High-resolution card viewer** — Click any card image to open a lightbox; automatically loads hi-res scans from pokemontcg.io
 - **Custom images** — Add an "Image" column to your sheet and paste direct URLs for variant photos (staff stamps, retailer exclusives, etc.)
 - **Works offline** — Falls back to local `.xlsx` file if the sheet is unreachable
+- **Image downloader tool** — One script mirrors every Image URL from the sheet into the repo's `img/` folder for faster, self-hosted loading
 - **Currency conversion** — Display prices in GBP, USD, or any currency; set exchange rate in config
 
 ---
@@ -108,9 +109,13 @@ Create columns with these exact header names:
 - **Bulk edit** — Directly edit the Google Sheet; changes sync automatically
 
 ### Images
-- **pokemontcg.io images** — Auto-loaded for most cards (base art + card number)
-- **Custom images** — Add an Image URL in the sheet to override (e.g., staff stamps, retailer exclusives)
-- **Placeholders** — Cards with no image show their initials in a crystal bubble
+Images resolve in this priority order:
+1. **Sheet's Image column** — a URL there always wins (staff stamps, retailer exclusives, your own scans)
+2. **`img/` folder** — local copies downloaded by the image downloader tool (see below)
+3. **pokemontcg.io** — base card art auto-loaded by card number
+4. **Placeholder** — cards with no image show their initials in a crystal bubble
+
+Click any image to open it in the lightbox viewer (hi-res where available).
 
 ---
 
@@ -148,6 +153,36 @@ To use your own scans, add Image URLs in the sheet.
 
 ---
 
+## Image Downloader (`download_images.py`)
+
+A helper script that mirrors every image linked in your sheet's **Image** column into the repo, so the tracker serves them from GitHub Pages instead of hotlinking external sites (faster, and immune to link rot if a listing photo disappears).
+
+### Usage
+
+```bash
+# 1. Export your Google Sheet as CSV: File → Download → Comma Separated Values (.csv)
+# 2. From the repo folder, run:
+python3 download_images.py sheet.csv
+
+# 3. Commit the results:
+git add img/ && git commit -m "Mirror card images" && git push
+```
+
+### What it does
+
+- Downloads each unique Image URL to `img/` with a stable filename (`cardname_hash.ext`)
+- Writes `img/manifest.txt` mapping `Card|Number|Variant|filename` — this is how `index.html` finds local copies
+- Skips rows without an Image URL; reports any failed downloads at the end
+
+### Notes
+
+- Requires Python 3 (no extra packages)
+- Re-run it any time you add new Image URLs to the sheet; existing files are simply re-downloaded
+- The sheet's Image URL still takes priority on the live site — the `img/` folder is the fallback, so deleting a URL from the sheet makes the tracker use the mirrored copy
+- If no `img/` folder or manifest exists, the tracker behaves as before (no errors)
+
+---
+
 ## Troubleshooting
 
 **"HTML detection" yellow warning**
@@ -169,6 +204,11 @@ To use your own scans, add Image URLs in the sheet.
 - Try a hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
 - If using a local file, edit `.xlsx` and reload
 
+**Local img/ images not showing**
+- Check `img/manifest.txt` exists and its `Card|Number|Variant` values match the sheet exactly (case and spacing matter)
+- Remember the sheet's Image URL wins — clear that cell to see the local copy
+- Re-run `python3 download_images.py sheet.csv` after renaming cards or variants
+
 **Card numbers aren't being recognized**
 - Format as `NNN/142` (set cards) or `SVP NNN` (promos) to match pokemontcg.io URLs
 - Custom Image URLs override auto-detection
@@ -181,6 +221,9 @@ To use your own scans, add Image URLs in the sheet.
 stellar-crown-promo-list/
 ├── index.html              # Main tracker (view + logic)
 ├── checklist.xlsx          # Fallback local data
+├── download_images.py      # Mirrors sheet Image URLs into img/
+├── img/                    # Downloaded card images (optional)
+│   └── manifest.txt        # Card|Number|Variant → filename map
 └── README.md               # This file
 ```
 
