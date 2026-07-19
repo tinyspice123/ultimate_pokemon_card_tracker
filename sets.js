@@ -25,12 +25,12 @@
 
 const SETS = {
 
-  "stellar-crown-promos": {
-    name: "Stellar Crown Promos",
+  "stellar-crown": {
+    name: "Stellar Crown",
     sheet: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPhhxFigR_Cyyp3Vi-Ne6yUBj2OrgG6VjbMNrBEzCm7dppuZkRgNj-9aeF7LbHYK3F3C4cIDm35GpE/pub?gid=1801512098&single=true&output=csv",
     tcgSet: "sv7",
     file: "checklist.xlsx",
-    tab: "stellar_crown_promos",
+    tab: "stellar_crown",
   },
 
   // ---- template: copy, un-comment, fill in ----------------------------
