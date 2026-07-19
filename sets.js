@@ -38,16 +38,16 @@ const SETS = {
     sheet: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPhhxFigR_Cyyp3Vi-Ne6yUBj2OrgG6VjbMNrBEzCm7dppuZkRgNj-9aeF7LbHYK3F3C4cIDm35GpE/pub?gid=1801512098&single=true&output=csv",
     tcgSet: "sv7",
     file: "checklist.xlsx",
-    tab: "Promos & Variants",
+    tab: "stellar_crown",
   },
 
   // ---- Mega-era example (pokemontcg.io lacks these sets) --------------
-  // "perfect-order": {
-  //   name: "Perfect Order",
-  //   code: "ME03",
-  //   sheet: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=YOUR_TAB_GID&single=true&output=csv",
-  //   tcgdexSet: "me03",   // images + logo come from TCGdex automatically
-  // },
+  "perfect-order": {
+    name: "Perfect Order",
+    code: "ME03",
+    sheet: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=YOUR_TAB_GID&single=true&output=csv",
+    tcgdexSet: "me03",   // images + logo come from TCGdex automatically
+  },
 
   // ---- template: copy, un-comment, fill in ----------------------------
   // "paradox-rift": {
