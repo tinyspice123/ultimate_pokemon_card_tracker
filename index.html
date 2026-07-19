@@ -117,10 +117,16 @@ Object.entries(SETS).forEach(([id,cfg])=>{
   const a=document.createElement('a');
   a.className='setcard';
   a.href='tracker.html?set='+encodeURIComponent(id);
-  const logo=cfg.logo||(cfg.tcgSet?'https://images.pokemontcg.io/'+cfg.tcgSet+'/logo.png':'');
+  const logoCands=[];
+  if(cfg.logo) logoCands.push(cfg.logo);
+  if(cfg.tcgSet) logoCands.push('https://images.pokemontcg.io/'+cfg.tcgSet+'/logo.png');
+  const sm=(cfg.tcgdexSet||'').match(/^[a-z]+/i);
+  if(sm) logoCands.push('https://assets.tcgdex.net/en/'+sm[0].toLowerCase()+'/'+cfg.tcgdexSet+'/logo.png');
+  const logo=logoCands[0]||'';
   a.innerHTML=`
     <img src="${logo}" alt="${cfg.name}"
-      onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'${cfg.name.replace(/'/g,"\\'")}'}))">
+      data-alts="${logoCands.slice(1).join('|')}"
+      onerror="const a=(this.dataset.alts||'').split('|').filter(Boolean); if(a.length){this.dataset.alts=a.slice(1).join('|');this.src=a[0];}else{this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'${cfg.name.replace(/'/g,"\\'")}'}))}">
     <div class="meta"><span class="code">${cfg.tcgSet||cfg.code||""}</span><span class="prog" data-prog>…</span></div>
     <div class="bar"><i data-bar></i></div>`;
   main.appendChild(a);

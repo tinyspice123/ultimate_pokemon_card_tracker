@@ -18,9 +18,12 @@
 //            Sparks, sv3pt5 = 151 ... see pokemontcg.io/sets)
 //   promoSet (optional) promo set code for "SVP NNN" numbers, default "svp"
 //   logo     (optional) custom logo URL, defaults to the tcgSet logo
-//   imgTemplate (optional) card image URL template for sets that are NOT
-//            on pokemontcg.io (it stopped updating before the Mega era).
-//            {num} = unpadded number, {num3} = zero-padded. Example below.
+//   tcgdexSet (optional) TCGdex set id (e.g. "me03") — a second image API
+//            that covers newer sets pokemontcg.io lacks (it stopped updating
+//            before the Mega era). Used automatically as a fallback; for a
+//            Mega-era set just set tcgdexSet and skip tcgSet entirely.
+//   imgTemplate (optional) fully custom card image URL template for any
+//            other source. {num} = unpadded number, {num3} = zero-padded.
 //   code     (optional) display code for the home tile when tcgSet is unset
 //   eyebrow  (optional) small line above the logo
 //   subtitle (optional) small line under the logo (hidden if omitted)
@@ -43,10 +46,7 @@ const SETS = {
   //   name: "Perfect Order",
   //   code: "ME03",
   //   sheet: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=YOUR_TAB_GID&single=true&output=csv",
-  //   // TCGdex hosts Mega-era images; open one URL in your browser to
-  //   // verify the path before committing, adjust if needed:
-  //   imgTemplate: "https://assets.tcgdex.net/en/me/me03/{num}/high.png",
-  //   logo: "https://assets.tcgdex.net/en/me/me03/logo.png",
+  //   tcgdexSet: "me03",   // images + logo come from TCGdex automatically
   // },
 
   // ---- template: copy, un-comment, fill in ----------------------------

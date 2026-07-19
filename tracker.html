@@ -158,7 +158,7 @@
   <a class="backlink" href="index.html">← All sets</a>
   <div class="eyebrow" id="eyebrowText">Pokémon TCG</div>
   <img class="setlogo" id="setLogo" alt=""
-       onerror="this.style.display='none';document.getElementById('titleFallback').style.display='block'">
+       onerror="const a=(this.dataset.alts||'').split('|').filter(Boolean); if(a.length){this.dataset.alts=a.slice(1).join('|');this.src=a[0];}else{this.style.display='none';document.getElementById('titleFallback').style.display='block'}">
   <h1 id="titleFallback" style="display:none"><span id="fallbackName" class="tera">Set</span></h1>
   <div class="subtitle" id="subtitleText" style="display:none"></div>
 </header>
@@ -236,7 +236,16 @@ const HAVE_COL = 7; // column H (fallback file only)
 
 // header branding from config
 document.title = cfg.name + " — Pokemon Card Tracker";
-document.getElementById('setLogo').src = cfg.logo || (cfg.tcgSet ? "https://images.pokemontcg.io/"+cfg.tcgSet+"/logo.png" : "");
+{
+  const logoCands=[];
+  if(cfg.logo) logoCands.push(cfg.logo);
+  if(cfg.tcgSet) logoCands.push("https://images.pokemontcg.io/"+cfg.tcgSet+"/logo.png");
+  const s=(cfg.tcgdexSet||"").match(/^[a-z]+/i);
+  if(s) logoCands.push(`https://assets.tcgdex.net/en/${s[0].toLowerCase()}/${cfg.tcgdexSet}/logo.png`);
+  const el=document.getElementById('setLogo');
+  el.dataset.alts=logoCands.slice(1).join("|");
+  el.src=logoCands[0]||"";
+}
 document.getElementById('setLogo').alt = cfg.name;
 document.getElementById('eyebrowText').textContent =
   cfg.eyebrow || ("Pokémon TCG · "+(cfg.tcgSet||cfg.code||"").toUpperCase()+" · English master set");
@@ -362,24 +371,34 @@ async function loadImgManifest(){
   }catch(e){}
 }
 
-function imgUrl(it){
+function tcgdexBase(){
+  // serie is the leading letters of the set id: me03 -> me, sv03.5 -> sv
+  const s=(cfg.tcgdexSet||"").match(/^[a-z]+/i);
+  return s ? `https://assets.tcgdex.net/en/${s[0].toLowerCase()}/${cfg.tcgdexSet}` : null;
+}
+function imgCandidates(it){
+  const out=[];
   // 1) Image column in the sheet is the source of truth
-  if(it.img && /^https?:\/\//i.test(it.img)) return it.img;
+  if(it.img && /^https?:\/\//i.test(it.img)) out.push(it.img);
   // 2) downloaded copy in the repo's img/ folder (via img/manifest.txt)
   const localFile = imgMap.get(`${it.card}|${it.num}|${it.variant}`);
-  if(localFile) return "img/"+SET_ID+"/"+localFile;
+  if(localFile) out.push("img/"+SET_ID+"/"+localFile);
   const m=it.num.match(/^(\d+)\s*\//);   // any NNN/MMM number
-  // 3) per-set image template ({num}=7, {num3}=007) for sets not on pokemontcg.io
-  if(m && cfg.imgTemplate){
-    const n=parseInt(m[1],10);
-    return cfg.imgTemplate.replace("{num3}", String(n).padStart(3,"0")).replace("{num}", String(n));
-  }
-  // 4) fall back to pokemontcg.io base card art
   const p=it.num.match(/^SVP\s*(\d+)/i);
-  if(p) return "https://images.pokemontcg.io/"+(cfg.promoSet||"svp")+"/"+parseInt(p[1],10)+".png";
-  if(m && cfg.tcgSet) return "https://images.pokemontcg.io/"+cfg.tcgSet+"/"+parseInt(m[1],10)+".png";
-  return null;
+  if(m){
+    const n=parseInt(m[1],10), n3=String(n).padStart(3,"0");
+    // 3) custom template
+    if(cfg.imgTemplate) out.push(cfg.imgTemplate.replace("{num3}",n3).replace("{num}",String(n)));
+    // 4) pokemontcg.io (covers sets up to ~2025)
+    if(cfg.tcgSet) out.push(`https://images.pokemontcg.io/${cfg.tcgSet}/${n}.png`);
+    // 5) TCGdex (covers newer sets incl. the Mega era) — try both id paddings
+    const dex=tcgdexBase();
+    if(dex){ out.push(`${dex}/${n3}/high.webp`, `${dex}/${n}/high.webp`); }
+  }
+  if(p) out.push(`https://images.pokemontcg.io/${cfg.promoSet||"svp"}/${parseInt(p[1],10)}.png`);
+  return out;
 }
+function imgUrl(it){ return imgCandidates(it)[0] || null; }
 
 function buildGroupSel(){
   const sel=document.getElementById('groupSel');
@@ -435,15 +454,28 @@ function render(){
   stats();
 }
 
+function __imgFallback(img){
+  const alts=(img.dataset.alts||"").split("|").filter(Boolean);
+  if(alts.length){
+    img.dataset.alts=alts.slice(1).join("|");
+    img.src=alts[0];
+    return;
+  }
+  img.replaceWith(Object.assign(document.createElement('div'),
+    {className:'ph',innerHTML:'<b>'+(img.dataset.ph||'?')+'</b><span>no image</span>'}));
+}
+
 function cardEl(it){
   const d=document.createElement('div');
   d.className='item'+(it.qty>0?' owned':'');
-  const url=imgUrl(it);
+  const cands=imgCandidates(it);
+  const url=cands[0]||null, alts=cands.slice(1);
   const initial=esc(it.card.replace(/[^A-Za-z]/g,'').slice(0,2)||'?');
   d.innerHTML=`
     <div class="imgwrap${/reverse\s*holo/i.test(it.variant)?' rh':''}">
       ${url?`<img loading="lazy" alt="${esc(it.card)}" src="${url}"
-        onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',innerHTML:'<b>${initial}</b><span>no image</span>'}))">`
+        data-alts="${esc(alts.join('|'))}" data-ph="${initial}"
+        onerror="__imgFallback(this)">`
         :`<div class="ph"><b>${initial}</b><span>variant</span></div>`}
       ${it.price?`<span class="pricechip">${esc(it.price)}</span>`:''}
       <span class="havechip ${it.qty>0?'y':'n'}">${it.qty>0?'OWNED':'NEED'}</span>
