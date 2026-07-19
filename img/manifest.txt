@@ -37,6 +37,7 @@ Joltik|050/142|Play! stamp - Cosmos holo|joltik_050_21f9e9.jpg
 Bouffalant|SVP 136|SVP promo STAFF stamp|bouffalant_svp136_05cc41.jpg
 Archaludon|107/142|Pokemon TCG Gym stamp|archaludon_107_896511.jpg
 Terapagos ex|128/142|Play! stamp - Non-holo|terapagos_ex_128_37334b.jpg
+terapagos_ex|128/142|Premier Ball League promo|terapagos_ex_128_049f3d.jpg
 Melmetal ex|105/142|Stamped promo|melmetal_ex_105_a17270.jpg
 Reshiram|022/142|Cosmos holo + Stellar Crown stamp|reshiram_022_be76cb.jpg
 Klinklang|101/142|Cosmos holo (unstamped)|klinklang_101_22827b.jpg
