@@ -1,6 +1,6 @@
-# Stellar Crown Promo Tracker
+# Promo Vault — Pokémon TCG Set Trackers
 
-A live web-based checklist for tracking Pokémon TCG Stellar Crown promotional and variant cards, with real-time sync to Google Sheets, price tracking, and an interactive card viewer.
+A multi-set, template-driven promo & variant checklist site. A home page lists your sets; each set gets its own tracker page fed live from a tab in one Google Spreadsheet. Adding a set means adding one sheet tab and one entry in `sets.js` — nothing else.
 
 **Live site:** https://tinyspice123.github.io/stellar-crown-promo-list/
 
@@ -8,15 +8,15 @@ A live web-based checklist for tracking Pokémon TCG Stellar Crown promotional a
 
 ## Features
 
+- **Multi-set template** — One tracker page serves every set via `tracker.html?set=<id>`; the home page shows all sets with live completion bars
 - **Live Google Sheets sync** — Update your checklist in the sheet; changes appear on the site within ~5 minutes (no republish needed)
 - **Track what you own** — Checkbox or number each card you have; automatically counts owned vs. missing
-- **Price estimates** — See the total value of cards you own and cost to complete your collection (GBP or USD)
+- **Price estimates** — See the total value of cards you own and cost to complete your collection (all prices in £)
 - **Smart filtering** — Search by card name, filter by category (Prerelease, ETB, etc.), or toggle "Missing Only" view
 - **High-resolution card viewer** — Click any card image to open a lightbox; automatically loads hi-res scans from pokemontcg.io
 - **Custom images** — Add an "Image" column to your sheet and paste direct URLs for variant photos (staff stamps, retailer exclusives, etc.)
 - **Works offline** — Falls back to local `.xlsx` file if the sheet is unreachable
 - **Image downloader tool** — One script mirrors every Image URL from the sheet into the repo's `img/` folder for faster, self-hosted loading
-- **Currency conversion** — Display prices in GBP, USD, or any currency; set exchange rate in config
 
 ---
 
@@ -72,6 +72,24 @@ A live web-based checklist for tracking Pokémon TCG Stellar Crown promotional a
 
 ---
 
+## Adding a New Set
+
+1. **Add a tab** to your Google Spreadsheet with the same columns as the existing one
+2. **Publish that tab**: File → Share → Publish to web → select the tab → CSV → copy the link (each tab has its own `gid=` in the URL)
+3. **Add an entry to `sets.js`**:
+   ```javascript
+   "paradox-rift": {
+     name: "Paradox Rift",
+     sheet: "https://docs.google.com/.../pub?gid=YOUR_TAB_GID&single=true&output=csv",
+     tcgSet: "sv4",   // pokemontcg.io set code (used for card images + logo)
+   },
+   ```
+4. Commit & push. The set appears on the home page with its own progress bar, and its tracker lives at `tracker.html?set=paradox-rift`.
+
+Common `tcgSet` codes: `sv7` Stellar Crown · `sv4` Paradox Rift · `sv8` Surging Sparks · `sv3pt5` 151 · full list at pokemontcg.io/sets.
+
+---
+
 ## Sheet Structure
 
 Create columns with these exact header names:
@@ -121,14 +139,9 @@ Click any image to open it in the lightbox viewer (hi-res where available).
 
 ## Customization
 
-### Currency
-Edit the top of `index.html`:
-```javascript
-const CURRENCY = "£";           // symbol to display
-const USD_TO_LOCAL = 0.75;      // multiply $ prices by this
-```
-
-Update whenever exchange rates drift significantly.
+### Prices
+All prices are plain £ text (e.g. `£3.50` or `~£4-11`). Ranges are averaged for the
+value stats. There is no currency conversion — write what you'd actually pay.
 
 ### Data Source
 **Option 1: Google Sheets (live)**
@@ -162,7 +175,7 @@ A helper script that mirrors every image linked in your sheet's **Image** column
 ```bash
 # 1. Export your Google Sheet as CSV: File → Download → Comma Separated Values (.csv)
 # 2. From the repo folder, run:
-python3 download_images.py sheet.csv
+python3 download_images.py sheet.csv stellar-crown   # <set-id> from sets.js
 
 # 3. Commit the results:
 git add img/ && git commit -m "Mirror card images" && git push
@@ -219,11 +232,14 @@ git add img/ && git commit -m "Mirror card images" && git push
 
 ```
 stellar-crown-promo-list/
-├── index.html              # Main tracker (view + logic)
-├── checklist.xlsx          # Fallback local data
-├── download_images.py      # Mirrors sheet Image URLs into img/
-├── img/                    # Downloaded card images (optional)
-│   └── manifest.txt        # Card|Number|Variant → filename map
+├── index.html              # Home page — lists all sets w/ progress
+├── tracker.html            # Tracker template (all sets share it)
+├── sets.js                 # ★ Set registry — the only file you edit to add sets
+├── checklist.xlsx          # Optional local fallback data
+├── download_images.py      # Mirrors sheet Image URLs into img/<set-id>/
+├── img/
+│   └── stellar-crown/      # Per-set downloaded images
+│       └── manifest.txt    # Card|Number|Variant → filename map
 └── README.md               # This file
 ```
 

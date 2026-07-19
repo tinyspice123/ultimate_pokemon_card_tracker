@@ -3,9 +3,12 @@
 Download card images from Google Sheet and organize into img/ folder.
 
 Usage:
-  1. Export your Google Sheet as CSV (File → Download → CSV)
+  1. Export the set's sheet TAB as CSV (File → Download → CSV)
   2. Place the CSV file in this repo folder (e.g., sheet.csv)
-  3. Run: python3 download_images.py sheet.csv
+  3. Run: python3 download_images.py sheet.csv <set-id>
+     where <set-id> matches the key in sets.js, e.g.:
+       python3 download_images.py stellar.csv stellar-crown
+     Images land in img/<set-id>/ with img/<set-id>/manifest.txt
 
 This will:
   - Read all Image column URLs from the CSV
@@ -31,6 +34,10 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 csv_file = Path(sys.argv[1])
+set_id = sys.argv[2] if len(sys.argv) > 2 else ""
+if not set_id:
+    print("\u26a0 No set id given \u2014 using img/ directly. For the multi-set site, pass the")
+    print("  sets.js key, e.g.:  python3 download_images.py sheet.csv stellar-crown\n")
 if not csv_file.exists():
     print(f"✗ File not found: {csv_file}")
     sys.exit(1)
@@ -88,8 +95,8 @@ rows = raw[header_row_idx+1:]
 print(f"✓ Found {len(rows)} data rows")
 
 # Create img folder
-img_dir = Path("img")
-img_dir.mkdir(exist_ok=True)
+img_dir = Path("img") / set_id if set_id else Path("img")
+img_dir.mkdir(parents=True, exist_ok=True)
 
 # Extract unique Image URLs
 urls_to_dl = {}  # url -> (card, variant, filename)
@@ -167,6 +174,6 @@ if failed:
     for fn, _ in failed:
         print(f"    - {fn}")
 print(f"\n📁 Next steps:")
-print(f"  1. Commit img/ folder and index.html to your repo")
+print(f"  1. Commit the {img_dir}/ folder to your repo")
 print(f"  2. Push to GitHub")
 print(f"  3. Your tracker will now load images from img/ first")

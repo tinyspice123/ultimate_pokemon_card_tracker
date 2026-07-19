@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stellar Crown — Collection Tracker</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<title>Promo Vault — Pokémon TCG Collection Trackers</title>
+<script src="sets.js"></script>
 <style>
   :root{
     --night:#100e22; --panel:#1a1733; --panel2:#221e42; --line:#332e5c;
@@ -14,473 +14,123 @@
     --crystal:linear-gradient(120deg,var(--tera1),var(--tera2) 34%,var(--tera3) 68%,var(--tera4));
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
   body{
     background:var(--night);
     background-image:radial-gradient(ellipse 60% 40% at 80% -5%, rgba(141,180,255,.10), transparent),
                      radial-gradient(ellipse 50% 35% at 10% 0%, rgba(226,155,255,.08), transparent);
     color:var(--ink);
     font-family:"Sora",-apple-system,"Segoe UI",Roboto,sans-serif;
-    min-height:100vh; padding-bottom:80px;
+    min-height:100vh;padding:0 20px 80px;
   }
-  @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+  header{max-width:900px;margin:0 auto;padding:46px 0 26px;text-align:center}
+  .eyebrow{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--dim)}
+  h1{font-family:"Unbounded","Sora",sans-serif;font-weight:700;font-size:clamp(26px,5vw,40px);margin-top:10px}
+  h1 .tera{background:var(--crystal);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{color:var(--dim);font-size:14px;margin-top:8px}
 
-  header{padding:26px 20px 8px; max-width:1180px; margin:0 auto}
-  .eyebrow{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--dim)}
-  .setlogo{display:block;max-width:min(360px,82vw);margin:2px auto 6px;
-    filter:drop-shadow(0 6px 22px rgba(141,180,255,.38)) drop-shadow(0 0 40px rgba(226,155,255,.18))}
-  .subtitle{text-align:center;font-size:14px;letter-spacing:.22em;text-transform:uppercase;
-    color:var(--dim);margin-bottom:2px}
-  .subtitle .tera{color:var(--tera2)}
-  h1{font-family:"Unbounded","Sora",sans-serif; font-weight:700; font-size:clamp(22px,4.5vw,34px); line-height:1.15; margin-top:6px}
-  h1 .tera{background:var(--crystal); -webkit-background-clip:text; background-clip:text; color:transparent}
-
-  .notice{
-    max-width:1180px;margin:18px auto 0;padding:0 20px;display:none;
-  }
-  .notice .inner{
-    border:1px solid rgba(255,212,126,.4);background:rgba(255,212,126,.06);
-    border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink);line-height:1.55;
-  }
-  .notice code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:6px;font-size:12px}
-  .notice label{display:inline-block;margin-top:8px;background:var(--panel);border:1px solid var(--line);
-    border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px}
-  .notice input{display:none}
-
-  .stats{
-    max-width:1180px; margin:22px auto 0; padding:0 20px;
-    display:none; grid-template-columns:auto 1fr; gap:22px; align-items:center;
-  }
-  .ring{width:104px;height:104px;position:relative;flex:none}
-  .ring svg{transform:rotate(-90deg)}
-  .ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .ring .pct b{font-family:"Unbounded",sans-serif;font-size:20px}
-  .ring .pct i{font-style:normal;font-size:9px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
-  .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-  .stat b{font-family:"Unbounded",sans-serif;font-size:17px;display:block}
-  .stat span{font-size:11px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
-  .stat.miss b{color:var(--miss)} .stat.own b{color:var(--good)}
-
-  .controls{
-    max-width:1180px;margin:20px auto 0;padding:0 20px;display:none;gap:10px;flex-wrap:wrap;align-items:center;
-  }
-  .controls input[type=search]{
-    flex:1;min-width:180px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:10px 14px;color:var(--ink);font-family:inherit;font-size:14px;outline:none;
-  }
-  .controls input[type=search]:focus{border-color:var(--tera2)}
-  .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);cursor:pointer;user-select:none;
-    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
-  .toggle input{accent-color:#e29bff}
-  select{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font-family:inherit;font-size:13px;outline:none}
-
-  main{max-width:1180px;margin:8px auto 0;padding:0 20px}
-  .grouphead{margin:30px 0 12px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-  .grouphead h2{font-family:"Unbounded",sans-serif;font-size:14px;font-weight:600;letter-spacing:.02em}
-  .grouphead .count{font-size:11px;color:var(--dim)}
-  .grouphead::after{content:"";flex:1;height:1px;background:var(--line);align-self:center}
-
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px}
-  .item{
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
-    display:flex;flex-direction:column;position:relative;transition:transform .15s, border-color .15s;
-  }
-  .item:hover{transform:translateY(-2px);border-color:var(--faint)}
-  .item.owned{border-color:transparent;background:
-    linear-gradient(var(--panel),var(--panel)) padding-box,
-    var(--crystal) border-box}
-  .imgwrap{aspect-ratio:63/88;background:var(--panel2);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .imgwrap img{width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-in}
-  .lightbox{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
-    background:rgba(10,8,24,.88);backdrop-filter:blur(4px);padding:24px;cursor:zoom-out}
-  .lightbox.open{display:flex}
-  .lightbox figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;max-width:min(92vw,560px)}
-  .lightbox img{max-width:100%;max-height:80vh;border-radius:16px;
-    box-shadow:0 0 60px rgba(141,180,255,.35), 0 0 120px rgba(226,155,255,.2)}
-  .lightbox figcaption{text-align:center;font-size:13px;color:var(--ink)}
-  .lightbox figcaption .lb-num{color:var(--tera2);margin-left:8px}
-  .lightbox figcaption .lb-var{display:block;font-size:11px;color:var(--dim);margin-top:3px}
-  .lightbox .lb-close{position:absolute;top:16px;right:20px;background:var(--panel);border:1px solid var(--line);
-    color:var(--ink);border-radius:999px;width:36px;height:36px;font-size:16px;cursor:pointer}
-  .lightbox .lb-close:hover{border-color:var(--tera2)}
-  .item:not(.owned) .imgwrap img,.item:not(.owned) .ph{filter:grayscale(.85) brightness(.6)}
-  .ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-    background:radial-gradient(circle at 30% 20%, rgba(141,180,255,.25), transparent 60%),
-               radial-gradient(circle at 75% 80%, rgba(226,155,255,.22), transparent 60%), var(--panel2)}
-  .ph b{font-family:"Unbounded",sans-serif;font-size:26px;background:var(--crystal);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .ph span{font-size:9px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
-  .pricechip{position:absolute;top:8px;left:8px;background:rgba(16,14,34,.82);backdrop-filter:blur(3px);
-    border:1px solid var(--line);border-radius:999px;font-size:10.5px;padding:3px 8px;color:var(--tera4)}
-  .havechip{position:absolute;top:8px;right:8px;border-radius:999px;font-size:10px;font-weight:700;padding:3px 8px;letter-spacing:.04em}
-  .havechip.y{background:var(--crystal);color:#14122a}
-  .havechip.n{background:rgba(255,141,161,.15);color:var(--miss);border:1px solid rgba(255,141,161,.35)}
-  .verify{position:absolute;bottom:8px;right:8px;font-size:9px;color:var(--tera4);background:rgba(16,14,34,.8);
-    border:1px solid rgba(255,212,126,.35);border-radius:6px;padding:2px 6px}
-  .meta{padding:10px 11px 12px;flex:1}
-  .meta .nm{font-size:13px;font-weight:600;line-height:1.25}
-  .meta .num{font-size:11px;color:var(--tera2);margin-top:2px}
-  .meta .var{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.35}
-  .meta .src{font-size:10px;color:var(--faint);margin-top:4px;line-height:1.3}
-  .qtytag{border-top:1px solid var(--line);padding:7px 0;text-align:center;
-    font-family:"Unbounded",sans-serif;font-size:12px}
-  .qtytag.zero{color:var(--faint)}
-  .empty{display:none;text-align:center;color:var(--dim);padding:60px 0;font-size:14px}
-  footer{max-width:1180px;margin:50px auto 0;padding:0 20px;font-size:11px;color:var(--faint);line-height:1.6}
-  :focus-visible{outline:2px solid var(--tera2);outline-offset:2px}
+  .sets{max-width:900px;margin:0 auto;display:grid;gap:18px;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  .setcard{display:block;text-decoration:none;color:var(--ink);
+    background:linear-gradient(160deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:18px;padding:22px 20px 18px;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease}
+  .setcard:hover{transform:translateY(-3px);border-color:var(--tera2);
+    box-shadow:0 10px 34px rgba(141,180,255,.16)}
+  .setcard img{display:block;max-width:82%;max-height:88px;margin:2px auto 14px;
+    filter:drop-shadow(0 4px 14px rgba(141,180,255,.3))}
+  .setcard .noimg{font-family:"Unbounded",sans-serif;font-size:20px;text-align:center;margin:14px 0 18px}
+  .setcard .meta{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim)}
+  .setcard .code{letter-spacing:.14em;text-transform:uppercase}
+  .setcard .prog{font-variant-numeric:tabular-nums}
+  .bar{height:5px;border-radius:99px;background:var(--panel);border:1px solid var(--line);
+    margin-top:10px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--crystal);width:0;transition:width .6s ease}
+  footer{max-width:900px;margin:44px auto 0;text-align:center;font-size:11px;color:var(--faint)}
+  footer a{color:var(--dim)}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
 <header>
-  <div class="eyebrow">Pokémon TCG · SV07 · English master set</div>
-  <img class="setlogo" src="https://images.pokemontcg.io/sv7/logo.png" alt="Stellar Crown"
-       onerror="this.style.display='none';document.getElementById('titleFallback').style.display='block'">
-  <h1 id="titleFallback" style="display:none">Stellar Crown <span class="tera">Promos</span></h1>
-  <div class="subtitle">Promos <span class="tera">&amp;</span> Variants</div>
+  <div class="eyebrow">Pokémon TCG · Master set trackers</div>
+  <h1>Promo <span class="tera">Vault</span></h1>
+  <div class="tagline">Pick a set to open its promo &amp; variant checklist</div>
 </header>
 
-<div class="notice" id="notice">
-  <div class="inner">
-    Couldn't auto-load <code id="fnameCode">checklist.xlsx</code> from this folder.
-    Browsers block reading local files when a page is opened directly from disk (<code>file://</code>).
-    Either serve the folder (e.g. <code>python3 -m http.server</code>, or host it on GitHub Pages) — or pick the file manually:
-    <label>Choose checklist.xlsx <input type="file" id="file" accept=".xlsx,.xls"></label>
-  </div>
-</div>
+<main class="sets" id="sets"></main>
 
-<section class="stats" id="stats">
-  <div class="ring">
-    <svg width="104" height="104" viewBox="0 0 104 104">
-      <defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#7ef0d4"/><stop offset=".4" stop-color="#8db4ff"/>
-        <stop offset=".7" stop-color="#e29bff"/><stop offset="1" stop-color="#ffd47e"/>
-      </linearGradient></defs>
-      <circle cx="52" cy="52" r="45" fill="none" stroke="#2a2650" stroke-width="9"/>
-      <circle id="ringbar" cx="52" cy="52" r="45" fill="none" stroke="url(#tg)" stroke-width="9"
-        stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283"/>
-    </svg>
-    <div class="pct"><b id="pct">0%</b><i>complete</i></div>
-  </div>
-  <div class="statgrid">
-    <div class="stat own"><b id="sOwn">0</b><span>owned</span></div>
-    <div class="stat miss"><b id="sMiss">0</b><span>missing</span></div>
-    <div class="stat"><b id="sQty">0</b><span>total copies</span></div>
-    <div class="stat own"><b id="sValOwn">£0</b><span>est. value owned</span></div>
-    <div class="stat miss"><b id="sValMiss">£0</b><span>est. cost of gaps</span></div>
-  </div>
-</section>
-
-<div class="controls" id="controls">
-  <input type="search" id="q" placeholder="Search card, number, stamp…">
-  <select id="groupSel"><option value="">All groups</option></select>
-  <select id="sortSel" title="Sort cards">
-    <option value="">Sheet order</option>
-    <option value="name">Name A–Z</option>
-    <option value="price-desc">Price high → low</option>
-    <option value="price-asc">Price low → high</option>
-  </select>
-  <label class="toggle"><input type="checkbox" id="missOnly"> Missing only</label>
-</div>
-
-<main id="main"></main>
-<div class="empty" id="empty">Nothing matches those filters.</div>
-
-<footer id="foot" style="display:none">
-  This page is read-only: edit quantities in <span id="fnameFoot">checklist.xlsx</span> (the Have column — “x” or a number),
-  save, and refresh. Card photos come from pokemontcg.io by card number; jumbo, staff and unusual variants show a crystal
-  placeholder. Prices are read from the sheet's NM Price column.
+<footer>
+  Data lives in Google Sheets · add sets in <code>sets.js</code><br>
+  Not affiliated with The Pokémon Company · card images © TPCi via pokemontcg.io
 </footer>
 
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Card image viewer">
-  <button class="lb-close" aria-label="Close">✕</button>
-  <figure>
-    <img id="lbImg" alt="">
-    <figcaption><span id="lbName"></span><span class="lb-num" id="lbNum"></span><span class="lb-var" id="lbVar"></span></figcaption>
-  </figure>
-</div>
-
 <script>
-// ---- config ----------------------------------------------------------
-// Option A (Google Sheets): paste your "Publish to web" CSV link between
-// the quotes below and the page will read the sheet live.
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPhhxFigR_Cyyp3Vi-Ne6yUBj2OrgG6VjbMNrBEzCm7dppuZkRgNj-9aeF7LbHYK3F3C4cIDm35GpE/pub?gid=1801512098&single=true&output=csv";
-// Option B (repo file): leave SHEET_URL empty and keep this xlsx next to
-// index.html — the page loads it instead.
-const FILE = "checklist.xlsx";
-// Currency: prices written with $ in the sheet get converted to this currency
-// at the rate below. Prices already written with this symbol pass through as-is.
-const CURRENCY = "\u00a3";
-const USD_TO_LOCAL = 0.75; // update the exchange rate here when needed
-const SHEET = "Promos & Variants";
-const HAVE_COL = 7; // column H
-// ----------------------------------------------------------------------
+const main=document.getElementById('sets');
 
-let items=[];
-document.getElementById('fnameCode').textContent = SHEET_URL ? "your Google Sheet" : FILE;
-document.getElementById('fnameFoot').textContent = SHEET_URL ? "your Google Sheet" : FILE;
-
-window.addEventListener('DOMContentLoaded', async ()=>{
-  await loadImgManifest();
-  try{
-    if(SHEET_URL){
-      const res = await fetch(SHEET_URL, {cache:"no-store"});
-      if(!res.ok) throw new Error(res.status);
-      const text = await res.text();
-      if(/^\s*</.test(text)) throw new Error("Got a web page, not CSV — use the Publish-to-web CSV link or /export?format=csv");
-      parseRows(csvToRows(text));
-    }else{
-      const res = await fetch(FILE + "?t=" + Date.now(), {cache:"no-store"});
-      if(!res.ok) throw new Error(res.status);
-      const buf = await res.arrayBuffer();
-      parseWorkbook(XLSX.read(new Uint8Array(buf), {type:'array'}));
-    }
-  }catch(e){
-    const n=document.getElementById('notice');
-    n.style.display='block';
-    n.querySelector('.inner').insertAdjacentHTML('afterbegin',
-      '<div style="margin-bottom:8px;color:#ffd47e">'+esc(String(e.message||e))+'</div>');
-  }
-});
-
+// tiny CSV parser (quote-aware)
 function csvToRows(text){
-  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
-  const rows=[]; let row=[], field="", inQ=false;
+  const rows=[];let row=[],cur="",inQ=false;
   for(let i=0;i<text.length;i++){
     const c=text[i];
     if(inQ){
-      if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else inQ=false; }
-      else field+=c;
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else inQ=false; }
+      else cur+=c;
     }else{
       if(c==='"') inQ=true;
-      else if(c===','){ row.push(field); field=""; }
-      else if(c==='\n'||c==='\r'){
-        if(c==='\r'&&text[i+1]==='\n') i++;
-        row.push(field); rows.push(row); row=[]; field="";
-      }
-      else field+=c;
+      else if(c===','){row.push(cur);cur="";}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur="";}
+      else if(c!=='\r') cur+=c;
     }
   }
-  if(field!==""||row.length){ row.push(field); rows.push(row); }
+  if(cur!==""||row.length){row.push(cur);rows.push(row);}
   return rows;
 }
+const OWNED_NO=new Set(["","false","no","n","-","0"]);
 
-document.getElementById('file').addEventListener('change',e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    parseWorkbook(XLSX.read(new Uint8Array(ev.target.result),{type:'array'}));
-    document.getElementById('notice').style.display='none';
-  };
-  r.readAsArrayBuffer(f);
+async function progress(cfg){
+  if(!cfg.sheet) return null;
+  const res=await fetch(cfg.sheet,{cache:"no-store"});
+  if(!res.ok) throw 0;
+  const text=await res.text();
+  if(/^\s*</.test(text)) throw 0;
+  const rows=csvToRows(text);
+  // find header row: needs a "card"-ish and "have"-ish column
+  let hi=-1,ci=-1,vi=-1,haveI=-1;
+  for(let r=0;r<Math.min(rows.length,5);r++){
+    const low=rows[r].map(x=>x.trim().toLowerCase());
+    const c=low.findIndex(h=>h.includes("card"));
+    const hv=low.findIndex(h=>h.includes("have")||h.includes("own")||h.includes("qty"));
+    if(c>-1&&hv>-1){hi=r;ci=c;haveI=hv;break;}
+  }
+  if(hi<0) return null;
+  let total=0,owned=0;
+  for(let r=hi+1;r<rows.length;r++){
+    const card=(rows[r][ci]||"").trim();
+    if(!card) continue;           // group header / blank rows
+    total++;
+    const hv=(rows[r][haveI]||"").trim().toLowerCase();
+    if(!OWNED_NO.has(hv)) owned++;
+  }
+  return {owned,total};
+}
+
+Object.entries(SETS).forEach(([id,cfg])=>{
+  const a=document.createElement('a');
+  a.className='setcard';
+  a.href='tracker.html?set='+encodeURIComponent(id);
+  const logo=cfg.logo||('https://images.pokemontcg.io/'+cfg.tcgSet+'/logo.png');
+  a.innerHTML=`
+    <img src="${logo}" alt="${cfg.name}"
+      onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'${cfg.name.replace(/'/g,"\\'")}'}))">
+    <div class="meta"><span class="code">${cfg.tcgSet}</span><span class="prog" data-prog>…</span></div>
+    <div class="bar"><i data-bar></i></div>`;
+  main.appendChild(a);
+  progress(cfg).then(p=>{
+    const t=a.querySelector('[data-prog]'), b=a.querySelector('[data-bar]');
+    if(!p){ t.textContent=''; return; }
+    t.textContent=`${p.owned} / ${p.total} owned`;
+    b.style.width=(p.total? (100*p.owned/p.total):0)+'%';
+  }).catch(()=>{ a.querySelector('[data-prog]').textContent=''; });
 });
-
-function parseWorkbook(wb){
-  const ws = wb.Sheets[SHEET] || wb.Sheets[wb.SheetNames[0]];
-  parseRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:""}));
-}
-
-function parseRows(rows){
-  // find columns by header name so you can remove/reorder columns freely
-  const hdr=(rows[0]||[]).map(h=>String(h).toLowerCase());
-  const col=name=>hdr.findIndex(h=>h.includes(name));
-  const cGroup=Math.max(col("group"),0), cCard=col("card")>-1?col("card"):1,
-        cNum=col("number"), cVar=col("variant"), cSrc=col("source"),
-        cPrice=col("price"), cStatus=col("status"), cHave=col("have"),
-        cImg=col("image");
-  const get=(r,c)=>c>-1?String(r[c]||"").trim():"";
-  items=[]; let group="Ungrouped";
-  for(let i=1;i<rows.length;i++){
-    const r=rows[i];
-    const g=get(r,cGroup), card=get(r,cCard);
-    if(g && !card){ group=g; continue; }
-    if(!card) continue;
-    const have=get(r,cHave).toLowerCase();
-    let qty=0;
-    if(/^\d+$/.test(have)) qty=parseInt(have,10);
-    else if(have && !["false","no","n","-","–","0"].includes(have)) qty=1;
-    items.push({group, card, num:get(r,cNum), variant:get(r,cVar),
-      src:get(r,cSrc), price:get(r,cPrice), status:get(r,cStatus), qty,
-      img:get(r,cImg)});
-  }
-  buildGroupSel(); render();
-  document.getElementById('stats').style.display='grid';
-  document.getElementById('controls').style.display='flex';
-  document.getElementById('foot').style.display='block';
-}
-
-function fmtNum(v){
-  return v>=5 ? String(Math.round(v)) : String(Math.round(v*10)/10);
-}
-function convertPrice(text){
-  if(!text) return text;
-  if(!text.includes("$")) return text; // already in local currency (or unit-less)
-  return text.replace(/\$\s*/g, CURRENCY)
-             .replace(/\d+(?:\.\d+)?/g, n=>fmtNum(parseFloat(n)*USD_TO_LOCAL));
-}
-function priceMid(p){
-  const nums=(p.match(/\d+(?:\.\d+)?/g)||[]).map(Number);
-  if(!nums.length) return null;
-  const mid = nums.length>1 ? (nums[0]+nums[1])/2 : nums[0];
-  return p.includes("$") ? mid*USD_TO_LOCAL : mid;
-}
-
-// ---- img folder manifest (downloaded copies of sheet Image URLs)
-let imgMap = new Map(); // "card|number|variant" -> filename in img/
-async function loadImgManifest(){
-  try{
-    const res=await fetch('img/manifest.txt', {cache:"no-store"});
-    if(!res.ok) return;
-    (await res.text()).split('\n').forEach(line=>{
-      if(!line.trim()) return;
-      const parts=line.split('|');
-      if(parts.length>=4){ // card|number|variant|filename
-        const file=parts[parts.length-1];
-        imgMap.set(parts.slice(0,-1).join('|'), file);
-      }
-    });
-  }catch(e){}
-}
-
-function imgUrl(it){
-  // 1) Image column in the sheet is the source of truth
-  if(it.img && /^https?:\/\//i.test(it.img)) return it.img;
-  // 2) downloaded copy in the repo's img/ folder (via img/manifest.txt)
-  const localFile = imgMap.get(`${it.card}|${it.num}|${it.variant}`);
-  if(localFile) return "img/"+localFile;
-  // 3) fall back to pokemontcg.io base card art
-  let m=it.num.match(/^SVP\s*(\d+)/i);
-  if(m) return "https://images.pokemontcg.io/svp/"+parseInt(m[1],10)+".png";
-  m=it.num.match(/^(\d+)\s*\/\s*142/);
-  if(m) return "https://images.pokemontcg.io/sv7/"+parseInt(m[1],10)+".png";
-  return null;
-}
-
-function buildGroupSel(){
-  const sel=document.getElementById('groupSel');
-  sel.innerHTML='<option value="">All groups</option>';
-  [...new Set(items.map(i=>i.group))].forEach(g=>{
-    const o=document.createElement('option'); o.value=g; o.textContent=g; sel.appendChild(o);
-  });
-}
-
-function sortItems(list){
-  const mode=document.getElementById('sortSel').value;
-  if(!mode) return list; // sheet order
-  const arr=[...list];
-  if(mode==='name'){
-    arr.sort((a,b)=> a.card.localeCompare(b.card) || a.num.localeCompare(b.num,undefined,{numeric:true}));
-  }else{
-    const dir = mode==='price-desc' ? -1 : 1;
-    arr.sort((a,b)=>{
-      const pa=priceMid(a.price), pb=priceMid(b.price);
-      if(pa==null && pb==null) return 0;
-      if(pa==null) return 1;           // unpriced cards sink to the bottom
-      if(pb==null) return -1;
-      return (pa-pb)*dir;
-    });
-  }
-  return arr;
-}
-
-function render(){
-  const q=document.getElementById('q').value.toLowerCase();
-  const gsel=document.getElementById('groupSel').value;
-  const missOnly=document.getElementById('missOnly').checked;
-  const main=document.getElementById('main'); main.innerHTML='';
-
-  const shown=items.filter(it=>{
-    if(gsel && it.group!==gsel) return false;
-    if(missOnly && it.qty>0) return false;
-    if(q && !(it.card+" "+it.num+" "+it.variant+" "+it.src).toLowerCase().includes(q)) return false;
-    return true;
-  });
-  document.getElementById('empty').style.display = shown.length? 'none':'block';
-
-  [...new Set(shown.map(i=>i.group))].forEach(g=>{
-    const list=sortItems(shown.filter(i=>i.group===g));
-    const own=list.filter(i=>i.qty>0).length;
-    const gh=document.createElement('div'); gh.className='grouphead';
-    gh.innerHTML=`<h2>${esc(g)}</h2><span class="count">${own}/${list.length} owned</span>`;
-    main.appendChild(gh);
-    const grid=document.createElement('div'); grid.className='grid';
-    list.forEach(it=>grid.appendChild(cardEl(it)));
-    main.appendChild(grid);
-  });
-  stats();
-}
-
-function cardEl(it){
-  const d=document.createElement('div');
-  d.className='item'+(it.qty>0?' owned':'');
-  const url=imgUrl(it);
-  const initial=esc(it.card.replace(/[^A-Za-z]/g,'').slice(0,2)||'?');
-  d.innerHTML=`
-    <div class="imgwrap">
-      ${url?`<img loading="lazy" alt="${esc(it.card)}" src="${url}"
-        onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',innerHTML:'<b>${initial}</b><span>no image</span>'}))">`
-        :`<div class="ph"><b>${initial}</b><span>variant</span></div>`}
-      ${it.price?`<span class="pricechip">${esc(convertPrice(it.price))}</span>`:''}
-      <span class="havechip ${it.qty>0?'y':'n'}">${it.qty>0?'OWNED':'NEED'}</span>
-      ${/verify/i.test(it.status)?`<span class="verify">verify</span>`:''}
-    </div>
-    <div class="meta">
-      <div class="nm">${esc(it.card)}</div>
-      <div class="num">${esc(it.num)}</div>
-      <div class="var">${esc(it.variant)}</div>
-      <div class="src">${esc(it.src)}</div>
-    </div>
-    <div class="qtytag ${it.qty? '':'zero'}">×${it.qty}</div>`;
-  const img=d.querySelector('.imgwrap img');
-  if(img) img.addEventListener('click',()=>openLightbox(it,img.src));
-  return d;
-}
-
-
-const lb=document.getElementById('lightbox'), lbImg=document.getElementById('lbImg');
-function openLightbox(it,shownSrc){
-  document.getElementById('lbName').textContent=it.card;
-  document.getElementById('lbNum').textContent=it.num;
-  document.getElementById('lbVar').textContent=it.variant;
-  lbImg.alt=it.card;
-  // try the high-res scan first, fall back to the already-loaded image
-  const hires=shownSrc.replace(/(\.png)$/i,'_hires$1');
-  lbImg.onerror=()=>{ lbImg.onerror=null; lbImg.src=shownSrc; };
-  lbImg.src=(hires!==shownSrc && /images\.pokemontcg\.io/.test(shownSrc)) ? hires : shownSrc;
-  lb.classList.add('open');
-  document.body.style.overflow='hidden';
-}
-function closeLightbox(){
-  lb.classList.remove('open'); lbImg.src=''; document.body.style.overflow='';
-}
-lb.addEventListener('click',closeLightbox);
-lb.querySelector('.lb-close').addEventListener('click',closeLightbox);
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&lb.classList.contains('open')) closeLightbox(); });
-
-function stats(){
-  const total=items.length, own=items.filter(i=>i.qty>0).length;
-  const pct=total? Math.round(own/total*100):0;
-  document.getElementById('pct').textContent=pct+'%';
-  document.getElementById('ringbar').style.strokeDashoffset=283-(283*pct/100);
-  document.getElementById('sOwn').textContent=own;
-  document.getElementById('sMiss').textContent=total-own;
-  document.getElementById('sQty').textContent=items.reduce((a,b)=>a+b.qty,0);
-  let vOwn=0,vMiss=0,anyPrice=false;
-  items.forEach(i=>{const p=priceMid(i.price); if(p==null)return; anyPrice=true; if(i.qty>0)vOwn+=p*i.qty; else vMiss+=p;});
-  document.getElementById('sValOwn').textContent=CURRENCY+vOwn.toFixed(0);
-  document.getElementById('sValMiss').textContent=CURRENCY+vMiss.toFixed(0);
-  document.getElementById('sValOwn').parentElement.style.display=anyPrice?'':'none';
-  document.getElementById('sValMiss').parentElement.style.display=anyPrice?'':'none';
-}
-
-document.getElementById('q').addEventListener('input',render);
-document.getElementById('groupSel').addEventListener('change',render);
-document.getElementById('missOnly').addEventListener('change',render);
-document.getElementById('sortSel').addEventListener('change',render);
-
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 </script>
 </body>
 </html>
