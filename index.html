@@ -176,6 +176,10 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPhhxFigR_Cy
 // Option B (repo file): leave SHEET_URL empty and keep this xlsx next to
 // index.html — the page loads it instead.
 const FILE = "checklist.xlsx";
+// Currency: prices written with $ in the sheet get converted to this currency
+// at the rate below. Prices already written with this symbol pass through as-is.
+const CURRENCY = "\u00a3";
+const USD_TO_LOCAL = 0.75; // update the exchange rate here when needed
 const SHEET = "Promos & Variants";
 const HAVE_COL = 7; // column H
 // ----------------------------------------------------------------------
@@ -272,10 +276,20 @@ function parseRows(rows){
   document.getElementById('foot').style.display='block';
 }
 
+function fmtNum(v){
+  return v>=5 ? String(Math.round(v)) : String(Math.round(v*10)/10);
+}
+function convertPrice(text){
+  if(!text) return text;
+  if(!text.includes("$")) return text; // already in local currency (or unit-less)
+  return text.replace(/\$\s*/g, CURRENCY)
+             .replace(/\d+(?:\.\d+)?/g, n=>fmtNum(parseFloat(n)*USD_TO_LOCAL));
+}
 function priceMid(p){
   const nums=(p.match(/\d+(?:\.\d+)?/g)||[]).map(Number);
   if(!nums.length) return null;
-  return nums.length>1 ? (nums[0]+nums[1])/2 : nums[0];
+  const mid = nums.length>1 ? (nums[0]+nums[1])/2 : nums[0];
+  return p.includes("$") ? mid*USD_TO_LOCAL : mid;
 }
 
 function imgUrl(it){
@@ -332,7 +346,7 @@ function cardEl(it){
       ${url?`<img loading="lazy" alt="${esc(it.card)}" src="${url}"
         onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',innerHTML:'<b>${initial}</b><span>no image</span>'}))">`
         :`<div class="ph"><b>${initial}</b><span>variant</span></div>`}
-      ${it.price?`<span class="pricechip">${esc(it.price)}</span>`:''}
+      ${it.price?`<span class="pricechip">${esc(convertPrice(it.price))}</span>`:''}
       <span class="havechip ${it.qty>0?'y':'n'}">${it.qty>0?'OWNED':'NEED'}</span>
       ${/verify/i.test(it.status)?`<span class="verify">verify</span>`:''}
     </div>
@@ -356,8 +370,8 @@ function stats(){
   document.getElementById('sQty').textContent=items.reduce((a,b)=>a+b.qty,0);
   let vOwn=0,vMiss=0,anyPrice=false;
   items.forEach(i=>{const p=priceMid(i.price); if(p==null)return; anyPrice=true; if(i.qty>0)vOwn+=p*i.qty; else vMiss+=p;});
-  document.getElementById('sValOwn').textContent='$'+vOwn.toFixed(0);
-  document.getElementById('sValMiss').textContent='$'+vMiss.toFixed(0);
+  document.getElementById('sValOwn').textContent=CURRENCY+vOwn.toFixed(0);
+  document.getElementById('sValMiss').textContent=CURRENCY+vMiss.toFixed(0);
   document.getElementById('sValOwn').parentElement.style.display=anyPrice?'':'none';
   document.getElementById('sValMiss').parentElement.style.display=anyPrice?'':'none';
 }
