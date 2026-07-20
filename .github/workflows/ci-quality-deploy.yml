@@ -4,7 +4,15 @@ name: Tests / Security / Deploy
 on:
   push:
     branches: ["main"]
+    paths-ignore:
+      - README.md
+      - backups/**
+      - template.csv
   pull_request:
+    paths-ignore:
+      - README.md
+      - backups/**
+      - template.csv
   workflow_dispatch:
 
 permissions:
@@ -28,12 +36,13 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
 
       - name: Zero-dependency site checks
         run: node tests/ci_checks.mjs
 
       - name: Install coverage tool
-        run: npm ci --ignore-scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: lib.js unit tests with coverage
         run: npm run test:coverage
@@ -61,9 +70,11 @@ jobs:
       - uses: actions/setup-python@v7.0.0
         with:
           python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
 
       - name: Install coverage tool
-        run: python -m pip install coverage==7.15.2
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
 
       - name: Byte-compile scripts
         run: |
@@ -89,13 +100,15 @@ jobs:
 
 
   browser-tests:
-    name: Browser tests (Playwright)
+    name: Browser tests / SonarQube
     needs: [site-checks, python-tests]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v7
         with:
@@ -103,7 +116,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Install Chromium
         run: node node_modules/@playwright/test/cli.js install --with-deps --only-shell chromium
@@ -119,19 +132,6 @@ jobs:
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
-
-
-  sonar-analysis:
-    name: SonarQube Analysis
-    needs: browser-tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
 
       - name: Download JavaScript coverage
         uses: actions/download-artifact@v8
@@ -169,7 +169,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
 
-    needs: sonar-analysis
+    needs: browser-tests
     timeout-minutes: 10
 
     concurrency:
@@ -227,9 +227,13 @@ jobs:
             return 1
           }
           site_root="${SITE_URL%/}"
-          smoke "$site_root/index.html" /tmp/index.html
-          smoke "$site_root/tracker.html" /tmp/tracker.html
-          smoke "$site_root/manifest.json" /dev/null
-          smoke "$site_root/sw.js" /dev/null
+          smoke "$site_root/index.html" /tmp/index.html & index_pid=$!
+          smoke "$site_root/tracker.html" /tmp/tracker.html & tracker_pid=$!
+          smoke "$site_root/manifest.json" /dev/null & manifest_pid=$!
+          smoke "$site_root/sw.js" /dev/null & worker_pid=$!
+          wait "$index_pid"
+          wait "$tracker_pid"
+          wait "$manifest_pid"
+          wait "$worker_pid"
           grep -q 'id="sets"' /tmp/index.html
           grep -q 'id="lightbox"' /tmp/tracker.html

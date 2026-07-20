@@ -126,7 +126,7 @@ Both pages also enforce a Content Security Policy. Scripts and styles live in lo
 
 ## CI
 
-`.github/workflows/ci-quality-deploy.yml` is a single pipeline — tests, quality/security analysis, then deploy. On every push to `main` and every PR:
+`.github/workflows/ci-quality-deploy.yml` is a single pipeline — tests, quality/security analysis, then deploy. It runs on changes pushed to `main` and on PRs; README-only, backup-only, and template-only changes are skipped:
 - **Site checks** (`tests/ci_checks.mjs`, zero dependencies): sets.js parses and uses kebab-case, non-numeric ids; sheet links are CSV publish links with no leftover `PASTE_TAB_GID` or shared gids; local JavaScript is syntactically valid; inline code is rejected; and the service worker precaches every local script and stylesheet the pages load
 - **JavaScript behavioral tests** (`tests/lib.test.mjs`, `tests/sw.test.mjs`): tracker data logic and service-worker caching/offline behavior
 - **Playwright browser tests** (`tests/e2e/`): deterministic mocked tracker data verifies filtering, full-screen lightbox centering, and hiding stale images while the next image loads on desktop and mobile Chromium
