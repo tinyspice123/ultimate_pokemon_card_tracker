@@ -1,0 +1,10 @@
+{
+  "name": "ultimate-pokemon-card-tracker",
+  "private": true,
+  "scripts": {
+    "test:coverage": "c8 --reporter=lcov node tests/lib.test.mjs"
+  },
+  "devDependencies": {
+    "c8": "12.0.0"
+  }
+}

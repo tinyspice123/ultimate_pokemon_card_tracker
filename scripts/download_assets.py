@@ -12,50 +12,71 @@ path first, so once committed, logos load from your own repo.
 
 Re-run after adding sets. Requires Python 3, no packages.
 """
-import json, re, sys, urllib.request
+import re, sys, urllib.request
 from pathlib import Path
 
 from sets_js import parse_sets
 
-entries = parse_sets(Path("sets.js").read_text(encoding="utf-8"))
-
-if not entries:
-    print("No active sets found in sets.js"); sys.exit(1)
-
-out = Path("assets/logos"); out.mkdir(parents=True, exist_ok=True)
 UA = {"User-Agent": "Mozilla/5.0"}
 
-def fetch(url):
+def fetch(url, opener=urllib.request.urlopen):
     req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=15) as r:
+    with opener(req, timeout=15) as r:
         return r.read()
 
-got, missed = 0, []
-for e in entries:
-    cands = []
-    if e.get("logo"): cands.append(e["logo"])
-    if e.get("tcgSet"): cands.append(f"https://images.pokemontcg.io/{e['tcgSet']}/logo.png")
-    if e.get("tcgdexSet"):
-        serie = re.match(r"[a-z]+", e["tcgdexSet"], re.I)
-        if serie:
-            cands.append(f"https://assets.tcgdex.net/en/{serie.group(0).lower()}/{e['tcgdexSet']}/logo.png")
-    dest = out / f"{e['id']}.png"
-    print(f"{e['id']}:", end=" ", flush=True)
-    for url in cands:
-        try:
-            data = fetch(url)
-            if len(data) < 100: raise ValueError("suspiciously small")
-            dest.write_bytes(data)
-            print(f"saved ({len(data)//1024} KB) from {url.split('/')[2]}")
-            got += 1
-            break
-        except Exception:
-            continue
-    else:
-        print("no source worked" + ("" if cands else " (no logo/tcgSet/tcgdexSet)"))
-        missed.append(e["id"])
 
-print(f"\n{got}/{len(entries)} logos saved to assets/logos/")
-if missed:
-    print("Missing:", ", ".join(missed))
-print("Commit the assets/ folder; the site prefers these local copies automatically.")
+def candidates(entry):
+    cands = []
+    if entry.get("logo"): cands.append(entry["logo"])
+    if entry.get("tcgSet"):
+        cands.append(f"https://images.pokemontcg.io/{entry['tcgSet']}/logo.png")
+    if entry.get("tcgdexSet"):
+        serie = re.match(r"[a-z]+", entry["tcgdexSet"], re.I)
+        if serie:
+            cands.append(
+                f"https://assets.tcgdex.net/en/{serie.group(0).lower()}/"
+                f"{entry['tcgdexSet']}/logo.png")
+    return cands
+
+
+def download(entries, out=Path("assets/logos"), fetcher=fetch):
+    if not entries:
+        print("No active sets found in sets.js")
+        return 1
+
+    out.mkdir(parents=True, exist_ok=True)
+    got, missed = 0, []
+    for entry in entries:
+        cands = candidates(entry)
+        dest = out / f"{entry['id']}.png"
+        print(f"{entry['id']}:", end=" ", flush=True)
+        for url in cands:
+            try:
+                data = fetcher(url)
+                if len(data) < 100:
+                    raise ValueError("suspiciously small")
+                dest.write_bytes(data)
+                print(f"saved ({len(data)//1024} KB) from {url.split('/')[2]}")
+                got += 1
+                break
+            except Exception:
+                continue
+        else:
+            suffix = "" if cands else " (no logo/tcgSet/tcgdexSet)"
+            print("no source worked" + suffix)
+            missed.append(entry["id"])
+
+    print(f"\n{got}/{len(entries)} logos saved to {out}/")
+    if missed:
+        print("Missing:", ", ".join(missed))
+    print("Commit the assets/ folder; the site prefers these local copies automatically.")
+    return 0
+
+
+def main():
+    entries = parse_sets(Path("sets.js").read_text(encoding="utf-8"))
+    return download(entries)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

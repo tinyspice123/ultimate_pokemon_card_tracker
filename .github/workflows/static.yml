@@ -32,13 +32,13 @@ jobs:
         run: node tests/ci_checks.mjs
 
       - name: Install coverage tool
-        run: npm install --no-save c8
+        run: npm ci --ignore-scripts
 
       - name: lib.js unit tests with coverage
-        run: npx c8 --reporter=lcov node tests/lib.test.mjs
+        run: npm run test:coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: javascript-coverage
           path: coverage/lcov.info
@@ -94,11 +94,11 @@ jobs:
 
       - name: Install coverage tools
         run: |
-          npm install --no-save c8
-          python -m pip install coverage
+          npm ci --ignore-scripts
+          python -m pip install coverage==7.15.2
 
       - name: Generate JavaScript coverage
-        run: npx c8 --reporter=lcov node tests/lib.test.mjs
+        run: npm run test:coverage
 
       - name: Generate Python coverage
         run: |
@@ -109,7 +109,8 @@ jobs:
         run: ls -la coverage/lcov.info coverage.xml
 
       - name: Analyze with SonarQube
-        uses: SonarSource/sonarqube-scan-action@v8.2.1
+        # v8.2.1, pinned to prevent a mutable tag from changing CI code.
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
