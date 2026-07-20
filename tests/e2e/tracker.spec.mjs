@@ -40,6 +40,21 @@ test('loads data and filters cards', async ({ page }) => {
   await expect(page.locator('.item .nm')).toHaveText('Eevee');
 });
 
+test('builds marketplace searches from the card details', async ({ page }) => {
+  const item=page.locator('.item').first();
+  const ebay=item.locator('[data-market="ebay"]');
+  const cardmarket=item.locator('[data-market="cardmarket"]');
+  await expect(ebay).toHaveAttribute('target','_blank');
+  await expect(ebay).toHaveAttribute('rel','noopener noreferrer');
+  expect(new URL(await ebay.getAttribute('href')).searchParams.get('_nkw'))
+    .toBe('Pokemon TCG Pikachu Stellar Crown 1/100');
+  expect(new URL(await cardmarket.getAttribute('href')).searchParams.get('searchString'))
+    .toBe('Pokemon TCG Pikachu Stellar Crown 1/100');
+
+  await page.locator('#viewSel').selectOption('table');
+  await expect(page.locator('.listtable [data-market="ebay"]')).toHaveCount(2);
+});
+
 test('centres the lightbox across the viewport', async ({ page }) => {
   await page.locator('.item').first().locator('img').click();
   const lightbox = page.getByRole('dialog', { name: 'Card image viewer' });

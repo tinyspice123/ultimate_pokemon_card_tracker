@@ -200,11 +200,26 @@ function exportCsv(kind, list){
   return rows.map(r=>r.map(csvEscape).join(",")).join("\n");
 }
 
+// Marketplace search URLs stay useful when listings change, unlike links to
+// individual offers. Generic variants add no search value and are omitted.
+function marketplaceSearchUrls(it,setName){
+  const variant=/^(?:regular|standard|normal)$/i.test((it.variant||'').trim())
+    ? '' : (it.variant||'').trim();
+  const query=['Pokemon TCG',it.card,setName,it.num,variant]
+    .map(v=>String(v||'').trim()).filter(Boolean).join(' ');
+  const encoded=encodeURIComponent(query);
+  return {
+    cardmarket:`https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=${encoded}`,
+    ebay:`https://www.ebay.co.uk/sch/i.html?_nkw=${encoded}`,
+  };
+}
+
 // Expose the pure helpers to Node's test runner. In browsers `module` is not
 // defined, so lib.js continues to behave as a classic script with globals.
 if(typeof module!=="undefined" && module.exports){
   module.exports={
     csvToRows,priceMid,parseHaveQty,detectColumns,rowsToItems,imgCandidatesPure,
-    esc,safeImageUrl,setSafeImageSource,sortItems,exportText,exportCsv,csvEscape
+    esc,safeImageUrl,setSafeImageSource,sortItems,exportText,exportCsv,csvEscape,
+    marketplaceSearchUrls
   };
 }

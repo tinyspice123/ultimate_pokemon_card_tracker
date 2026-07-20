@@ -15,6 +15,7 @@ A multi-set, template-driven card checklist site. A home page lists your sets wi
 - **Filtering** — Search, group dropdown, Missing Only toggle
 - **Data-saving views** — Card scans are requested only as they approach the viewport; switch to the remembered Text table view to browse without requesting card images at all
 - **Export missing / owned** — Copy a plain-text want/have list to the clipboard, or download it as CSV; respects the active search and group filter
+- **Marketplace searches** — Every card links to targeted Cardmarket and eBay searches using its set, collector number, and meaningful variant
 - **Lightbox viewer** — Click any card to zoom; hi-res scans load where available; Esc or click to close
 - **Two image APIs + fallback chain** — pokemontcg.io for older sets, TCGdex for newer ones (Mega era onward); each image tries its sources in order and heals itself if one is down
 - **Custom images** — Per-row Image URLs in the sheet always win; an image downloader mirrors them into the repo
@@ -167,6 +168,7 @@ git add img/ && git commit -m "Mirror card images" && git push
 - **Track**: edit the Have column in the sheet — the site is read-only by design and re-syncs within ~5 minutes
 - **Sort**: dropdown in the toolbar — sheet order / name / price ↑↓, applied within each group
 - **Filter**: search box, group dropdown, Missing Only
+- **Find**: use the Cardmarket/eBay links on a card or table row to search for that exact set, number, and variant in a new tab
 - **Export**: ⤓ Missing / ⤓ Owned buttons — Copy list (forum/eBay-ready text) or Download CSV; search and group filters apply, the Missing-only toggle doesn't
 - **Zoom**: click any card image; ←/→ step between cards, Esc/✕/click closes
 - **Fold**: click a group header to collapse it (remembered next visit)

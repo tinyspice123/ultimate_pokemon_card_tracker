@@ -196,7 +196,7 @@ function render(){
     if(tableMode){
       const wrap=document.createElement('div'); wrap.className='tablewrap';
       const table=document.createElement('table'); table.className='listtable';
-      table.innerHTML='<thead><tr><th>Card</th><th>Number</th><th>Variant</th><th>Source</th><th>Price</th><th>Status</th><th>Quantity</th></tr></thead>';
+      table.innerHTML='<thead><tr><th>Card</th><th>Number</th><th>Variant</th><th>Source</th><th>Price</th><th>Find</th><th>Status</th><th>Quantity</th></tr></thead>';
       const body=document.createElement('tbody');
       list.forEach(it=>body.appendChild(rowEl(it)));
       table.appendChild(body); wrap.appendChild(table); main.appendChild(wrap);
@@ -268,6 +268,7 @@ function cardEl(it){
       <div class="num">${esc(it.num)}</div>
       <div class="var">${esc(it.variant)}</div>
       <div class="src">${esc(it.src)}</div>
+      ${marketplaceLinks(it)}
     </div>
     ${qtyHtml}`;
   const img=d.querySelector('.imgwrap img');
@@ -277,6 +278,17 @@ function cardEl(it){
   }
   d.__item=it;
   return d;
+}
+
+function marketplaceLinks(it){
+  const urls=marketplaceSearchUrls(it,cfg.name);
+  const card=esc(it.card);
+  return `<div class="marketlinks">
+    <a data-market="cardmarket" href="${esc(urls.cardmarket)}" target="_blank" rel="noopener noreferrer"
+      aria-label="Search Cardmarket for ${card}">Cardmarket</a>
+    <a data-market="ebay" href="${esc(urls.ebay)}" target="_blank" rel="noopener noreferrer"
+      aria-label="Search eBay for ${card}">eBay</a>
+  </div>`;
 }
 
 function rowEl(it){
@@ -290,6 +302,7 @@ function rowEl(it){
     <td class="variant">${esc(it.variant)}</td>
     <td class="source">${esc(it.src)}</td>
     <td class="price">${esc(it.price)}</td>
+    <td>${marketplaceLinks(it)}</td>
     <td><span class="havechip ${it.qty>0?'y':'n'}">${it.qty>0?'OWNED':'NEED'}</span></td>
     <td>${qtyHtml}</td>`;
   return row;
