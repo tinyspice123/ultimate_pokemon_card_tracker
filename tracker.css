@@ -23,7 +23,8 @@
     padding:5px 12px;background:var(--panel)}
   .backlink:hover{color:var(--ink);border-color:var(--tera2)}
   .eyebrow{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--dim)}
-  .setlogo{display:block;max-width:min(360px,82vw);margin:2px auto 6px;
+  .setlogo{display:block;width:fit-content;max-width:min(360px,82vw);margin:2px auto 6px;
+    text-align:center;
     filter:drop-shadow(0 6px 22px rgba(141,180,255,.38)) drop-shadow(0 0 40px rgba(226,155,255,.18))}
   .subtitle{text-align:center;font-size:14px;letter-spacing:.22em;text-transform:uppercase;
     color:var(--dim);margin-bottom:2px}
