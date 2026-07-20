@@ -18,7 +18,7 @@ export default defineConfig({
     { name: 'mobile-chrome', use: { ...devices['Pixel 7'], channel: 'chrome' } },
   ],
   webServer: {
-    command: 'node tests/e2e/static-server.mjs',
+    command: 'node tests/e2e/static-server.mjs public',
     url: 'http://127.0.0.1:4173/index.html',
     reuseExistingServer: !process.env.CI,
   },

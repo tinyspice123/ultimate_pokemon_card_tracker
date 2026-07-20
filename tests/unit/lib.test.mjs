@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const {csvToRows, priceMid, parseHaveQty, detectColumns, rowsToItems, imgCandidatesPure,
        esc, safeImageUrl, setSafeImageSource, sortItems, exportText, exportCsv,
-       csvEscape, marketplaceSearchUrls} = require('../lib.js');
+       csvEscape, marketplaceSearchUrls} = require('../../public/lib.js');
 
 test('csvToRows: simple rows', () => {
   assert.deepStrictEqual(csvToRows('a,b\n1,2'), [['a','b'],['1','2']]);

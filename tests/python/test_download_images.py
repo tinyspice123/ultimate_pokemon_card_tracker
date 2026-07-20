@@ -3,7 +3,7 @@ import contextlib, csv, io, os, runpy, sys, tempfile, unittest
 from pathlib import Path
 from unittest import mock
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "download_images.py"
 
 def make_fixture(tmp: Path):

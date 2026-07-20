@@ -2,7 +2,9 @@
   "name": "ultimate-pokemon-card-tracker",
   "private": true,
   "scripts": {
-    "test:coverage": "c8 --reporter=lcov node --test tests/lib.test.mjs tests/sw.test.mjs",
+    "test:site": "node tests/site/ci_checks.mjs",
+    "test:coverage": "c8 --reporter=lcov node --test tests/unit/*.test.mjs",
+    "test:python": "python -m unittest discover -s tests/python -v",
     "test:e2e": "playwright test"
   },
   "devDependencies": {

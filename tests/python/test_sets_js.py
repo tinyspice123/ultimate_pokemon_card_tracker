@@ -4,7 +4,8 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
 from sets_js import _extract_fields, parse_sets, strip_comments  # noqa: E402
 
 SAMPLE = '''
@@ -78,7 +79,7 @@ class TestParseSets(unittest.TestCase):
         self.assertNotIn("gone", kept)
 
     def test_real_sets_js_parses(self):
-        src = (Path(__file__).resolve().parent.parent / "sets.js").read_text(
+        src = (ROOT / "public" / "sets.js").read_text(
             encoding="utf-8")
         entries = parse_sets(src)
         self.assertGreater(len(entries), 0)

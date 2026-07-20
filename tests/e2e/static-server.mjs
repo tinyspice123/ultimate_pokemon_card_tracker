@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-const root = process.cwd();
+const root = path.resolve(process.argv[2] || 'public');
 const types = new Map([
   ['.css', 'text/css'], ['.html', 'text/html'], ['.js', 'text/javascript'],
   ['.json', 'application/json'], ['.png', 'image/png'], ['.svg', 'image/svg+xml'],

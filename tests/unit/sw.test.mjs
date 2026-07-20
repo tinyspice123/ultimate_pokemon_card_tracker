@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
-const swPath = path.resolve('sw.js');
+const swPath = path.resolve('public/sw.js');
 const swSource = fs.readFileSync(swPath, 'utf8');
 
 class FakeCache {
