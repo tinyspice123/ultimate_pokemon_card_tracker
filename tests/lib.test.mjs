@@ -11,8 +11,18 @@ const {csvToRows, priceMid, parseHaveQty, detectColumns, rowsToItems, imgCandida
   `)();
 
 let failures = 0;
+// Plain JSON.stringify compares object key order, not just key/value pairs -
+// sorting keys makes this an actual deep-equality check instead of failing
+// whenever a source object's property declaration order changes.
+function stableStringify(v){
+  if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
+  if (v && typeof v === 'object') {
+    return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stableStringify(v[k])).join(',') + '}';
+  }
+  return JSON.stringify(v);
+}
 function eq(actual, expected, label){
-  const a = JSON.stringify(actual), e = JSON.stringify(expected);
+  const a = stableStringify(actual), e = stableStringify(expected);
   if (a === e) { console.log('  ok ' + label); }
   else { console.error(`  FAIL ${label}\n    expected ${e}\n    got      ${a}`); failures++; }
 }
