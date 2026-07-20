@@ -7,12 +7,24 @@ changes are a normal git diff.
 
 Run manually any time:  python3 backup_sheets.py
 """
-import sys, urllib.request
+import sys, urllib.parse, urllib.request
 from pathlib import Path
 
 from sets_js import parse_sets
 
 UA = {"User-Agent": "Mozilla/5.0 (card-tracker-backup)"}
+SHEET_DELIVERY_HOST = "doc-08-3o-sheets.googleusercontent.com"
+
+
+def validate_delivery_host(source_url, final_url):
+    """Fail clearly if Google moves a published sheet beyond the CSP allowlist."""
+    source_host = urllib.parse.urlparse(source_url).hostname
+    final_host = urllib.parse.urlparse(final_url).hostname
+    allowed = {"docs.google.com", SHEET_DELIVERY_HOST}
+    if source_host == "docs.google.com" and final_host not in allowed:
+        raise ValueError(
+            f"Google redirected to unexpected host {final_host!r}; update the "
+            "Content Security Policy in index.html and tracker.html")
 
 
 def backup(entries, out=Path("backups"), opener=urllib.request.urlopen):
@@ -29,6 +41,9 @@ def backup(entries, out=Path("backups"), opener=urllib.request.urlopen):
             req = urllib.request.Request(url, headers=UA)
             with opener(req, timeout=30) as response:
                 data = response.read().decode("utf-8")
+                geturl = getattr(response, "geturl", None)
+                if callable(geturl):
+                    validate_delivery_host(url, geturl())
             if data.lstrip().startswith("<"):
                 raise ValueError("got a web page, not CSV (tab not published?)")
             (out / f"{sid}.csv").write_text(data, encoding="utf-8")

@@ -30,6 +30,15 @@ class Response:
 
 
 class BackupSheetsTest(unittest.TestCase):
+    def test_google_delivery_host_must_match_csp(self):
+        source = "https://docs.google.com/spreadsheets/example"
+        backup_sheets.validate_delivery_host(
+            source,
+            f"https://{backup_sheets.SHEET_DELIVERY_HOST}/published.csv")
+        with self.assertRaisesRegex(ValueError, "update the Content Security Policy"):
+            backup_sheets.validate_delivery_host(
+                source, "https://different-shard.googleusercontent.com/file.csv")
+
     def test_no_sheet_links_is_success(self):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):

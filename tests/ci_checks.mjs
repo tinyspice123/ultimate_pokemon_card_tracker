@@ -79,6 +79,7 @@ for (const file of ['index.html', 'tracker.html']) {
       if (!csp.includes(hash)) fail(`CSP missing inline-style hash ${hash}`);
     }
     if (csp.includes("'unsafe-inline'")) fail("CSP must not allow 'unsafe-inline'");
+    if (csp.includes('*')) fail('CSP must use exact hosts, not wildcards');
     if (/img-src[^;]*\shttps:\s*(?:;|$)/.test(csp))
       fail('CSP image sources must use explicit hosts, not all HTTPS origins');
   }
