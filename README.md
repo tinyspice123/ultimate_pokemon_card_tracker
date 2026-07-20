@@ -18,19 +18,19 @@ A multi-set, template-driven card checklist site. A home page lists your sets wi
 - **Two image APIs + fallback chain** — pokemontcg.io for older sets, TCGdex for newer ones (Mega era onward); each image tries its sources in order and heals itself if one is down
 - **Custom images** — Per-row Image URLs in the sheet always win; an image downloader mirrors them into the repo
 - **Offline fallback** — Optional local `.xlsx` per set if the sheet is unreachable
-- **Optional write-back** — With a small Apps Script deployed on the spreadsheet, +/− buttons on each card edit the Have column from the website
+- **Optional write-back** — With a small Apps Script deployed on the spreadsheet, PIN-protected +/− buttons on each card edit the Have column from the website
 - **Self-hosted assets** — `download_assets.py` mirrors set logos into the repo; the site prefers local copies
 - **Collapsible groups** — Click any group header to fold/unfold it; state remembered per set
 - **Keyboard shortcuts** — `/` focuses search, `m` toggles Missing only, ←/→ browse cards in the lightbox, Esc closes
 - **Installable PWA** — Add to home screen on mobile; pages and images cached for offline browsing (sheet data still needs a connection to refresh)
 - **Weekly collection history** — A scheduled Action snapshots every sheet into `backups/`; git history gives diffable, restorable records of your collection over time
-- **CI** — GitHub Actions runs site checks (sets.js validity, HTML script sanity) and Python unit tests on every push/PR
+- **CI** — GitHub Actions runs site, `lib.js`, and Python tests on every push/PR, plus a weekly logo-reachability check
 
 ---
 
 ## Getting Started (hosting your own)
 
-1. **Fork the repo** and enable GitHub Pages (Settings → Pages → deploy from `main`)
+1. **Fork the repo** and enable GitHub Pages (Settings → Pages → Build and deployment → Source: **GitHub Actions**) — the included workflow handles the actual deploy
 2. **Create a Google Spreadsheet** with one tab per set, columns:
    `Group, Card, Number, Variant, Source, Status, Price, Have, Image`
 3. **Publish each tab**: File → Share → Publish to web → select the tab → CSV → copy the link
@@ -135,12 +135,14 @@ Edits are optimistic (instant on screen) and confirmed against the server's resp
 ## CI
 
 `.github/workflows/static.yml` is a single pipeline — tests, then deploy. On every push to `main` and every PR:
-- **Site checks** (`tests/ci_checks.mjs`, zero dependencies): sets.js parses; set ids aren't purely numeric and are kebab-case; sheet links are CSV links with no leftover `PASTE_TAB_GID`; no two sets share a gid; inline scripts in both pages are syntactically valid; no code trapped inside `<script src>` tags; required element ids exist
-- **`lib.js` unit tests** (`tests/lib.test.mjs`): CSV parsing edge cases, price-range averaging, Have/qty parsing, column auto-detection, the image fallback chain
-- **Python tests** (`tests/test_download_images.py`): header auto-detection, manifest format, duplicate reporting, failed-download exclusion, shared-URL handling
+- **Site checks** (`tests/ci_checks.mjs`, zero dependencies): sets.js parses and uses kebab-case, non-numeric ids; sheet links are CSV publish links with no leftover `PASTE_TAB_GID` or shared gids; inline scripts in both pages are syntactically valid; `lib.js` parses and is loaded by both pages; the service worker precaches every script the pages load (this caught a real "offline PWA loads a 404" bug once); required element ids exist
+- **`lib.js` unit tests** (`tests/lib.test.mjs`, Node's built-in test runner): CSV parsing edge cases, price-range averaging, Have/qty parsing, column auto-detection, the image fallback chain, sorting, and both export formats
+- **Python tests** (`tests/`): `download_images.py`'s header auto-detection, manifest format, and duplicate/failed-download handling; `sets_js.py`'s entry/field parsing and comment-stripping — the one shared parser `download_assets.py`, `backup_sheets.py`, and `check_logos.py` all depend on
 - **Deploy** publishes the repo to GitHub Pages **only if all test jobs pass** (skipped on PRs), so a broken commit can't take the live site down
 
 `.github/workflows/backup.yml` also runs `check_logos.py` weekly alongside the sheet backup — it isn't in the deploy pipeline because it depends on third-party CDNs and shouldn't be able to block (or flake out) a deploy.
+
+Renovate (`renovate.json`) keeps GitHub Actions versions and the pinned SheetJS CDN version in `tracker.html` up to date automatically.
 
 Run locally: `node tests/ci_checks.mjs`, `node tests/lib.test.mjs`, and `python3 -m unittest discover -s tests`.
 
@@ -175,7 +177,7 @@ git add img/ && git commit -m "Mirror card images" && git push
 - **Zoom**: click any card image; ←/→ step between cards, Esc/✕/click closes
 - **Fold**: click a group header to collapse it (remembered next visit)
 - **Keys**: `/` → search, `m` → missing-only toggle
-- **Stats**: completion ring, owned/missing, total copies, £ value owned, £ cost of gaps
+- **Stats**: completion ring, owned/missing, total copies, £ value owned, £ cost of gaps, and a "Synced Xs ago" label for the last successful read
 
 ---
 
@@ -207,17 +209,17 @@ repo/
 ├── download_images.py      # Mirrors sheet Image URLs into img/<set-id>/
 ├── download_assets.py      # Mirrors set logos into assets/logos/
 ├── check_logos.py          # Read-only check that every set's logo source resolves
+├── backup_sheets.py        # fetches all sheets into backups/ (used by the Action)
+├── sets_js.py              # Shared sets.js parser used by the three scripts above
 ├── apps-script/Code.gs     # Optional write-back endpoint (paste into Apps Script)
 ├── tests/                  # CI checks + lib.js unit tests (node) + script unit tests (python)
 ├── renovate.json           # Automated dependency updates (Renovate)
 ├── .github/workflows/static.yml   # tests → deploy pipeline
 ├── .github/workflows/backup.yml   # weekly sheet snapshots + logo reachability check
-├── backup_sheets.py        # fetches all sheets into backups/ (used by the Action)
 ├── manifest.json           # PWA manifest
 ├── sw.js                   # service worker (offline caching)
 ├── img/<set-id>/           # Per-set downloaded card images + manifest.txt
 ├── assets/logos/           # Self-hosted set logos
-├── checklist.xlsx          # Optional local fallback data
 └── README.md
 ```
 
