@@ -3,7 +3,7 @@ import csv, subprocess, sys, tempfile, unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = ROOT / "download_images.py"
+SCRIPT = ROOT / "scripts" / "download_images.py"
 
 def make_fixture(tmp: Path):
     img_ok = tmp / "src_ok.jpg"; img_ok.write_bytes(b"\xff\xd8\xffFAKEJPEG")

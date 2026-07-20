@@ -126,9 +126,9 @@ Edits are optimistic (instant on screen) and confirmed against the server's resp
 
 ## Self-Hosting Assets (`download_assets.py`)
 
-`python3 download_assets.py` reads sets.js and saves each active set's logo to `assets/logos/<set-id>.png`, trying your custom `logo`, then pokemontcg.io, then TCGdex. Commit the folder; both pages check the local path before any API. Re-run after adding sets. Card *artwork* still comes from the APIs (mirroring thousands of card images into a repo isn't practical) — for specific cards you want pinned locally, use the Image column + `download_images.py`.
+`python3 scripts/download_assets.py` reads sets.js and saves each active set's logo to `assets/logos/<set-id>.png`, trying your custom `logo`, then pokemontcg.io, then TCGdex. Commit the folder; both pages check the local path before any API. Re-run after adding sets. Card *artwork* still comes from the APIs (mirroring thousands of card images into a repo isn't practical) — for specific cards you want pinned locally, use the Image column + `download_images.py`.
 
-`python3 check_logos.py` is the read-only counterpart: it walks the same logo/tcgSet/tcgdexSet candidate chain without downloading anything, and fails if none of a set's candidates resolve. Useful right after adding a `tcgSet`/`tcgdexSet` code you haven't verified yet (see the `// VERIFY` comments in `sets.js`) — it also runs weekly in CI (see below).
+`python3 scripts/check_logos.py` is the read-only counterpart: it walks the same logo/tcgSet/tcgdexSet candidate chain without downloading anything, and fails if none of a set's candidates resolve. Useful right after adding a `tcgSet`/`tcgdexSet` code you haven't verified yet (see the `// VERIFY` comments in `sets.js`) — it also runs weekly in CI (see below).
 
 ---
 
@@ -142,7 +142,7 @@ Edits are optimistic (instant on screen) and confirmed against the server's resp
 
 `.github/workflows/backup.yml` also runs `check_logos.py` weekly alongside the sheet backup — it isn't in the deploy pipeline because it depends on third-party CDNs and shouldn't be able to block (or flake out) a deploy.
 
-Renovate (`renovate.json`) keeps GitHub Actions versions and the pinned SheetJS CDN version in `tracker.html` up to date automatically.
+Renovate (`.github/renovate.json`) keeps GitHub Actions versions and the pinned SheetJS CDN version in `tracker.html` up to date automatically.
 
 Run locally: `node tests/ci_checks.mjs`, `node tests/lib.test.mjs`, and `python3 -m unittest discover -s tests`.
 
@@ -155,7 +155,7 @@ Mirrors every Image-column URL into the repo so GitHub Pages serves them (faster
 ```bash
 # 1. Export the set's tab as CSV: File → Download → CSV
 # 2. From the repo folder:
-python3 download_images.py sheet.csv stellar-crown    # <set-id> from sets.js
+python3 scripts/download_images.py sheet.csv stellar-crown    # <set-id> from sets.js
 # 3. Commit:
 git add img/ && git commit -m "Mirror card images" && git push
 ```
@@ -206,14 +206,15 @@ repo/
 ├── sets.js                 # ★ Set registry + WRITE_URL — the only file you configure
 ├── lib.js                  # Shared pure logic (CSV parsing, price/qty math, image fallback chain)
 ├── template.csv            # Example sheet tab to copy for new sets
-├── download_images.py      # Mirrors sheet Image URLs into img/<set-id>/
-├── download_assets.py      # Mirrors set logos into assets/logos/
-├── check_logos.py          # Read-only check that every set's logo source resolves
-├── backup_sheets.py        # fetches all sheets into backups/ (used by the Action)
-├── sets_js.py              # Shared sets.js parser used by the three scripts above
+├── scripts/
+│   ├── download_images.py  # Mirrors sheet Image URLs into img/<set-id>/
+│   ├── download_assets.py  # Mirrors set logos into assets/logos/
+│   ├── check_logos.py      # Read-only check that every set's logo source resolves
+│   ├── backup_sheets.py    # fetches all sheets into backups/ (used by the Action)
+│   └── sets_js.py          # Shared sets.js parser used by the three scripts above
 ├── apps-script/Code.gs     # Optional write-back endpoint (paste into Apps Script)
 ├── tests/                  # CI checks + lib.js unit tests (node) + script unit tests (python)
-├── renovate.json           # Automated dependency updates (Renovate)
+├── .github/renovate.json   # Automated dependency updates (Renovate)
 ├── .github/workflows/static.yml   # tests → deploy pipeline
 ├── .github/workflows/backup.yml   # weekly sheet snapshots + logo reachability check
 ├── manifest.json           # PWA manifest

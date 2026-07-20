@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.14"
       - name: Fetch all sheets
-        run: python backup_sheets.py
+        run: python scripts/backup_sheets.py
       - name: Commit if changed
         run: |
           git config user.name "collection-backup[bot]"
@@ -47,4 +47,4 @@ jobs:
         with:
           python-version: "3.14"
       - name: Check every set's logo resolves
-        run: python check_logos.py
+        run: python scripts/check_logos.py

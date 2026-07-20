@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: "3.14"
       - name: Byte-compile scripts
-        run: python -m py_compile download_images.py download_assets.py backup_sheets.py check_logos.py
+        run: python -m py_compile scripts/download_images.py scripts/download_assets.py scripts/backup_sheets.py scripts/check_logos.py scripts/sets_js.py
       - name: Unit tests
         run: python -m unittest discover -s tests -v
 
