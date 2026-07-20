@@ -19,31 +19,39 @@ self.addEventListener('activate', e => {
       .then(() => self.clients.claim()));
 });
 
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== 'GET') return;
-
-  // images & logos: cache-first
-  if (/\.(png|jpg|jpeg|webp|svg)$/.exec(url.pathname)) {
-    e.respondWith(
-      caches.open(IMAGE_CACHE).then(cache => cache.match(e.request).then(hit => hit ||
-        fetch(e.request).then(res => {
-          // Cross-origin <img> responses are commonly opaque (status 0), but
-          // the Cache API can safely store and replay them for the same URL.
-          if (res.ok || res.type === 'opaque') {
-            return cache.put(e.request, res.clone()).then(() => res);
-          }
-          return res;
-        }).catch(() => Response.error()))));
-    return;
+async function cacheFirstImage(request){
+  const cache=await caches.open(IMAGE_CACHE);
+  const hit=await cache.match(request);
+  if(hit) return hit;
+  try{
+    const response=await fetch(request);
+    // Cross-origin <img> responses are commonly opaque (status 0), but
+    // the Cache API can safely store and replay them for the same URL.
+    if(response.ok || response.type==='opaque'){
+      await cache.put(request,response.clone());
+    }
+    return response;
+  }catch(error){
+    return Response.error();
   }
+}
 
-  // everything else (pages, sets.js, sheet CSVs): network-first, cache fallback
-  e.respondWith(
-    fetch(e.request).then(res => {
-      if (res.ok && url.origin === location.origin) {
-        const cp = res.clone(); caches.open(VERSION).then(c => c.put(e.request, cp));
-      }
-      return res;
-    }).catch(() => caches.match(e.request)));
+async function networkFirst(request,url){
+  try{
+    const response=await fetch(request);
+    if(response.ok && url.origin===location.origin){
+      const cache=await caches.open(VERSION);
+      await cache.put(request,response.clone());
+    }
+    return response;
+  }catch(error){
+    return caches.match(request);
+  }
+}
+
+self.addEventListener('fetch',event=>{
+  if(event.request.method!=='GET') return;
+  const url=new URL(event.request.url);
+  const isImage=/\.(png|jpg|jpeg|webp|svg)$/.test(url.pathname);
+  event.respondWith(isImage ? cacheFirstImage(event.request) : networkFirst(event.request,url));
 });

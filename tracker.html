@@ -439,15 +439,26 @@ function buildGroupSel(){
 // ---- collapsible groups (state kept per set) ----
 const COLLAPSE_KEY='collapse:'+SET_ID;
 const VIEW_KEY='view-mode';
+function storageGet(key){
+  try{ return localStorage.getItem(key); }
+  catch(error){ return null; } // storage can be disabled in private/restricted browsers
+}
+function storageSet(key,value){
+  try{ localStorage.setItem(key,value); return true; }
+  catch(error){ return false; }
+}
+function storageRemove(key){
+  try{ localStorage.removeItem(key); return true; }
+  catch(error){ return false; }
+}
 let collapsed=new Set();
-try{ collapsed=new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY)||'[]')); }catch(e){}
-try{
-  const savedView=localStorage.getItem(VIEW_KEY);
-  document.getElementById('viewSel').value=savedView==='table'?'table':'cards';
-}catch(e){}
+try{ collapsed=new Set(JSON.parse(storageGet(COLLAPSE_KEY)||'[]')); }
+catch(error){ collapsed=new Set(); }
+const savedView=storageGet(VIEW_KEY);
+document.getElementById('viewSel').value=savedView==='table'?'table':'cards';
 function toggleGroup(g){
   collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g);
-  try{ localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...collapsed])); }catch(e){}
+  storageSet(COLLAPSE_KEY,JSON.stringify([...collapsed]));
   render();
 }
 
@@ -458,16 +469,15 @@ const WRITE_OK = (typeof WRITE_URL!=="undefined") && WRITE_URL;
 // checked server-side by the Apps Script before any write happens.
 const PIN_KEY='tracker:pin';
 function getPin(){
-  let p=null;
-  try{ p=localStorage.getItem(PIN_KEY); }catch(e){}
+  let p=storageGet(PIN_KEY);
   if(p) return p;
   p=prompt('Enter the edit PIN for this tracker\n(set in the sheet\u2019s Apps Script \u2192 Script properties):');
   if(p===null || !p.trim()) return null;
   p=p.trim();
-  try{ localStorage.setItem(PIN_KEY,p); }catch(e){}
+  storageSet(PIN_KEY,p);
   return p;
 }
-function forgetPin(){ try{ localStorage.removeItem(PIN_KEY); }catch(e){} }
+function forgetPin(){ storageRemove(PIN_KEY); }
 let toastTimer=null;
 function toast(msg){
   let el=document.getElementById('saveToast');
@@ -782,7 +792,7 @@ document.addEventListener('keydown',e=>{
 document.getElementById('missOnly').addEventListener('change',render);
 document.getElementById('sortSel').addEventListener('change',render);
 document.getElementById('viewSel').addEventListener('change',e=>{
-  try{ localStorage.setItem(VIEW_KEY,e.target.value); }catch(err){}
+  storageSet(VIEW_KEY,e.target.value);
   render();
 });
 

@@ -1,5 +1,5 @@
-# CI + Sonar + Deploy pipeline
-name: CI / Sonar / Deploy to Pages
+# Tests + quality analysis + deployment pipeline
+name: Tests / Security / Deploy
 
 on:
   push:

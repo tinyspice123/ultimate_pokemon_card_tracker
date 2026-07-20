@@ -135,7 +135,7 @@ Edits are optimistic (instant on screen) and confirmed against the server's resp
 
 ## CI
 
-`.github/workflows/static.yml` is a single pipeline — tests, then deploy. On every push to `main` and every PR:
+`.github/workflows/ci-quality-deploy.yml` is a single pipeline — tests, quality/security analysis, then deploy. On every push to `main` and every PR:
 - **Site checks** (`tests/ci_checks.mjs`, zero dependencies): sets.js parses and uses kebab-case, non-numeric ids; sheet links are CSV publish links with no leftover `PASTE_TAB_GID` or shared gids; inline scripts in both pages are syntactically valid; `lib.js` parses and is loaded by both pages; the service worker precaches every script the pages load (this caught a real "offline PWA loads a 404" bug once); required element ids exist
 - **`lib.js` unit tests** (`tests/lib.test.mjs`, Node's built-in test runner): CSV parsing edge cases, price-range averaging, Have/qty parsing, column auto-detection, the image fallback chain, sorting, and both export formats
 - **Python tests** (`tests/`): `download_images.py`'s header auto-detection, manifest format, and duplicate/failed-download handling; `sets_js.py`'s entry/field parsing and comment-stripping — the one shared parser `download_assets.py`, `backup_sheets.py`, and `check_logos.py` all depend on
@@ -216,7 +216,7 @@ repo/
 ├── apps-script/Code.gs     # Optional write-back endpoint (paste into Apps Script)
 ├── tests/                  # CI checks + lib.js unit tests (node) + script unit tests (python)
 ├── .github/renovate.json   # Automated dependency updates (Renovate)
-├── .github/workflows/static.yml   # tests → deploy pipeline
+├── .github/workflows/ci-quality-deploy.yml # tests → quality/security → deploy
 ├── .github/workflows/backup.yml   # weekly sheet snapshots + logo reachability check
 ├── sonar-project.properties # SonarCloud analysis settings (e.g. Python version)
 ├── manifest.json           # PWA manifest
