@@ -18,7 +18,6 @@ A multi-set, template-driven card checklist site. A home page lists your sets wi
 - **Lightbox viewer** — Click any card to zoom; hi-res scans load where available; Esc or click to close
 - **Two image APIs + fallback chain** — pokemontcg.io for older sets, TCGdex for newer ones (Mega era onward); each image tries its sources in order and heals itself if one is down
 - **Custom images** — Per-row Image URLs in the sheet always win; an image downloader mirrors them into the repo
-- **Offline fallback** — Optional local `.xlsx` per set if the sheet is unreachable
 - **Read-only by design** — Collection state comes from the published CSV; edit quantities only in Google Sheets
 - **Self-hosted assets** — `download_assets.py` mirrors set logos into the repo; the site prefers local copies
 - **Collapsible groups** — Click any group header to fold/unfold it; state remembered per set
@@ -66,7 +65,7 @@ A multi-set, template-driven card checklist site. A home page lists your sets wi
 
 Common `tcgSet` codes: `sv1` S&V base · `sv2` Paldea Evolved · `sv3` Obsidian Flames · `sv3pt5` 151 · `sv4` Paradox Rift · `sv4pt5` Paldean Fates · `sv5` Temporal Forces · `sv6` Twilight Masquerade · `sv6pt5` Shrouded Fable · `sv7` Stellar Crown · `sv8` Surging Sparks · `sv8pt5` Prismatic Evolutions. Verify any code by opening `https://images.pokemontcg.io/<code>/logo.png` in a browser. For TCGdex ids, check the set's page on tcgdex.net.
 
-Optional per-set fields: `logo` (custom logo URL, overrides both APIs), `imgTemplate` (fully custom image URL with `{num}`/`{num3}` placeholders), `promoSet` (pokemontcg.io code for `SVP NNN` rows, default `svp`), `subtitle`, `eyebrow`, `file` + `tab` (local xlsx fallback).
+Optional per-set fields: `logo` (custom logo URL, overrides both APIs), `imgTemplate` (fully custom image URL with `{num}`/`{num3}` placeholders), `promoSet` (pokemontcg.io code for `SVP NNN` rows, default `svp`), `subtitle`, and `eyebrow`.
 
 ---
 
@@ -113,7 +112,7 @@ For a direct external Image URL or custom logo/template host, add that exact HTT
 
 ## Browser Security
 
-Both pages also enforce a Content Security Policy. Inline scripts and styles are authorized by exact hashes verified in CI, event-handler attributes are forbidden, and scripts, images, connections, frames, objects, and base URLs are restricted to exact origins. Google's current generated Sheets delivery host is allowlisted explicitly; the weekly backup check fails with instructions if Google moves the spreadsheet to a different host.
+Both pages also enforce a Content Security Policy. Scripts and styles live in local files, event-handler attributes and inline code are forbidden by CI, and scripts, images, connections, frames, objects, and base URLs are restricted to exact origins. Google's current generated Sheets delivery host is allowlisted explicitly; the weekly backup check fails with instructions if Google moves the spreadsheet to a different host.
 
 ---
 
@@ -128,14 +127,14 @@ Both pages also enforce a Content Security Policy. Inline scripts and styles are
 ## CI
 
 `.github/workflows/ci-quality-deploy.yml` is a single pipeline — tests, quality/security analysis, then deploy. On every push to `main` and every PR:
-- **Site checks** (`tests/ci_checks.mjs`, zero dependencies): sets.js parses and uses kebab-case, non-numeric ids; sheet links are CSV publish links with no leftover `PASTE_TAB_GID` or shared gids; inline scripts in both pages are syntactically valid; `lib.js` parses and is loaded by both pages; the service worker precaches every script the pages load (this caught a real "offline PWA loads a 404" bug once); required element ids exist
+- **Site checks** (`tests/ci_checks.mjs`, zero dependencies): sets.js parses and uses kebab-case, non-numeric ids; sheet links are CSV publish links with no leftover `PASTE_TAB_GID` or shared gids; local JavaScript is syntactically valid; inline code is rejected; and the service worker precaches every local script and stylesheet the pages load
 - **JavaScript behavioral tests** (`tests/lib.test.mjs`, `tests/sw.test.mjs`): tracker data logic and service-worker caching/offline behavior
 - **Python tests** (`tests/`): `download_images.py`'s header auto-detection, manifest format, and duplicate/failed-download handling; `sets_js.py`'s entry/field parsing and comment-stripping — the one shared parser `download_assets.py`, `backup_sheets.py`, and `check_logos.py` all depend on
-- **Deploy** publishes the repo to GitHub Pages **only if all test jobs pass** (skipped on PRs), so a broken commit can't take the live site down
+- **Deploy** publishes only the runtime site files to GitHub Pages **only if all test jobs pass** (skipped on PRs), so tests, scripts, backups, and development configuration are not included in the public artifact
 
 `.github/workflows/backup.yml` also runs `check_logos.py` weekly alongside the sheet backup — it isn't in the deploy pipeline because it depends on third-party CDNs and shouldn't be able to block (or flake out) a deploy.
 
-Renovate (`.github/renovate.json`) keeps GitHub Actions versions and the pinned SheetJS CDN version in `tracker.html` up to date automatically.
+Renovate (`.github/renovate.json`) keeps GitHub Actions and development dependencies up to date automatically.
 
 Run locally: `node tests/ci_checks.mjs`, `node tests/lib.test.mjs`, and `python3 -m unittest discover -s tests`.
 
@@ -195,7 +194,9 @@ git add img/ && git commit -m "Mirror card images" && git push
 ```
 repo/
 ├── index.html              # Home page — set tiles w/ logos, search, progress
+├── index.css / index.js    # Home-page presentation and behavior
 ├── tracker.html            # Tracker template (all sets share it; never edited per set)
+├── tracker.css / tracker.js # Tracker presentation and behavior
 ├── sets.js                 # ★ Set registry — the only file you configure
 ├── lib.js                  # Shared pure logic (CSV parsing, price/qty math, image fallback chain)
 ├── template.csv            # Example sheet tab to copy for new sets

@@ -58,7 +58,7 @@ def parse_sets(src):
     """Parse sets.js source into a list of dicts, one per active entry.
 
     Each dict has "id" plus every simple string field present in the
-    entry body (name, sheet, tcgSet, tcgdexSet, logo, tab, ...).
+    entry body (name, sheet, tcgSet, tcgdexSet, logo, subtitle, ...).
     Fields that are commented out or absent are simply missing — use
     .get("field") exactly like the old per-script field() helpers.
     """

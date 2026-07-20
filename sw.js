@@ -2,11 +2,15 @@
 // Strategy: network-first for pages/config (so updates land immediately),
 // cache-first for images and logos (fast + offline), never cache sheet CSVs
 // beyond a session fallback.
-const VERSION = 'shell-v3';
+const VERSION = 'shell-v4';
 // Keep downloaded card art across shell releases. Browser storage quotas still
 // apply, so the user agent may evict older images when space is constrained.
 const IMAGE_CACHE = 'card-images-v1';
-const SHELL = ['./', 'index.html', 'tracker.html', 'sets.js', 'lib.js', 'manifest.json'];
+const SHELL = [
+  './', 'index.html', 'index.css', 'index.js',
+  'tracker.html', 'tracker.css', 'tracker.js',
+  'sets.js', 'lib.js', 'manifest.json'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

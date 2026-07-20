@@ -72,8 +72,9 @@ beforeEach(loadWorker);
 test('install precaches the shell and activates immediately',async()=>{
   const event=lifecycleEvent();
   listeners.install(event); await event.promise;
-  assert.deepEqual(stores.get('shell-v3').precached,
-    ['./','index.html','tracker.html','sets.js','lib.js','manifest.json']);
+  assert.deepEqual(stores.get('shell-v4').precached,
+    ['./','index.html','index.css','index.js','tracker.html','tracker.css',
+      'tracker.js','sets.js','lib.js','manifest.json']);
   assert.equal(skipWaitingCalled,true);
 });
 
@@ -81,10 +82,11 @@ test('activate removes stale caches but preserves shell and card images',async()
   stores.set('v2',new FakeCache());
   stores.set('shell-v2',new FakeCache());
   stores.set('shell-v3',new FakeCache());
+  stores.set('shell-v4',new FakeCache());
   stores.set('card-images-v1',new FakeCache());
   const event=lifecycleEvent();
   listeners.activate(event); await event.promise;
-  assert.deepEqual(deleted.sort(),['shell-v2','v2']);
+  assert.deepEqual(deleted.sort(),['shell-v2','shell-v3','v2']);
   assert.equal(stores.has('card-images-v1'),true);
   assert.equal(claimCalled,true);
 });
@@ -135,11 +137,11 @@ test('same-origin pages are network-first and cached',async()=>{
   const event=fetchEvent('https://tracker.test/tracker.html');
   listeners.fetch(event);
   assert.equal(await event.response,network);
-  assert.equal(stores.get('shell-v3').entries.has(event.request.url),true);
+  assert.equal(stores.get('shell-v4').entries.has(event.request.url),true);
 });
 
 test('page requests fall back to cache offline and non-GET is ignored',async()=>{
-  const shell=new FakeCache(); stores.set('shell-v3',shell);
+  const shell=new FakeCache(); stores.set('shell-v4',shell);
   const cached=fakeResponse({body:'offline'});
   await shell.put('https://tracker.test/index.html',cached);
   fetchImpl=async()=>{ throw new Error('offline'); };

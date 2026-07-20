@@ -1,6 +1,5 @@
 // Zero-dependency CI checks for the tracker site. Run: node tests/ci_checks.mjs
 import fs from 'node:fs';
-import crypto from 'node:crypto';
 let failures = 0;
 const fail = m => { console.error('  FAIL ' + m); failures++; };
 const ok = m => console.log('  ok ' + m);
@@ -19,7 +18,7 @@ const ids = Object.keys(SETS);
 if (ids.length === 0) fail('no sets defined'); else ok(ids.length + ' active set(s)');
 
 const allowedSetFields = new Set([
-  'name', 'sheet', 'tcgSet', 'tcgdexSet', 'code', 'logo', 'tab', 'file',
+  'name', 'sheet', 'tcgSet', 'tcgdexSet', 'code', 'logo',
   'eyebrow', 'subtitle', 'imgTemplate', 'promoSet',
 ]);
 for (const [id, cfg] of Object.entries(SETS)) {
@@ -57,33 +56,23 @@ for (const file of ['index.html', 'tracker.html']) {
   else ok('no dead inline code in src script tags');
 
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-  if (!scripts.length) fail('no inline script found');
-  scripts.forEach((s, i) => {
-    try {
-      new Function(s.replace(/\bdocument\./g, '__d.').replace(/\blocation\./g, '__l.').replace(/\bwindow\./g, '__w.')); // NOSONAR
-      ok(`inline script ${i + 1} syntax OK`);
-    } catch (e) { fail(`inline script ${i + 1} syntax error: ${e.message}`); }
-  });
+  if (scripts.length) fail('inline scripts found; move them to the page JavaScript file');
+  const styles = [...html.matchAll(/<style>([\s\S]*?)<\/style>/gi)].map(match => match[1]);
+  if (styles.length) fail('inline styles found; move them to the page stylesheet');
 
   const csp = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/i)?.[1];
   if (!csp) fail('Content Security Policy meta tag missing');
   else {
-    for (const script of scripts) {
-      const hash = `'sha256-${crypto.createHash('sha256').update(script).digest('base64')}'`;
-      if (!csp.includes(hash)) fail(`CSP missing inline-script hash ${hash}`);
-    }
     if (!csp.includes("object-src 'none'") || !csp.includes("base-uri 'none'"))
       fail('CSP is missing object-src/base-uri restrictions');
-    for (const style of [...html.matchAll(/<style>([\s\S]*?)<\/style>/gi)].map(match => match[1])) {
-      const hash = `'sha256-${crypto.createHash('sha256').update(style).digest('base64')}'`;
-      if (!csp.includes(hash)) fail(`CSP missing inline-style hash ${hash}`);
-    }
+    if (csp.includes('sha256-')) fail('CSP contains a stale inline-content hash');
     if (csp.includes("'unsafe-inline'")) fail("CSP must not allow 'unsafe-inline'");
     if (csp.includes('*')) fail('CSP must use exact hosts, not wildcards');
     if (/img-src[^;]*\shttps:\s*(?:;|$)/.test(csp))
       fail('CSP image sources must use explicit hosts, not all HTTPS origins');
   }
   if (/\son[a-z]+\s*=/i.test(html)) fail('inline event handler blocked by CSP');
+  if (/xlsx|cdnjs\.cloudflare\.com/i.test(html)) fail('legacy Excel/CDN dependency found');
 
   const requiredIds = file === 'index.html'
     ? ['sets', 'setSearch', 'noResults']
@@ -95,10 +84,12 @@ for (const file of ['index.html', 'tracker.html']) {
   if (!missing) ok('required element ids present');
 }
 
-// ---------- lib.js ----------
-console.log('lib.js');
-try { new Function(fs.readFileSync('lib.js', 'utf8')); ok('syntax OK'); } // NOSONAR
-catch (e) { fail('syntax error: ' + e.message); }
+// ---------- local JavaScript ----------
+for (const file of ['lib.js', 'index.js', 'tracker.js']) {
+  console.log(file);
+  try { new Function(fs.readFileSync(file, 'utf8')); ok('syntax OK'); } // NOSONAR
+  catch (e) { fail('syntax error: ' + e.message); }
+}
 for (const file of ['index.html', 'tracker.html']) {
   if (!fs.readFileSync(file, 'utf8').includes('<script src="lib.js">')) fail(`${file} does not load lib.js`);
 }
@@ -110,7 +101,7 @@ for (const f of ['manifest.json', 'sw.js', 'assets/icon-192.png', 'assets/icon-5
 }
 try { JSON.parse(fs.readFileSync('manifest.json', 'utf8')); ok('manifest.json is valid JSON'); }
 catch (e) { fail('manifest.json invalid: ' + e.message); }
-// every local <script src> used by the pages must be in the precache SHELL,
+// every local script and stylesheet used by the pages must be in the precache SHELL,
 // or an offline-installed PWA opens a page whose scripts 404 (real bug once)
 const swSrc = fs.readFileSync('sw.js', 'utf8');
 if (!swSrc.includes("const IMAGE_CACHE = 'card-images-v1'"))
@@ -124,9 +115,11 @@ else {
   for (const page of ['index.html', 'tracker.html']) {
     const srcs = [...fs.readFileSync(page, 'utf8').matchAll(/<script src="([^"]+)"/g)]
       .map(m => m[1]).filter(s => !/^https?:/.test(s));
-    for (const s of srcs) {
-      if (shell.has(s)) ok(`${page}: ${s} is precached`);
-      else fail(`${page} loads ${s} but sw.js SHELL doesn't precache it - offline PWA would break`);
+    const stylesheets = [...fs.readFileSync(page, 'utf8').matchAll(/<link rel="stylesheet" href="([^"]+)"/g)]
+      .map(m => m[1]).filter(s => !/^https?:/.test(s));
+    for (const asset of [...srcs, ...stylesheets]) {
+      if (shell.has(asset)) ok(`${page}: ${asset} is precached`);
+      else fail(`${page} loads ${asset} but sw.js SHELL doesn't precache it - offline PWA would break`);
     }
   }
 }

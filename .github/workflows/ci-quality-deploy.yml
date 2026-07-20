@@ -149,10 +149,16 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
+      - name: Stage runtime files only
+        run: |
+          mkdir _site
+          cp index.html index.css index.js tracker.html tracker.css tracker.js sets.js lib.js sw.js manifest.json _site/
+          cp -R assets img _site/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

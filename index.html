@@ -3,60 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3fX4b8+n1xMZpkQZYWajdbg30nhq/EIYhvOmyXMuDTE=' 'sha256-YrPpGC+5U85WfTBbiyVT+hatbUuKrkPYdDo8TgIh10o='; style-src 'self' https://fonts.googleapis.com 'sha256-h48bdzYmRVuHs87y6yTlkUE8UGkc1/AJBYyem+9MxWE='; font-src https://fonts.gstatic.com; img-src 'self' data: https://images.pokemontcg.io https://assets.tcgdex.net; connect-src 'self' https://docs.google.com https://doc-08-3o-sheets.googleusercontent.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://images.pokemontcg.io https://assets.tcgdex.net; connect-src 'self' https://docs.google.com https://doc-08-3o-sheets.googleusercontent.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests">
 <title>Pokemon Card Tracker</title>
 <script src="sets.js"></script>
 <script src="lib.js"></script>
-<style>
-  :root{
-    --night:#100e22; --panel:#1a1733; --panel2:#221e42; --line:#332e5c;
-    --ink:#eceaf7; --dim:#8d88b0; --faint:#5b5680;
-    --tera1:#7ef0d4; --tera2:#8db4ff; --tera3:#e29bff; --tera4:#ffd47e;
-    --good:#7ef0d4; --miss:#ff8da1;
-    --crystal:linear-gradient(120deg,var(--tera1),var(--tera2) 34%,var(--tera3) 68%,var(--tera4));
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:var(--night);
-    background-image:radial-gradient(ellipse 60% 40% at 80% -5%, rgba(141,180,255,.10), transparent),
-                     radial-gradient(ellipse 50% 35% at 10% 0%, rgba(226,155,255,.08), transparent);
-    color:var(--ink);
-    font-family:"Sora",-apple-system,"Segoe UI",Roboto,sans-serif;
-    min-height:100vh;padding:0 20px 80px;
-  }
-  header{max-width:900px;margin:0 auto;padding:46px 0 26px;text-align:center}
-  .eyebrow{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--dim)}
-  h1{font-family:"Unbounded","Sora",sans-serif;font-weight:700;font-size:clamp(26px,5vw,40px);margin-top:10px}
-  h1 .tera{background:var(--crystal);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .tagline{color:var(--dim);font-size:14px;margin-top:8px}
-
-  .homesearch{display:block;width:min(420px,100%);margin:0 auto 24px;
-    background:var(--panel);border:1px solid var(--line);border-radius:999px;
-    color:var(--ink);font:inherit;font-size:14px;padding:10px 18px;outline:none}
-  .homesearch::placeholder{color:var(--faint)}
-  .homesearch:focus{border-color:var(--tera2);box-shadow:0 0 0 3px rgba(141,180,255,.12)}
-  .setcard.hidden{display:none}
-  .noresults{display:none;text-align:center;color:var(--dim);font-size:14px;margin-top:8px}
-  .sets{max-width:900px;margin:0 auto;display:grid;gap:18px;
-    grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
-  .setcard{display:block;text-decoration:none;color:var(--ink);
-    background:linear-gradient(160deg,var(--panel2),var(--panel));
-    border:1px solid var(--line);border-radius:18px;padding:22px 20px 18px;
-    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease}
-  .setcard:hover{transform:translateY(-3px);border-color:var(--tera2);
-    box-shadow:0 10px 34px rgba(141,180,255,.16)}
-  .setcard img{display:block;max-width:82%;max-height:88px;margin:2px auto 14px;
-    filter:drop-shadow(0 4px 14px rgba(141,180,255,.3))}
-  .setcard .noimg{font-family:"Unbounded",sans-serif;font-size:20px;text-align:center;margin:14px 0 18px}
-  .setcard .meta{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim)}
-  .setcard .code{letter-spacing:.14em;text-transform:uppercase}
-  .setcard .prog{font-variant-numeric:tabular-nums}
-  .bar{height:5px;border-radius:99px;background:var(--panel);border:1px solid var(--line);
-    margin-top:10px;overflow:hidden}
-  .bar i{display:block;height:100%;background:var(--crystal);width:0;transition:width .6s ease}
-  footer{max-width:900px;margin:44px auto 0;text-align:center;font-size:11px;color:var(--faint)}
-  footer a{color:var(--dim)}
-</style>
+<link rel="stylesheet" href="index.css">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b0920">
 <link rel="icon" href="assets/icon-192.png">
@@ -78,101 +29,7 @@
   Not affiliated with The Pokémon Company · card images © TPCi via pokemontcg.io
 </footer>
 
-<script>
-const main=document.getElementById('sets');
+<script src="index.js"></script>
 
-async function progress(cfg){
-  if(!cfg.sheet) return null;
-  const res=await fetch(cfg.sheet,{cache:"no-store"});
-  if(!res.ok) throw new Error('sheet fetch failed: '+res.status);
-  const text=await res.text();
-  if(/^\s*</.test(text)) throw new Error('got a web page, not CSV');
-  const rows=csvToRows(text);
-  // find header row: needs a "card"-ish and "have"-ish column
-  let hi=-1,ci=-1,haveI=-1;
-  for(let r=0;r<Math.min(rows.length,5);r++){
-    const low=rows[r].map(x=>x.trim().toLowerCase());
-    const c=low.findIndex(h=>h.includes("card"));
-    const hv=low.findIndex(h=>h.includes("have")||h.includes("own")||h.includes("qty"));
-    if(c>-1&&hv>-1){hi=r;ci=c;haveI=hv;break;}
-  }
-  if(hi<0) return null;
-  let total=0,owned=0;
-  for(let r=hi+1;r<rows.length;r++){
-    const card=(rows[r][ci]||"").trim();
-    if(!card) continue;           // group header / blank rows
-    total++;
-    if(parseHaveQty(rows[r][haveI])>0) owned++;
-  }
-  return {owned,total};
-}
-
-// ---- cache last-seen progress per set so returning visitors see numbers
-// instantly instead of a "…" flash while every set's sheet re-fetches ----
-function getCachedProgress(id){
-  try{ return JSON.parse(localStorage.getItem('progress:'+id)||'null'); }catch(e){ return null; }
-}
-function setCachedProgress(id,p){
-  try{ localStorage.setItem('progress:'+id, JSON.stringify(p)); }catch(e){}
-}
-function paintProgress(a,p){
-  const t=a.querySelector('[data-prog]'), b=a.querySelector('[data-bar]');
-  t.textContent=`${p.owned} / ${p.total} owned`;
-  b.style.width=(p.total? (100*p.owned/p.total):0)+'%';
-}
-
-Object.entries(SETS).forEach(([id,cfg])=>{
-  const a=document.createElement('a');
-  a.className='setcard';
-  a.href='tracker.html?set='+encodeURIComponent(id);
-  const logoCands=['assets/logos/'+id+'.png'];
-  if(cfg.logo) logoCands.push(cfg.logo);
-  if(cfg.tcgSet) logoCands.push('https://images.pokemontcg.io/'+cfg.tcgSet+'/logo.png');
-  const sm=(cfg.tcgdexSet||'').match(/^[a-z]+/i);
-  if(sm) logoCands.push('https://assets.tcgdex.net/en/'+sm[0].toLowerCase()+'/'+cfg.tcgdexSet+'/logo.png');
-  const logo=logoCands[0]||'';
-  a.innerHTML=`
-    <img src="${esc(logo)}" alt="${esc(cfg.name)}"
-      data-alts="${esc(logoCands.slice(1).join('|'))}">
-    <div class="meta"><span class="code">${esc(cfg.tcgSet||cfg.code||"")}</span><span class="prog" data-prog>…</span></div>
-    <div class="bar"><i data-bar></i></div>`;
-  a.querySelector('img').addEventListener('error',function(){
-    const alternatives=(this.dataset.alts||'').split('|').filter(Boolean);
-    if(alternatives.length){
-      this.dataset.alts=alternatives.slice(1).join('|'); this.src=alternatives[0];
-    }else{
-      this.replaceWith(Object.assign(document.createElement('div'),
-        {className:'noimg',textContent:cfg.name}));
-    }
-  });
-  a.dataset.search=(id+" "+cfg.name+" "+(cfg.tcgSet||"")+" "+(cfg.code||"")+" "+(cfg.tcgdexSet||"")).toLowerCase();
-  main.appendChild(a);
-  if(!cfg.sheet){
-    a.querySelector('[data-prog]').textContent='not set up yet';
-  } else {
-    const cached=getCachedProgress(id);
-    if(cached) paintProgress(a,cached);
-    progress(cfg).then(p=>{
-      if(!p) return; // keep showing the cached value (or "…") rather than blanking
-      paintProgress(a,p);
-      setCachedProgress(id,p);
-    }).catch(()=>{ if(!cached) a.querySelector('[data-prog]').textContent=''; });
-  }
-});
-
-document.getElementById('setSearch').addEventListener('input', e=>{
-  const q=e.target.value.trim().toLowerCase();
-  let visible=0;
-  document.querySelectorAll('.setcard').forEach(card=>{
-    const hit=!q || card.dataset.search.includes(q);
-    card.classList.toggle('hidden', !hit);
-    if(hit) visible++;
-  });
-  document.getElementById('noResults').style.display = visible? 'none':'block';
-});
-</script>
-<script>
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
-</script>
 </body>
 </html>

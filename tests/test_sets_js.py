@@ -15,7 +15,7 @@ const SETS = {
     name: "Stellar Crown",
     sheet: "https://docs.google.com/pub?gid=123&single=true&output=csv",
     tcgSet: "sv7",
-    tab: "stellar_crown",
+    subtitle: "Promos and variants",
   },
 
   "me02.5": {
@@ -55,7 +55,7 @@ class TestParseSets(unittest.TestCase):
         sc = self.by_id["stellar-crown"]
         self.assertEqual(sc["name"], "Stellar Crown")
         self.assertEqual(sc["tcgSet"], "sv7")
-        self.assertEqual(sc["tab"], "stellar_crown")
+        self.assertEqual(sc["subtitle"], "Promos and variants")
         self.assertIn("output=csv", sc["sheet"])
 
     def test_commented_field_inside_active_entry_ignored(self):

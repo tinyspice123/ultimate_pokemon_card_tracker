@@ -13,7 +13,7 @@
 //   sheet      published CSV link for that tab (only the gid differs)
 //   tcgSet     pokemontcg.io id (images + logo; covers sets up to ~2025)
 //   tcgdexSet  TCGdex id (images + logo; covers newer sets incl. Mega era)
-//   logo / imgTemplate / promoSet / subtitle / eyebrow / file / tab: optional
+//   logo / imgTemplate / promoSet / subtitle / eyebrow: optional
 // =====================================================================
 
 const SETS = {
@@ -81,8 +81,6 @@ const SETS = {
     name: "Stellar Crown",
     sheet: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPhhxFigR_Cyyp3Vi-Ne6yUBj2OrgG6VjbMNrBEzCm7dppuZkRgNj-9aeF7LbHYK3F3C4cIDm35GpE/pub?gid=1801512098&single=true&output=csv",
     tcgSet: "sv7",
-//    file: "checklist.xlsx",
-//    tab: "stellar_crown",
   },
 
   "surging-sparks": {          // Nov 2024
