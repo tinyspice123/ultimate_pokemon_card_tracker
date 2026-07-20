@@ -202,15 +202,16 @@ function exportCsv(kind, list){
 
 // Marketplace search URLs stay useful when listings change, unlike links to
 // individual offers. Generic variants add no search value and are omitted.
-function marketplaceSearchUrls(it,setName){
+function marketplaceSearchUrls(it){
   const variant=/^(?:regular|standard|normal)$/i.test((it.variant||'').trim())
     ? '' : (it.variant||'').trim();
-  const query=['Pokemon TCG',it.card,setName,it.num,variant]
+  const cardmarketQuery=[it.card,it.num]
     .map(v=>String(v||'').trim()).filter(Boolean).join(' ');
-  const encoded=encodeURIComponent(query);
+  const ebayQuery=[it.card,it.num,variant]
+    .map(v=>String(v||'').trim()).filter(Boolean).join(' ');
   return {
-    cardmarket:`https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=${encoded}`,
-    ebay:`https://www.ebay.co.uk/sch/i.html?_nkw=${encoded}`,
+    cardmarket:`https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=${encodeURIComponent(cardmarketQuery)}`,
+    ebay:`https://www.ebay.co.uk/sch/i.html?_nkw=${encodeURIComponent(ebayQuery)}`,
   };
 }
 

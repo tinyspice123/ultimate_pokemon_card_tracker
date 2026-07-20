@@ -181,18 +181,20 @@ test('exportCsv / csvEscape', async (t) => {
 test('marketplaceSearchUrls', async (t) => {
   await t.test('encodes identifying card details and omits a generic variant', () => {
     const urls=marketplaceSearchUrls(
-      {card:'Mr. Mime & Friends',num:'12/100',variant:'Regular'}, 'Stellar Crown');
+      {card:'Mr. Mime & Friends',num:'12/100',variant:'Regular'});
     const ebay=new URL(urls.ebay);
     assert.equal(ebay.hostname,'www.ebay.co.uk');
     assert.equal(ebay.searchParams.get('_nkw'),
-      'Pokemon TCG Mr. Mime & Friends Stellar Crown 12/100');
+      'Mr. Mime & Friends 12/100');
   });
-  await t.test('keeps a meaningful variant in Cardmarket searches', () => {
+  await t.test('keeps meaningful variants for eBay but not Cardmarket', () => {
     const urls=marketplaceSearchUrls(
-      {card:'Crabominable',num:'SVP 134',variant:'STAFF stamp'}, 'Stellar Crown');
+      {card:'Archaludon',num:'107/142',variant:'Galaxy holo + GameStop stamp'});
     const cardmarket=new URL(urls.cardmarket);
     assert.equal(cardmarket.hostname,'www.cardmarket.com');
     assert.equal(cardmarket.searchParams.get('searchString'),
-      'Pokemon TCG Crabominable Stellar Crown SVP 134 STAFF stamp');
+      'Archaludon 107/142');
+    assert.equal(new URL(urls.ebay).searchParams.get('_nkw'),
+      'Archaludon 107/142 Galaxy holo + GameStop stamp');
   });
 });
