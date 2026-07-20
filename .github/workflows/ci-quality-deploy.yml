@@ -7,12 +7,12 @@ on:
     paths-ignore:
       - README.md
       - backups/**
-      - template.csv
+      - docs/**
   pull_request:
     paths-ignore:
       - README.md
       - backups/**
-      - template.csv
+      - docs/**
   workflow_dispatch:
 
 concurrency:
@@ -22,7 +22,7 @@ concurrency:
 jobs:
 
   site-checks:
-    name: Site checks (sets.js + HTML)
+    name: Site checks + JavaScript unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -34,21 +34,10 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/
-            /assets/icon-192.png
-            /assets/icon-512.png
+            /public/
             /tests/
-            /index.css
-            /index.html
-            /index.js
-            /lib.js
-            /manifest.json
             /package-lock.json
             /package.json
-            /sets.js
-            /sw.js
-            /tracker.css
-            /tracker.html
-            /tracker.js
 
       - uses: actions/setup-node@v7
         with:
@@ -56,7 +45,7 @@ jobs:
           cache: npm
 
       - name: Zero-dependency site checks
-        run: node tests/ci_checks.mjs
+        run: npm run test:site
 
       - name: Install coverage tool
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -87,7 +76,7 @@ jobs:
             /scripts/
             /tests/
             /requirements-dev.txt
-            /sets.js
+            /public/sets.js
 
       - uses: actions/setup-python@v7.0.0
         with:
@@ -109,7 +98,7 @@ jobs:
 
       - name: Unit tests with coverage
         run: |
-          python -m coverage run --source=scripts -m unittest discover -s tests -v
+          python -m coverage run --source=scripts -m unittest discover -s tests/python -v
           python -m coverage xml -o coverage.xml
 
       - name: Upload coverage report
@@ -138,25 +127,14 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/
-            /assets/
-            /img/
+            /public/
             /scripts/
             /tests/
-            /index.css
-            /index.html
-            /index.js
-            /lib.js
-            /manifest.json
             /package-lock.json
             /package.json
             /playwright.config.mjs
             /requirements-dev.txt
-            /sets.js
             /sonar-project.properties
-            /sw.js
-            /tracker.css
-            /tracker.html
-            /tracker.js
 
       - uses: actions/setup-node@v7
         with:
@@ -208,19 +186,12 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
 
-      - name: Stage runtime files only
-        if: github.event_name != 'pull_request'
-        run: |
-          mkdir _site
-          cp index.html index.css index.js tracker.html tracker.css tracker.js sets.js lib.js sw.js manifest.json _site/
-          cp -R assets img _site/
-
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'
         # v5, pinned because this step is part of the trusted deployment path.
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
-          path: '_site'
+          path: 'public'
 
   deploy:
     name: Deploy to GitHub Pages
