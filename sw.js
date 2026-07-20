@@ -2,7 +2,10 @@
 // Strategy: network-first for pages/config (so updates land immediately),
 // cache-first for images and logos (fast + offline), never cache sheet CSVs
 // beyond a session fallback.
-const VERSION = 'v2';  // bumped: SHELL changed (lib.js added)
+const VERSION = 'shell-v3';
+// Keep downloaded card art across shell releases. Browser storage quotas still
+// apply, so the user agent may evict older images when space is constrained.
+const IMAGE_CACHE = 'card-images-v1';
 const SHELL = ['./', 'index.html', 'tracker.html', 'sets.js', 'lib.js', 'manifest.json'];
 
 self.addEventListener('install', e => {
@@ -11,7 +14,8 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k !== VERSION && k !== IMAGE_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim()));
 });
 
@@ -22,11 +26,15 @@ self.addEventListener('fetch', e => {
   // images & logos: cache-first
   if (/\.(png|jpg|jpeg|webp|svg)$/.exec(url.pathname)) {
     e.respondWith(
-      caches.match(e.request).then(hit => hit ||
+      caches.open(IMAGE_CACHE).then(cache => cache.match(e.request).then(hit => hit ||
         fetch(e.request).then(res => {
-          if (res.ok) { const cp = res.clone(); caches.open(VERSION).then(c => c.put(e.request, cp)); }
+          // Cross-origin <img> responses are commonly opaque (status 0), but
+          // the Cache API can safely store and replay them for the same URL.
+          if (res.ok || res.type === 'opaque') {
+            return cache.put(e.request, res.clone()).then(() => res);
+          }
           return res;
-        }).catch(() => hit)));
+        }).catch(() => Response.error()))));
     return;
   }
 

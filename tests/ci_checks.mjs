@@ -56,7 +56,7 @@ for (const file of ['index.html', 'tracker.html']) {
 
   const requiredIds = file === 'index.html'
     ? ['sets', 'setSearch', 'noResults']
-    : ['setLogo', 'eyebrowText', 'titleFallback', 'groupSel', 'missOnly', 'sortSel', 'lightbox', 'notice', 'exportMissing', 'exportOwned'];
+    : ['setLogo', 'eyebrowText', 'titleFallback', 'groupSel', 'missOnly', 'sortSel', 'viewSel', 'lightbox', 'notice', 'exportMissing', 'exportOwned'];
   let missing = false;
   for (const id of requiredIds) {
     if (!html.includes(`id="${id}"`)) { fail(`missing element id="${id}"`); missing = true; }
@@ -82,6 +82,10 @@ catch (e) { fail('manifest.json invalid: ' + e.message); }
 // every local <script src> used by the pages must be in the precache SHELL,
 // or an offline-installed PWA opens a page whose scripts 404 (real bug once)
 const swSrc = fs.readFileSync('sw.js', 'utf8');
+if (!swSrc.includes("const IMAGE_CACHE = 'card-images-v1'"))
+  fail('sw.js: persistent image cache is not configured');
+if (!swSrc.includes("res.type === 'opaque'"))
+  fail('sw.js: cross-origin opaque card images will not be cached');
 const shellM = swSrc.match(/const SHELL = \[([^\]]*)\]/);
 if (!shellM) fail('sw.js: SHELL list not found');
 else {

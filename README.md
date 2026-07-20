@@ -13,6 +13,7 @@ A multi-set, template-driven card checklist site. A home page lists your sets wi
 - **Price stats in £** — Value owned and cost of gaps from the Price column; ranges like `~£4-11` are averaged
 - **Sorting** — Sheet order, name A–Z, or price high↔low (within each group; unpriced cards sink)
 - **Filtering** — Search, group dropdown, Missing Only toggle
+- **Data-saving views** — Card scans are requested only as they approach the viewport; switch to the remembered Text table view to browse without requesting card images at all
 - **Export missing / owned** — Copy a plain-text want/have list to the clipboard, or download it as CSV; respects the active search and group filter
 - **Lightbox viewer** — Click any card to zoom; hi-res scans load where available; Esc or click to close
 - **Two image APIs + fallback chain** — pokemontcg.io for older sets, TCGdex for newer ones (Mega era onward); each image tries its sources in order and heals itself if one is down
@@ -22,7 +23,7 @@ A multi-set, template-driven card checklist site. A home page lists your sets wi
 - **Self-hosted assets** — `download_assets.py` mirrors set logos into the repo; the site prefers local copies
 - **Collapsible groups** — Click any group header to fold/unfold it; state remembered per set
 - **Keyboard shortcuts** — `/` focuses search, `m` toggles Missing only, ←/→ browse cards in the lightbox, Esc closes
-- **Installable PWA** — Add to home screen on mobile; pages and images cached for offline browsing (sheet data still needs a connection to refresh)
+- **Installable PWA** — Add to home screen on mobile; downloaded card images remain in a dedicated cache across site updates for faster repeat visits (sheet data still needs a connection to refresh)
 - **Weekly collection history** — A scheduled Action snapshots every sheet into `backups/`; git history gives diffable, restorable records of your collection over time
 - **CI** — GitHub Actions runs site, `lib.js`, and Python tests on every push/PR, plus a weekly logo-reachability check
 

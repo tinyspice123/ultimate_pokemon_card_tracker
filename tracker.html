@@ -91,6 +91,18 @@
   .grouphead::after{content:"";flex:1;height:1px;background:var(--line);align-self:center}
 
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .listtable{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
+  .listtable th{padding:9px 10px;text-align:left;color:var(--dim);font-size:10px;
+    letter-spacing:.08em;text-transform:uppercase;background:var(--panel2);position:sticky;top:0;z-index:1}
+  .listtable td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:middle}
+  .listtable tbody tr:hover{background:rgba(141,180,255,.06)}
+  .listtable .cardname{font-weight:600}.listtable .cardnum{color:var(--tera2);white-space:nowrap}
+  .listtable .variant,.listtable .source{color:var(--dim)}
+  .listtable .price{color:var(--tera4);white-space:nowrap}
+  .listtable .havechip{position:static;display:inline-block;white-space:nowrap}
+  .listtable .qtyctl{border:0;padding:0;justify-content:flex-start;white-space:nowrap}
+  .listtable .qtytag{border:0;padding:0;text-align:left}
   .item{
     background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
     display:flex;flex-direction:column;position:relative;transition:transform .15s, border-color .15s;
@@ -233,6 +245,10 @@
     <option value="name">Name A–Z</option>
     <option value="price-desc">Price high → low</option>
     <option value="price-asc">Price low → high</option>
+  </select>
+  <select id="viewSel" title="Display mode" aria-label="Display mode">
+    <option value="cards">Card images</option>
+    <option value="table">Text table (data saver)</option>
   </select>
   <label class="toggle"><input type="checkbox" id="missOnly"> Missing only</label>
   <span class="exportwrap">
@@ -422,8 +438,13 @@ function buildGroupSel(){
 
 // ---- collapsible groups (state kept per set) ----
 const COLLAPSE_KEY='collapse:'+SET_ID;
+const VIEW_KEY='view-mode';
 let collapsed=new Set();
 try{ collapsed=new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY)||'[]')); }catch(e){}
+try{
+  const savedView=localStorage.getItem(VIEW_KEY);
+  document.getElementById('viewSel').value=savedView==='table'?'table':'cards';
+}catch(e){}
 function toggleGroup(g){
   collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g);
   try{ localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...collapsed])); }catch(e){}
@@ -486,6 +507,8 @@ function render(){
   const q=document.getElementById('q').value.toLowerCase();
   const gsel=document.getElementById('groupSel').value;
   const missOnly=document.getElementById('missOnly').checked;
+  const tableMode=document.getElementById('viewSel').value==='table';
+  if(imageObserver) imageObserver.disconnect();
   const main=document.getElementById('main'); main.innerHTML='';
 
   const shown=items.filter(it=>{
@@ -511,11 +534,45 @@ function render(){
     });
     main.appendChild(gh);
     if(folded) return;
-    const grid=document.createElement('div'); grid.className='grid';
-    list.forEach(it=>grid.appendChild(cardEl(it)));
-    main.appendChild(grid);
+    if(tableMode){
+      const wrap=document.createElement('div'); wrap.className='tablewrap';
+      const table=document.createElement('table'); table.className='listtable';
+      table.innerHTML='<thead><tr><th>Card</th><th>Number</th><th>Variant</th><th>Source</th><th>Price</th><th>Status</th><th>Quantity</th></tr></thead>';
+      const body=document.createElement('tbody');
+      list.forEach(it=>body.appendChild(rowEl(it)));
+      table.appendChild(body); wrap.appendChild(table); main.appendChild(wrap);
+    }else{
+      const grid=document.createElement('div'); grid.className='grid';
+      list.forEach(it=>grid.appendChild(cardEl(it)));
+      main.appendChild(grid);
+    }
   });
+  if(!tableMode) observeLazyImages(main);
   stats();
+}
+
+let imageObserver=null;
+function loadDeferredImage(img){
+  const src=img.dataset.src;
+  if(!src) return;
+  delete img.dataset.src;
+  img.src=src;
+}
+function observeLazyImages(root){
+  if(imageObserver) imageObserver.disconnect();
+  const images=[...root.querySelectorAll('img[data-src]')];
+  if(!('IntersectionObserver' in window)){
+    images.forEach(loadDeferredImage);
+    return;
+  }
+  imageObserver=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      imageObserver.unobserve(entry.target);
+      loadDeferredImage(entry.target);
+    });
+  },{rootMargin:'300px 0px'});
+  images.forEach(img=>imageObserver.observe(img));
 }
 
 function __imgFallback(img){
@@ -548,7 +605,7 @@ function cardEl(it){
   }
   d.innerHTML=`
     <div class="imgwrap${/reverse\s*holo/i.test(it.variant)?' rh':''}">
-      ${url?`<img loading="lazy" alt="${esc(it.card)}" src="${url}"
+      ${url?`<img loading="lazy" decoding="async" fetchpriority="low" alt="${esc(it.card)}" data-src="${url}"
         data-alts="${esc(alts.join('|'))}" data-ph="${initial}"
         onerror="__imgFallback(this)">`
         :`<div class="ph"><b>${initial}</b><span>variant</span></div>`}
@@ -574,11 +631,33 @@ function cardEl(it){
   return d;
 }
 
+function rowEl(it){
+  const row=document.createElement('tr');
+  row.className=it.qty>0?'owned':'';
+  const zeroCls=it.qty?'':'zero';
+  const qtyHtml=WRITE_OK
+    ? `<div class="qtyctl" data-qty><button type="button" data-dec aria-label="one fewer">−</button><span class="${zeroCls}">×${it.qty}</span><button type="button" data-inc aria-label="one more">+</button></div>`
+    : `<div class="qtytag ${zeroCls}">×${it.qty}</div>`;
+  row.innerHTML=`
+    <td class="cardname">${esc(it.card)}</td>
+    <td class="cardnum">${esc(it.num)}</td>
+    <td class="variant">${esc(it.variant)}</td>
+    <td class="source">${esc(it.src)}</td>
+    <td class="price">${esc(it.price)}</td>
+    <td><span class="havechip ${it.qty>0?'y':'n'}">${it.qty>0?'OWNED':'NEED'}</span></td>
+    <td>${qtyHtml}</td>`;
+  if(WRITE_OK){
+    row.querySelector('[data-dec]').addEventListener('click',()=>changeQty(it,-1,row));
+    row.querySelector('[data-inc]').addEventListener('click',()=>changeQty(it,+1,row));
+  }
+  return row;
+}
+
 
 const lb=document.getElementById('lightbox'), lbImg=document.getElementById('lbImg');
 let lbList=[], lbIndex=-1;
 function openLightbox(it,shownSrc){
-  lbList=[...document.querySelectorAll('.imgwrap img')];
+  lbList=[...document.querySelectorAll('.imgwrap img[src]')];
   lbIndex=lbList.findIndex(im=>im.src===shownSrc);
   lb.querySelector('figure').classList.toggle('rh', /reverse\s*holo/i.test(it.variant));
   document.getElementById('lbName').textContent=it.card;
@@ -702,6 +781,10 @@ document.addEventListener('keydown',e=>{
 
 document.getElementById('missOnly').addEventListener('change',render);
 document.getElementById('sortSel').addEventListener('change',render);
+document.getElementById('viewSel').addEventListener('change',e=>{
+  try{ localStorage.setItem(VIEW_KEY,e.target.value); }catch(err){}
+  render();
+});
 
 // esc moved to lib.js
 </script>
