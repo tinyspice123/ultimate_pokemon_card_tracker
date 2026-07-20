@@ -12,10 +12,17 @@
  *  4. Copy the web app URL (https://script.google.com/macros/s/…/exec)
  *  5. Paste it into WRITE_URL at the top of sets.js
  *
- * SECURITY: anyone who has the URL can edit Have values in this
- * spreadsheet (only the Have column, only existing rows). Don't post
- * the URL publicly; treat it like a password. To revoke, delete the
- * deployment in Apps Script.
+ *  6. Project Settings (gear icon) -> Script properties -> Add:
+ *       Property: WRITE_PIN   Value: your PIN (a word or phrase is
+ *       stronger than 4 digits). Writes are refused until it's set.
+ *
+ * SECURITY: the web-app URL is PUBLIC by nature (it ships in sets.js,
+ * which anyone can view-source on GitHub Pages) - so the URL is NOT
+ * the secret. The PIN is. It lives only in Script properties (server
+ * side, never in the repo) and every write must include it. Ten wrong
+ * PINs in a row lock all writes for 10 minutes. Even with the right
+ * PIN, writes can only touch the Have column of existing rows. To
+ * revoke everything, delete the deployment in Apps Script.
  *
  * Each set entry in sets.js needs `tab` set to the EXACT name of its
  * tab in this spreadsheet, e.g. tab: "stellar_crown".
@@ -24,6 +31,20 @@
 function doPost(e) {
   try {
     var d = JSON.parse(e.postData.contents);
+
+    // ---- PIN gate (the URL is public; this is the real lock) ----
+    var pin = PropertiesService.getScriptProperties().getProperty('WRITE_PIN') || '';
+    if (!pin) return out_({ok: false, error: 'writes disabled: set WRITE_PIN in Script properties'});
+    var cache = CacheService.getScriptCache();
+    if (cache.get('pin_lock')) return out_({ok: false, error: 'locked: too many wrong PINs, try again in ~10 min'});
+    if (String(d.pin || '') !== pin) {
+      var fails = (parseInt(cache.get('pin_fails'), 10) || 0) + 1;
+      cache.put('pin_fails', String(fails), 600);
+      if (fails >= 10) cache.put('pin_lock', '1', 600);
+      return out_({ok: false, error: 'bad pin'});
+    }
+    cache.remove('pin_fails');
+
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sh = ss.getSheetByName(d.tab);
     if (!sh) return out_({ok: false, error: "no tab named " + d.tab});

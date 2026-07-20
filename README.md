@@ -114,10 +114,13 @@ By default the site is read-only. To enable the +/− buttons on cards:
 
 1. Open the spreadsheet → Extensions → Apps Script → paste `apps-script/Code.gs`
 2. Deploy → New deployment → Web app → *Execute as: Me* · *Access: Anyone*
-3. Copy the web-app URL into `WRITE_URL` at the top of `sets.js`
-4. Ensure every set entry's `tab` matches its exact Google tab name
+3. Copy the web-app URL into `WRITE_URL` at the top of `sets.js` (un-comment the line)
+4. In the Apps Script editor: Project Settings (⚙) → **Script properties** → add property `WRITE_PIN` with your PIN — a word or short phrase beats 4 digits
+5. Ensure every set entry's `tab` matches its exact Google tab name
 
-Edits are optimistic (instant on screen) and written to the sheet in the background; the Google publish cache still means a page *reload* can show values up to ~5 min old. **Treat the URL like a password** — anyone holding it can edit Have values. Revoke anytime by deleting the deployment.
+**Security model.** `sets.js` is served as a plain static file, so `WRITE_URL` is public by definition — anyone can view-source it, and that's fine. The secret is the **PIN**: it lives only in Script properties (server side, never in the repo), the site asks each visitor for it once and remembers it in that browser's `localStorage`, and the server refuses any write without it. Ten wrong PINs lock all writes for 10 minutes, so it can't be brute-forced. Even a correct PIN can only change the Have column of existing rows. Wrong-PIN edits roll back on screen with a toast; the *Forget / change PIN* link in the page footer clears the stored PIN. Revoke everything by deleting the deployment.
+
+Edits are optimistic (instant on screen) and confirmed against the server's response; the Google publish cache still means a page *reload* can show values up to ~5 min old.
 
 ---
 

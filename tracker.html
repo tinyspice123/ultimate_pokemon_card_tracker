@@ -396,7 +396,16 @@ function parseRows(rows){
   buildGroupSel(); render();
   document.getElementById('stats').style.display='grid';
   document.getElementById('controls').style.display='flex';
-  document.getElementById('foot').style.display='block';
+  const foot=document.getElementById('foot');
+  if(WRITE_OK){
+    foot.innerHTML='Editing is enabled: the +/\u2212 buttons write the Have column straight to the Google Sheet '+
+      '(PIN-protected; the PIN is remembered on this device only). '+
+      '<a href="#" id="pinReset">Forget / change PIN</a>. A page reload can show values up to ~5 min old \u2014 Google\u2019s publish cache.';
+    document.getElementById('pinReset').addEventListener('click',e=>{
+      e.preventDefault(); forgetPin(); toast('PIN forgotten \u2014 you\u2019ll be asked on the next edit');
+    });
+  }
+  foot.style.display='block';
 }
 
 function priceMid(p){
@@ -488,6 +497,22 @@ function toggleGroup(g){
 }
 
 const WRITE_OK = (typeof WRITE_URL!=="undefined") && WRITE_URL;
+
+// The write URL is public (sets.js is view-source-able) - the PIN is the
+// secret. It's asked for once, kept in this browser's localStorage, and
+// checked server-side by the Apps Script before any write happens.
+const PIN_KEY='tracker:pin';
+function getPin(){
+  let p=null;
+  try{ p=localStorage.getItem(PIN_KEY); }catch(e){}
+  if(p) return p;
+  p=prompt('Enter the edit PIN for this tracker\n(set in the sheet\u2019s Apps Script \u2192 Script properties):');
+  if(p===null || !p.trim()) return null;
+  p=p.trim();
+  try{ localStorage.setItem(PIN_KEY,p); }catch(e){}
+  return p;
+}
+function forgetPin(){ try{ localStorage.removeItem(PIN_KEY); }catch(e){} }
 let toastTimer=null;
 function toast(msg){
   let el=document.getElementById('saveToast');
@@ -496,20 +521,31 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1600);
 }
 function changeQty(it,delta,cardDiv){
-  it.qty=Math.max(0,(it.qty|0)+delta);
-  // update this card in place
+  const pin=getPin();
+  if(pin===null){ toast('Editing needs the PIN'); return; }
+  const prev=it.qty|0;
+  it.qty=Math.max(0,prev+delta);
+  // update this card in place (optimistic)
   const span=cardDiv.querySelector('[data-qty] span');
   span.textContent='\u00d7'+it.qty;
   span.classList.toggle('zero', !it.qty);
   const chip=cardDiv.querySelector('.havechip');
   if(chip){ chip.textContent=it.qty>0?'OWNED':'NEED'; chip.classList.toggle('y',it.qty>0); chip.classList.toggle('n',!(it.qty>0)); }
   stats();
-  // fire-and-forget write to the sheet (opaque response by design)
-  fetch(WRITE_URL,{method:'POST',mode:'no-cors',
+  // CORS mode (text/plain = no preflight; Apps Script's redirect target
+  // sends Access-Control-Allow-Origin:*) so we can READ the verdict and
+  // catch a wrong PIN instead of silently pretending it saved.
+  fetch(WRITE_URL,{method:'POST',
     headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({tab:cfg.tab||cfg.name, card:it.card, num:it.num, variant:it.variant, qty:it.qty})
-  }).then(()=>toast('Saved to sheet'))
-    .catch(()=>toast('Save failed \u2014 check connection'));
+    body:JSON.stringify({pin, tab:cfg.tab||cfg.name, card:it.card, num:it.num, variant:it.variant, qty:it.qty})
+  }).then(r=>r.json()).then(res=>{
+    if(res && res.ok===false){
+      if(/pin|locked/i.test(res.error||'')) forgetPin();
+      it.qty=prev; render();  // roll back the optimistic edit
+      toast(res.error==='bad pin' ? 'Wrong PIN \u2014 tap again to retry'
+           : 'Not saved: '+(res.error||'server error'));
+    } else toast('Saved to sheet');
+  }).catch(()=>toast('Save not confirmed \u2014 check connection'));
 }
 
 function render(){
