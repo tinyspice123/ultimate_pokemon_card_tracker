@@ -18,11 +18,34 @@ import re
 # lazy `.*?` spanning newlines with a multi-char terminator.
 _ENTRY_RE = re.compile(r'"([\w.\-]+)"\s*:\s*\{([^}]*)\}')
 
-# a simple string field inside a body: key: "value" (sets.js consistently
-# writes zero-or-one space after the colon, never more - "? " is a bounded
-# quantifier, so there's no unbounded repetition left for the backtracking
-# checker to flag, unlike the `\s*` this replaced)
-_FIELD_RE = re.compile(r'(\w+): ?"([^"]*)"')
+
+def _extract_fields(body):
+    """Pull every `key: "value"` field out of an entry body.
+
+    Plain string scanning, not a regex: two rewrites of a field-matching
+    regex here still got flagged for backtracking risk even with every
+    quantifier bounded, since the checker doesn't need genuine ambiguity
+    to flag a pattern with more than one quantified group. Fields are one
+    per line in sets.js, so a line-by-line scan is simpler and provably
+    linear - there's nothing left to backtrack.
+    """
+    fields = {}
+    for line in body.splitlines():
+        line = line.strip()
+        colon = line.find(":")
+        if colon <= 0:
+            continue
+        key = line[:colon]
+        if not key.isidentifier():
+            continue
+        rest = line[colon + 1:].lstrip()
+        if not rest.startswith('"'):
+            continue
+        end = rest.find('"', 1)
+        if end == -1:
+            continue
+        fields[key] = rest[1:end]
+    return fields
 
 
 def strip_comments(src):
@@ -42,7 +65,7 @@ def parse_sets(src):
     entries = []
     for m in _ENTRY_RE.finditer(strip_comments(src)):
         sid, body = m.group(1), m.group(2)
-        fields = dict(_FIELD_RE.findall(body))
+        fields = _extract_fields(body)
         fields["id"] = sid
         entries.append(fields)
     return entries
