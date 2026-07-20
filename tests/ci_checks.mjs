@@ -17,10 +17,20 @@ catch (e) { fail('does not parse: ' + e.message); process.exit(1); }
 const ids = Object.keys(SETS);
 if (ids.length === 0) fail('no sets defined'); else ok(ids.length + ' active set(s)');
 
+const allowedSetFields = new Set([
+  'name', 'sheet', 'tcgSet', 'tcgdexSet', 'code', 'logo', 'tab', 'file',
+  'eyebrow', 'subtitle', 'imgTemplate', 'promoSet',
+]);
 for (const [id, cfg] of Object.entries(SETS)) {
   if (/^\d+$/.test(id)) fail(`key "${id}" is purely numeric - JS reorders these; rename it`);
   if (!/^[a-z0-9-]+$/.test(id)) fail(`key "${id}" is not kebab-case (lowercase letters, digits, hyphens only) - rename it to match the other set ids`);
   if (!cfg.name) fail(`"${id}" has no name`);
+  for (const [field, value] of Object.entries(cfg)) {
+    if (!allowedSetFields.has(field))
+      fail(`"${id}" has unknown field "${field}" - possible typo`);
+    if (typeof value !== 'string')
+      fail(`"${id}.${field}" must be a string`);
+  }
   if (cfg.sheet && !/output=csv/.test(cfg.sheet)) fail(`"${id}" sheet link is not a CSV publish link`);
   if (cfg.sheet && /PASTE_TAB_GID/.test(cfg.sheet)) fail(`"${id}" still contains PASTE_TAB_GID - comment the sheet line out or paste the real gid`);
 }
