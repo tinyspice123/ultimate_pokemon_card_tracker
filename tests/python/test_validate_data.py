@@ -109,8 +109,9 @@ class RepositoryValidationTests(unittest.TestCase):
         self.temp.cleanup()
 
     def write_registry(self, configured=True):
-        sheet = 'sheet: "https://example.test/?output=csv",' if configured else ""
+        sheet = 'sheetGid: "123",' if configured else ""
         (self.root / "public" / "sets.js").write_text(
+            'const SHEET_BASE_URL = "https://example.test/pub";\n'
             'const SETS = {\n'
             '  "base": {\n'
             '    name: "Base",\n'

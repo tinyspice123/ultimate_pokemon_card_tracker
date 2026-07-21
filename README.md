@@ -39,7 +39,7 @@ the `SETS` object:
 "stellar-crown": {
   name: "Stellar Crown",
   code: "SV7",
-  sheet: "https://docs.google.com/spreadsheets/d/e/.../pub?gid=123&single=true&output=csv",
+  sheetGid: "123",
   tcgSet: "sv7",
   tcgdexSet: "sv07",
   subtitle: "English master set",
@@ -49,8 +49,9 @@ the `SETS` object:
 Rules:
 
 - Use a unique, kebab-case key such as `stellar-crown`.
-- Publish the individual Google Sheets tab as CSV, not the whole spreadsheet.
-- Make sure each configured set uses a different `gid`.
+- Publish the spreadsheet as CSV and store only the tab's numeric `sheetGid`.
+- Keep the shared publication URL in `SHEET_BASE_URL` and make sure each
+  configured set uses a different `sheetGid`.
 - `tcgSet` is the Pokémon TCG API set code; `tcgdexSet` is the TCGdex code.
 - Optional fields include `logo`, `eyebrow`, `subtitle`, `imgTemplate`,
   `promoSet`, and `cardmarketSet`.

@@ -21,7 +21,7 @@ const ids = Object.keys(SETS);
 if (ids.length === 0) fail('no sets defined'); else ok(ids.length + ' active set(s)');
 
 const allowedSetFields = new Set([
-  'name', 'sheet', 'tcgSet', 'tcgdexSet', 'code', 'logo',
+  'name', 'sheet', 'sheetGid', 'tcgSet', 'tcgdexSet', 'code', 'logo',
   'eyebrow', 'subtitle', 'imgTemplate', 'promoSet', 'cardmarketSet',
 ]);
 for (const [id, cfg] of Object.entries(SETS)) {
@@ -35,7 +35,9 @@ for (const [id, cfg] of Object.entries(SETS)) {
       fail(`"${id}.${field}" must be a string`);
   }
   if (cfg.sheet && !/output=csv/.test(cfg.sheet)) fail(`"${id}" sheet link is not a CSV publish link`);
-  if (cfg.sheet && /PASTE_TAB_GID/.test(cfg.sheet)) fail(`"${id}" still contains PASTE_TAB_GID - comment the sheet line out or paste the real gid`);
+  if (cfg.sheetGid && !/^\d+$/.test(cfg.sheetGid)) fail(`"${id}" sheetGid must contain digits only`);
+  if (cfg.sheetGid && !cfg.sheet?.includes(`gid=${cfg.sheetGid}&`))
+    fail(`"${id}" generated sheet URL does not contain its sheetGid`);
 }
 const gids = Object.entries(SETS).flatMap(([id, c]) => {
   const m = (c.sheet || '').match(/gid=(\d+)/); return m ? [[id, m[1]]] : [];
