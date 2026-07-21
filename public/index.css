@@ -49,3 +49,8 @@
   .bar i{display:block;height:100%;background:var(--crystal);width:0;transition:width .6s ease}
   footer{max-width:900px;margin:44px auto 0;text-align:center;font-size:11px;color:var(--faint)}
   footer a{color:var(--dim)}
+  .errorpage{max-width:620px;margin:0 auto;text-align:center}
+  .errorpage p{color:var(--dim);font-size:15px;line-height:1.6;margin-top:12px}
+  .homebutton{display:inline-block;margin-top:24px;padding:11px 18px;border:1px solid var(--line);
+    border-radius:999px;background:var(--panel2);color:var(--ink);font-weight:700;text-decoration:none}
+  .homebutton:hover{border-color:var(--tera2);box-shadow:0 8px 24px rgba(141,180,255,.14)}

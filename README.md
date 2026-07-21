@@ -118,6 +118,16 @@ python scripts/backup_sheets.py
 The scheduled backup workflow runs the same command weekly and commits only
 when sheet data changed.
 
+Validate every configured backup and exact-variant image mapping offline with:
+
+```bash
+python scripts/validate_data.py
+```
+
+The validator rejects malformed sheet columns, missing collector numbers,
+duplicate card variants, invalid quantities, stale manifest mappings, missing
+image files, and orphaned local images.
+
 ## Tests
 
 Run each test layer from the repository root:
@@ -157,6 +167,9 @@ To replace the site temporarily with its maintenance page, open **Actions →
 Toggle maintenance mode → Run workflow**, choose `enable`, and run it. Choose
 `disable` to redeploy the current site from `public/`. A later successful normal
 deployment also replaces maintenance mode with the live site.
+
+For rollback, sheet restoration, outage and image-repair procedures, see the
+[recovery runbook](docs/RECOVERY.md).
 
 The workflow uses least-privilege job permissions. Pages deployment requires
 `pages: write` and `id-token: write`; SonarQube authentication also uses an OIDC
