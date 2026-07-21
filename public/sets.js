@@ -28,7 +28,7 @@ const SETS = {
 
   "scarlet-violet": {          // Mar 2023
     name: "Scarlet & Violet",
-//    sheetGid: "PASTE_TAB_GID",
+    sheetGid: "711342047",
     tcgSet: "sv1",
   },
 
