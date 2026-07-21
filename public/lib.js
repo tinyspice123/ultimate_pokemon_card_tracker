@@ -207,7 +207,7 @@ function marketplaceSearchUrls(it,cardmarketSet=''){
     ? '' : (it.variant||'').trim();
   const number=String(it.num||'').trim();
   const promo=/^[A-Za-z][A-Za-z0-9-]*\s+\d+$/.test(number);
-  const regular=number.match(/^(\d+)(?:\/\d+)?$/);
+  const regular=/^(\d+)(?:\/\d+)?$/.exec(number);
   let cardmarketNumber='';
   if(promo) cardmarketNumber=number;
   else if(cardmarketSet && regular) cardmarketNumber=`${cardmarketSet} ${regular[1]}`;
