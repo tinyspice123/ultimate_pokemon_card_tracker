@@ -81,7 +81,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
 
 function parseRows(rows){
   items=rowsToItems(rows);
-  buildGroupSel(); render();
+  buildGroupSel(); applyFilterParams(); render();
   document.getElementById('stats').style.display='grid';
   document.getElementById('controls').style.display='flex';
   const foot=document.getElementById('foot');
@@ -121,6 +121,7 @@ function buildGroupSel(){
 // ---- collapsible groups (state kept per set) ----
 const COLLAPSE_KEY='collapse:'+SET_ID;
 const VIEW_KEY='view-mode';
+const SORT_KEY='sort-mode';
 let storageWarningShown=false;
 function noteStorageFailure(operation,error){
   if(storageWarningShown) return;
@@ -149,6 +150,32 @@ catch(error){
 }
 const savedView=storageGet(VIEW_KEY);
 document.getElementById('viewSel').value=savedView==='table'?'table':'cards';
+const savedSort=storageGet(SORT_KEY);
+const validSort=new Set(['','name','price-desc','price-asc']);
+document.getElementById('sortSel').value=validSort.has(savedSort)?savedSort:'';
+
+function applyFilterParams(){
+  const current=new URLSearchParams(location.search);
+  document.getElementById('q').value=current.get('q')||'';
+  document.getElementById('missOnly').checked=current.get('missing')==='1';
+  const group=current.get('group')||'';
+  const select=document.getElementById('groupSel');
+  select.value=[...select.options].some(option=>option.value===group)?group:'';
+}
+function filterUrl(){
+  const next=new URL(location.href);
+  const values={q:document.getElementById('q').value.trim(),
+    group:document.getElementById('groupSel').value,
+    missing:document.getElementById('missOnly').checked?'1':''};
+  Object.entries(values).forEach(([key,value])=>value
+    ? next.searchParams.set(key,value) : next.searchParams.delete(key));
+  return next;
+}
+function commitFilters(){
+  const next=filterUrl();
+  if(next.href!==location.href) history.pushState(null,'',next);
+  render();
+}
 function toggleGroup(g){
   collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g);
   storageSet(COLLAPSE_KEY,JSON.stringify([...collapsed]));
@@ -395,9 +422,9 @@ function stats(){
 let searchTimer=null;
 document.getElementById('q').addEventListener('input',()=>{
   clearTimeout(searchTimer);
-  searchTimer=setTimeout(render,125);
+  searchTimer=setTimeout(commitFilters,125);
 });
-document.getElementById('groupSel').addEventListener('change',render);
+document.getElementById('groupSel').addEventListener('change',commitFilters);
 // ---- export missing / owned ----
 function exportItems(kind){ // respects search + group filters; ignores the Missing-only toggle
   const q=(document.getElementById('q')?.value||"").trim().toLowerCase();
@@ -406,7 +433,9 @@ function exportItems(kind){ // respects search + group filters; ignores the Miss
     if(!it.card) return false;
     if(gsel && it.group!==gsel) return false;
     if(!matchesQuery(it,q)) return false;
-    return kind==='missing' ? it.qty<=0 : it.qty>0;
+    if(kind==='missing') return it.qty<=0;
+    if(kind==='spares') return it.qty>1;
+    return it.qty>0;
   });
 }
 // exportText / exportCsv moved to lib.js
@@ -434,7 +463,7 @@ function closeExportMenus(){
 }
 document.querySelectorAll('.exportwrap').forEach(wrap=>{
   const btn=wrap.querySelector('.exportbtn'), menu=wrap.querySelector('[data-menu]');
-  const kind=btn.id==='exportMissing'?'missing':'owned';
+  const kind=btn.dataset.kind || (btn.id==='exportMissing'?'missing':'owned');
   btn.addEventListener('click',e=>{
     e.stopPropagation();
     const wasOpen=menu.classList.contains('open');
@@ -455,10 +484,18 @@ document.addEventListener('keydown',e=>{
   btn.focus();  // hand focus back to the trigger, as a native menu would
 });
 
-document.getElementById('missOnly').addEventListener('change',render);
-document.getElementById('sortSel').addEventListener('change',render);
+document.getElementById('missOnly').addEventListener('change',commitFilters);
+document.getElementById('sortSel').addEventListener('change',e=>{
+  storageSet(SORT_KEY,e.target.value);
+  render();
+});
 document.getElementById('viewSel').addEventListener('change',e=>{
   storageSet(VIEW_KEY,e.target.value);
+  render();
+});
+window.addEventListener('popstate',()=>{
+  clearTimeout(searchTimer);
+  applyFilterParams();
   render();
 });
 

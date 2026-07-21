@@ -54,7 +54,8 @@ function getCachedProgress(id){
   try{ return JSON.parse(localStorage.getItem('progress:'+id)||'null'); }catch(e){ return null; }
 }
 function setCachedProgress(id,p){
-  try{ localStorage.setItem('progress:'+id, JSON.stringify(p)); }catch(e){}
+  try{ localStorage.setItem('progress:'+id, JSON.stringify(p)); }
+  catch{ /* progress caching is optional when storage is unavailable */ }
 }
 function paintProgress(a,p){
   const t=a.querySelector('[data-prog]'), b=a.querySelector('[data-bar]');

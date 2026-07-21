@@ -114,7 +114,7 @@ for (const file of ['index.html', 'tracker.html', '404.html']) {
   const requiredIds = file === 'index.html'
     ? ['sets', 'setSearch', 'noResults']
     : file === 'tracker.html'
-      ? ['setLogo', 'eyebrowText', 'titleFallback', 'groupSel', 'missOnly', 'sortSel', 'viewSel', 'lightbox', 'notice', 'exportMissing', 'exportOwned']
+      ? ['setLogo', 'eyebrowText', 'titleFallback', 'groupSel', 'missOnly', 'sortSel', 'viewSel', 'lightbox', 'notice', 'exportMissing', 'exportOwned', 'exportSpares']
       : [];
   let missing = false;
   for (const id of requiredIds) {
@@ -154,7 +154,7 @@ catch (e) { fail('manifest.json invalid: ' + e.message); }
 // every local script and stylesheet used by the pages must be in the precache SHELL,
 // or an offline-installed PWA opens a page whose scripts 404 (real bug once)
 const swSrc = fs.readFileSync(sitePath('sw.js'), 'utf8');
-if (!swSrc.includes("const IMAGE_CACHE = 'card-images-v1'"))
+if (!swSrc.includes("const IMAGE_CACHE = 'card-images-v2'"))
   fail('sw.js: persistent image cache is not configured');
 if (!swSrc.includes('IMAGE_CACHE_LIMIT'))
   fail('sw.js: image cache is not bounded');

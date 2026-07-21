@@ -3,14 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://images.pokemontcg.io https://assets.tcgdex.net; connect-src 'self' https://docs.google.com https://doc-08-3o-sheets.googleusercontent.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://images.pokemontcg.io https://assets.tcgdex.net; connect-src 'self' https://docs.google.com https://doc-08-3o-sheets.googleusercontent.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests">
 <title>Stellar Crown — Collection Tracker</title>
 <meta name="description" content="Browse a Pokémon card set checklist, filter missing cards and track collection progress.">
 <meta name="robots" content="noindex,follow">
+<link rel="preconnect" href="https://images.pokemontcg.io" crossorigin>
+<link rel="preconnect" href="https://assets.tcgdex.net" crossorigin>
+<link rel="preconnect" href="https://docs.google.com" crossorigin>
 <script src="sets.js"></script>
 <script src="lib.js"></script>
+<link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="tracker.css">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b0920">
 <link rel="icon" href="assets/icon-192.png">
@@ -75,6 +78,13 @@
   </span>
   <span class="exportwrap">
     <button type="button" class="exportbtn" id="exportOwned" aria-haspopup="menu" aria-expanded="false">⤓ Owned</button>
+    <div class="exportmenu" data-menu>
+      <button type="button" data-act="copy">Copy list</button>
+      <button type="button" data-act="csv">Download CSV</button>
+    </div>
+  </span>
+  <span class="exportwrap">
+    <button type="button" class="exportbtn" id="exportSpares" data-kind="spares" aria-haspopup="menu" aria-expanded="false">⤓ Spares</button>
     <div class="exportmenu" data-menu>
       <button type="button" data-act="copy">Copy list</button>
       <button type="button" data-act="csv">Download CSV</button>

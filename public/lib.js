@@ -196,7 +196,7 @@ function exportText(setName, kind, list){
   const lines=list.map(it=>{
     let l=`- ${it.card} ${it.num}`;
     if(it.variant && it.variant.toLowerCase()!=='regular') l+=` (${it.variant})`;
-    if(kind==='owned' && it.qty>1) l+=` \u00d7${it.qty}`;
+    if((kind==='owned'||kind==='spares') && it.qty>1) l+=` \u00d7${it.qty}`;
     if(it.price) l+=` \u2014 ${it.price}`;
     return l;
   });
@@ -212,9 +212,10 @@ function csvEscape(v){
 
 // CSV export; owned exports gain a Have column with quantities.
 function exportCsv(kind, list){
-  const rows=[["Card","Number","Variant","Group","Price"].concat(kind==='owned'?["Have"]:[])];
+  const withQty=kind==='owned'||kind==='spares';
+  const rows=[["Card","Number","Variant","Group","Price"].concat(withQty?["Have"]:[])];
   list.forEach(it=>rows.push(
-    [it.card,it.num,it.variant,it.group,it.price].concat(kind==='owned'?[it.qty]:[])));
+    [it.card,it.num,it.variant,it.group,it.price].concat(withQty?[it.qty]:[])));
   return rows.map(r=>r.map(csvEscape).join(",")).join("\n");
 }
 

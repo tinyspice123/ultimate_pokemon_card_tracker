@@ -173,6 +173,9 @@ test('exportText', async (t) => {
     assert.equal(exportText('Stellar Crown','owned',[exList[1]]),
       'Stellar Crown — owned (1 card)\n- Eevee 133 (Reverse holo) ×3');
   });
+  await t.test('spares export includes the owned quantity', () => {
+    assert.match(exportText('Stellar Crown','spares',[exList[1]]),/\u00d73/);
+  });
 });
 
 test('exportCsv / csvEscape', async (t) => {
@@ -190,6 +193,10 @@ test('exportCsv / csvEscape', async (t) => {
   await t.test('missing export has no Have column', () => {
     const missing = exportCsv('missing',[{card:'Pikachu', num:'025', variant:'Regular', group:'Base', price:'£1.20', qty:0}]);
     assert.equal(missing.split('\n')[0], 'Card,Number,Variant,Group,Price');
+  });
+  await t.test('spares export includes a Have column', () => {
+    assert.equal(exportCsv('spares',[{card:'Pikachu',num:'025',variant:'Regular',group:'Base',price:'',qty:2}]).split('\n')[0],
+      'Card,Number,Variant,Group,Price,Have');
   });
 });
 

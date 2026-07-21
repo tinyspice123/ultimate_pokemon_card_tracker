@@ -2,14 +2,15 @@
 // Strategy: network-first for pages/config (so updates land immediately),
 // cache-first for images and logos (fast + offline), never cache sheet CSVs
 // beyond a session fallback.
-const VERSION = 'shell-v5';
+const VERSION = 'shell-v6';
 // Keep downloaded card art across shell releases. Browser storage quotas still
 // apply, so the user agent may evict older images when space is constrained.
-const IMAGE_CACHE = 'card-images-v1';
+const IMAGE_CACHE = 'card-images-v2';
 const IMAGE_CACHE_LIMIT = 200;
 const SHELL = [
-  './', 'index.html', '404.html', 'index.css', 'index.js',
+  './', 'index.html', '404.html', 'fonts.css', 'index.css', 'index.js',
   'tracker.html', 'tracker.css', 'tracker.js',
+  'assets/fonts/sora-latin.woff2', 'assets/fonts/unbounded-latin.woff2',
   'sets.js', 'lib.js', 'manifest.json'
 ];
 

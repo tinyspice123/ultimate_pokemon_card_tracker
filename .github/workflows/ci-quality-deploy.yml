@@ -44,11 +44,11 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Zero-dependency site checks
-        run: npm run test:site
-
-      - name: Install coverage tool
+      - name: Install development tools
         run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Site checks and lint
+        run: npm run test:site
 
       - name: lib.js unit tests with coverage
         run: npm run test:coverage

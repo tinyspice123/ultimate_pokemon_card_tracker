@@ -10,12 +10,6 @@ const SHEET = [
 const TEST_IMAGE = path.resolve('public/assets/icon-192.png');
 
 async function mockTrackerData(page, highResolutionDelay = 0) {
-  await page.route('https://fonts.googleapis.com/**', route => route.fulfill({
-    status: 200,
-    contentType: 'text/css',
-    body: '',
-  }));
-  await page.route('https://fonts.gstatic.com/**', route => route.abort());
   await page.route('https://docs.google.com/**', route => route.fulfill({
     status: 200,
     contentType: 'text/csv',
