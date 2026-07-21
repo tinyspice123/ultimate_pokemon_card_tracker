@@ -104,10 +104,7 @@ for (const file of ['index.html', 'tracker.html', '404.html']) {
       fail('CSP is missing object-src/base-uri restrictions');
     if (csp.includes('sha256-')) fail('CSP contains a stale inline-content hash');
     if (csp.includes("'unsafe-inline'")) fail("CSP must not allow 'unsafe-inline'");
-    // Google published-sheet redirects use rotating doc-XX shards. Permit only
-    // that scoped wildcard; all other CSP sources must remain exact hosts.
-    if (csp.replace('https://*.googleusercontent.com','').includes('*'))
-      fail('CSP must use exact hosts except for Google published-sheet shards');
+    if (csp.includes('*')) fail('CSP must use exact hosts, not wildcards');
     if (/img-src[^;]*\shttps:\s*(?:;|$)/.test(csp))
       fail('CSP image sources must use explicit hosts, not all HTTPS origins');
   }
