@@ -31,19 +31,12 @@ def find_column(header: list[str], *needles: str) -> int | None:
                  if any(needle in value for needle in needles)), None)
 
 
-def validate_sheet(path: Path) -> tuple[list[str], set[str]]:
-    """Validate one CSV backup and return errors plus its card identities."""
-    errors: list[str] = []
-    with path.open(newline="", encoding="utf-8-sig") as handle:
-        rows = list(csv.reader(handle))
-    if not rows:
-        return [f"{path}: empty CSV"], set()
-
+def sheet_columns(path: Path, rows: list[list[str]]) -> tuple[list[str], int, tuple[int, ...]]:
+    """Locate and validate the required sheet columns."""
     header_index = next((i for i, row in enumerate(rows[:5])
-                         if find_column(row, "card") is not None), None)
-    if header_index is None:
-        return [f"{path}: no Card header in the first five rows"], set()
-
+                         if find_column(row, "card") is not None), -1)
+    if header_index < 0:
+        return [f"{path}: no Card header in the first five rows"], -1, ()
     header = rows[header_index]
     columns = {
         "card": find_column(header, "card"),
@@ -51,41 +44,87 @@ def validate_sheet(path: Path) -> tuple[list[str], set[str]]:
         "variant": find_column(header, "variant", "stamp"),
         "have": find_column(header, "have", "own", "qty", "quantity"),
     }
-    for name, index in columns.items():
-        if index is None:
-            errors.append(f"{path}: missing {name.title()} column")
+    errors = [f"{path}: missing {name.title()} column"
+              for name, index in columns.items() if index is None]
+    if errors:
+        return errors, header_index, ()
+    return errors, header_index, tuple(columns.values())
+
+
+def row_value(row: list[str], index: int) -> str:
+    return row[index].strip() if index < len(row) else ""
+
+
+def validate_sheet_row(path: Path, line_number: int, row: list[str],
+                       columns: tuple[int, ...], identities: set[str]) -> list[str]:
+    """Validate one card row; group headings return no errors or identity."""
+    card_i, number_i, variant_i, have_i = columns
+    card = row_value(row, card_i)
+    if not card:
+        return []
+    number = row_value(row, number_i)
+    variant = row_value(row, variant_i)
+    quantity = row_value(row, have_i)
+    errors = []
+    if not number:
+        errors.append(f"{path}:{line_number}: {card!r} has no collector number")
+    identity = normalized_key(card, number, variant)
+    if identity in identities:
+        errors.append(
+            f"{path}:{line_number}: duplicate card/number/variant {card!r} / "
+            f"{number!r} / {variant!r}")
+    identities.add(identity)
+    if quantity and not QUANTITY.fullmatch(quantity):
+        errors.append(f"{path}:{line_number}: invalid Have value {quantity!r}")
+    return errors
+
+
+def validate_sheet(path: Path) -> tuple[list[str], set[str]]:
+    """Validate one CSV backup and return errors plus its card identities."""
+    errors: list[str] = []
+    with path.open(newline="", encoding="utf-8-sig") as handle:
+        rows = list(csv.reader(handle))
+    if not rows:
+        return [f"{path}: empty CSV"], set()
+    errors, header_index, columns = sheet_columns(path, rows)
     if errors:
         return errors, set()
-
-    card_i = columns["card"]
-    number_i = columns["number"]
-    variant_i = columns["variant"]
-    have_i = columns["have"]
-    assert None not in (card_i, number_i, variant_i, have_i)
-
     identities: set[str] = set()
     for line_number, row in enumerate(rows[header_index + 1:], header_index + 2):
-        value = lambda index: row[index].strip() if index < len(row) else ""
-        card = value(card_i)
-        if not card:  # group heading or intentional blank row
-            continue
-        number = value(number_i)
-        variant = value(variant_i)
-        quantity = value(have_i)
-        if not number:
-            errors.append(f"{path}:{line_number}: {card!r} has no collector number")
-        identity = normalized_key(card, number, variant)
-        if identity in identities:
-            errors.append(
-                f"{path}:{line_number}: duplicate card/number/variant {card!r} / "
-                f"{number!r} / {variant!r}")
-        identities.add(identity)
-        if quantity and not QUANTITY.fullmatch(quantity):
-            errors.append(f"{path}:{line_number}: invalid Have value {quantity!r}")
-
+        errors.extend(validate_sheet_row(path, line_number, row, columns, identities))
     if not identities:
         errors.append(f"{path}: contains no card rows")
     return errors, identities
+
+
+def parse_manifest_line(path: Path, line_number: int, raw: str):
+    """Parse one manifest line, returning None for intentional blank lines."""
+    if not raw.strip():
+        return None
+    parts = raw.split("|")
+    if len(parts) < 4:
+        return "", "", [f"{path}:{line_number}: expected card|number|variant|filename"]
+    filename = parts[-1].strip()
+    identity = "|".join(part.strip().casefold() for part in parts[:-1])
+    return identity, filename, []
+
+
+def validate_manifest_entry(path: Path, line_number: int, identity: str,
+                            filename: str, manifest_keys: set[str],
+                            sheet_keys: set[str]) -> tuple[list[str], bool]:
+    """Validate a parsed manifest entry; bool says whether its file is safe."""
+    errors = []
+    if identity in manifest_keys:
+        errors.append(f"{path}:{line_number}: duplicate manifest identity {identity!r}")
+    manifest_keys.add(identity)
+    if filename != Path(filename).name or "/" in filename or "\\" in filename:
+        errors.append(f"{path}:{line_number}: filename must not contain a path")
+        return errors, False
+    if not (path.parent / filename).is_file():
+        errors.append(f"{path}:{line_number}: missing image file {filename!r}")
+    if sheet_keys and identity not in sheet_keys:
+        errors.append(f"{path}:{line_number}: image mapping is not present in the sheet")
+    return errors, True
 
 
 def validate_manifest(path: Path, sheet_keys: set[str]) -> list[str]:
@@ -94,25 +133,18 @@ def validate_manifest(path: Path, sheet_keys: set[str]) -> list[str]:
     manifest_keys: set[str] = set()
     referenced_files: set[str] = set()
     for line_number, raw in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
-        if not raw.strip():
+        parsed = parse_manifest_line(path, line_number, raw)
+        if parsed is None:
             continue
-        parts = raw.split("|")
-        if len(parts) < 4:
-            errors.append(f"{path}:{line_number}: expected card|number|variant|filename")
+        identity, filename, parse_errors = parsed
+        errors.extend(parse_errors)
+        if parse_errors:
             continue
-        filename = parts[-1].strip()
-        identity = "|".join(part.strip().casefold() for part in parts[:-1])
-        if identity in manifest_keys:
-            errors.append(f"{path}:{line_number}: duplicate manifest identity {identity!r}")
-        manifest_keys.add(identity)
-        if filename != Path(filename).name or "/" in filename or "\\" in filename:
-            errors.append(f"{path}:{line_number}: filename must not contain a path")
-            continue
-        referenced_files.add(filename)
-        if not (path.parent / filename).is_file():
-            errors.append(f"{path}:{line_number}: missing image file {filename!r}")
-        if sheet_keys and identity not in sheet_keys:
-            errors.append(f"{path}:{line_number}: image mapping is not present in the sheet")
+        entry_errors, safe_file = validate_manifest_entry(
+            path, line_number, identity, filename, manifest_keys, sheet_keys)
+        errors.extend(entry_errors)
+        if safe_file:
+            referenced_files.add(filename)
 
     actual_images = {
         item.name for item in path.parent.iterdir()
