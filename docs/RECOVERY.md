@@ -81,5 +81,7 @@ rollback procedure.
   responses.
 - A configured sheet loads and progress totals appear.
 - One exact promo/variant override displays its local image.
-- Missing/owned exports work.
-- The latest deployment smoke test and scheduled backup validation are green.
+- Missing/owned/spares exports work and a copied filtered URL restores its
+  search, group, and missing-only state.
+- The latest deployment smoke test, production dependency canary, and scheduled
+  backup validation are green.

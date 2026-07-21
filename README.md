@@ -2,11 +2,13 @@
 
 A static, multi-set Pokémon card collection tracker backed by published Google
 Sheets. The home page lists configured sets and their completion; each set opens
-the same reusable tracker with filtering, ownership totals, prices, exports,
-offline caching, local card images, and marketplace search links.
+the same reusable tracker with shareable filtering, ownership totals, prices,
+owned/missing/spares exports, offline caching, local card images, and
+marketplace search links. Display and sort preferences persist in the browser.
 
-The site has no production build step. Everything inside `public/` is deployed
-unchanged to GitHub Pages.
+The site has no application bundling step. GitHub Pages receives `public/`
+directly after CI replaces the service worker's cache-version placeholder with
+the deploying commit's short SHA.
 
 ## Quick start
 
@@ -29,6 +31,21 @@ node tests/e2e/static-server.mjs public
 
 Then open <http://127.0.0.1:4173/>. The local server is deliberately small and
 serves only `public/`, matching the files deployed by GitHub Pages.
+
+Sora and Unbounded are self-hosted under `public/assets/fonts/`, including
+their OFL license files, so typography works without Google Fonts or a network
+connection.
+
+## Tracker controls
+
+- Search, group, and missing-only filters are encoded in the URL so a filtered
+  checklist can be shared. Search edits replace the current history entry;
+  discrete group/missing changes remain navigable with Back and Forward.
+- Card/table view and sort selection persist locally between visits.
+- Missing, owned, and spares (`Have > 1`) lists can be copied or downloaded as
+  CSV. Exports respect the active search and group filters.
+- Press `/` to focus search and `m` to toggle missing-only while keeping the
+  shareable URL synchronized.
 
 ## Add or edit a set
 
@@ -145,7 +162,9 @@ python scripts/backup_sheets.py
 ```
 
 The scheduled backup workflow runs the same command weekly and commits only
-when sheet data changed.
+when sheet data changed. It also synchronizes image manifests; when that changes
+anything under `public/`, the workflow explicitly dispatches the normal test and
+deployment pipeline so production never waits for an unrelated push.
 
 Validate every configured backup and exact-variant image mapping offline with:
 
@@ -168,12 +187,13 @@ npm run test:e2e
 npm run test:python
 ```
 
-- `tests/site/` validates configuration, HTML, CSP, JavaScript syntax, and PWA
-  precaching without installing extra packages.
+- `npm run test:site` runs ESLint, then `tests/site/` validates configuration,
+  HTML, CSP, JavaScript syntax, workflow policy, and PWA precaching.
 - `tests/unit/` exercises shared JavaScript and service-worker behavior.
 - `tests/python/` tests the maintenance scripts without real network calls.
 - `tests/e2e/` runs the tracker in desktop and mobile Chrome with deterministic
-  mocked sheet data.
+  mocked sheet data, plus a service-worker-enabled offline reload integration
+  test.
 
 JavaScript coverage is written to `coverage/`; Playwright failures are written
 to `test-results/`. Both are generated and ignored by Git.
@@ -186,9 +206,15 @@ On pushes to `main` and pull requests, GitHub Actions runs:
 2. Python unit coverage.
 3. Desktop and mobile Playwright tests.
 4. SonarQube analysis and Quality Gate validation.
-5. A GitHub Pages upload of `public/` when the checks pass on `main`.
+5. Injection of a commit-derived service-worker shell cache version, followed
+   by a GitHub Pages upload of `public/` when checks pass on `main`.
 6. Post-deployment smoke checks for the home page, tracker, manifest, and
    service worker.
+
+The weekly **Production dependency canary** follows a live published-sheet
+redirect, rejects HTML/error responses, and verifies that the final Google
+delivery host remains in both CSP allowlists. This monitors shard changes even
+when no deployment occurs.
 
 ### Maintenance mode
 
@@ -215,9 +241,10 @@ token.
 │   ├── tracker.js/css      # Tracker behavior and styles
 │   ├── lib.js              # Shared, testable data and image logic
 │   ├── sets.js             # Set registry and sheet URLs
-│   ├── sw.js               # Offline service worker
+│   ├── sw.js               # Offline service worker with CI version placeholder
+│   ├── fonts.css           # Self-hosted font declarations
 │   ├── manifest.json       # PWA metadata
-│   ├── assets/             # Icons and locally mirrored set logos
+│   ├── assets/             # Icons, fonts/licenses, and mirrored set logos
 │   └── img/<set-id>/       # Local card variants and manifest
 ├── scripts/                # Download, validation, and backup tools
 ├── tests/
@@ -228,6 +255,7 @@ token.
 ├── docs/template.csv       # Example sheet tab to import
 ├── backups/                # Versioned collection snapshots
 ├── playwright.config.mjs
+├── eslint.config.mjs
 ├── sonar-project.properties
 └── package.json
 ```
@@ -248,6 +276,9 @@ published CSV output parameter.
 **Sheet data does not load** — confirm the individual tab is published to the
 web and that its URL contains `output=csv`. A normal edit/share URL is not a CSV
 endpoint.
+If the URL works directly, check the browser console for a CSP error on a
+changed `doc-XX-YY-sheets.googleusercontent.com` shard and follow the
+[recovery runbook](docs/RECOVERY.md).
 
 **A local card image does not appear** — check that its file and manifest are in
 `public/img/<set-id>/`. Manifest matching ignores cosmetic case and punctuation;
