@@ -2,7 +2,7 @@
 // Strategy: network-first for pages/config (so updates land immediately),
 // cache-first for images and logos (fast + offline), never cache sheet CSVs
 // beyond a session fallback.
-const VERSION = 'shell-v6';
+const VERSION = 'shell-__BUILD_VERSION__';
 // Keep downloaded card art across shell releases. Browser storage quotas still
 // apply, so the user agent may evict older images when space is constrained.
 const IMAGE_CACHE = 'card-images-v2';

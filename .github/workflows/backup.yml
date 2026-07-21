@@ -18,6 +18,7 @@ jobs:
   backup:
     permissions:
       contents: write
+      actions: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -39,9 +40,15 @@ jobs:
       - name: Validate collection backups and image manifests
         run: python scripts/validate_data.py
       - name: Commit if changed
+        id: commit
         run: |
           git config user.name "collection-backup[bot]"
           git config user.email "actions@github.com"
+          if [[ -n "$(git status --porcelain -- public/)" ]]; then
+            echo "public_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "public_changed=false" >> "$GITHUB_OUTPUT"
+          fi
           git add backups/ public/img/*/manifest.txt
           if git diff --cached --quiet; then
             echo "No changes since last backup"
@@ -49,6 +56,11 @@ jobs:
             git commit -m "Weekly collection backup [skip ci]"
             git push
           fi
+      - name: Deploy synchronized public manifests
+        if: steps.commit.outputs.public_changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci-quality-deploy.yml --ref main
 
   check-logos:
     name: Set logo reachability

@@ -403,7 +403,7 @@ document.addEventListener('keydown',e=>{
   }
   if(typing){ if(e.key==='Escape'){ document.activeElement.blur(); } return; }
   if(e.key==='/'){ e.preventDefault(); document.getElementById('q').focus(); }
-  else if(e.key==='m'||e.key==='M'){ const c=document.getElementById('missOnly'); c.checked=!c.checked; render(); }
+  else if(e.key==='m'||e.key==='M'){ const c=document.getElementById('missOnly'); c.checked=!c.checked; commitFilters(true); }
 });
 
 function stats(){

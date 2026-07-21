@@ -74,7 +74,7 @@ beforeEach(loadWorker);
 test('install precaches the shell and activates immediately',async()=>{
   const event=lifecycleEvent();
   listeners.install(event); await event.promise;
-  assert.deepEqual(stores.get('shell-v6').precached,
+  assert.deepEqual(stores.get('shell-__BUILD_VERSION__').precached,
     ['./','index.html','404.html','fonts.css','index.css','index.js','tracker.html','tracker.css',
       'tracker.js','assets/fonts/sora-latin.woff2','assets/fonts/unbounded-latin.woff2',
       'sets.js','lib.js','manifest.json']);
@@ -87,7 +87,7 @@ test('activate removes stale caches but preserves shell and card images',async()
   stores.set('shell-v3',new FakeCache());
   stores.set('shell-v4',new FakeCache());
   stores.set('shell-v5',new FakeCache());
-  stores.set('shell-v6',new FakeCache());
+  stores.set('shell-__BUILD_VERSION__',new FakeCache());
   stores.set('card-images-v1',new FakeCache());
   stores.set('card-images-v2',new FakeCache());
   const event=lifecycleEvent();
@@ -143,11 +143,11 @@ test('same-origin pages are network-first and cached',async()=>{
   const event=fetchEvent('https://tracker.test/tracker.html');
   listeners.fetch(event);
   assert.equal(await event.response,network);
-  assert.equal(stores.get('shell-v6').entries.has(event.request.url),true);
+  assert.equal(stores.get('shell-__BUILD_VERSION__').entries.has(event.request.url),true);
 });
 
 test('page requests fall back to cache offline and non-GET is ignored',async()=>{
-  const shell=new FakeCache(); stores.set('shell-v6',shell);
+  const shell=new FakeCache(); stores.set('shell-__BUILD_VERSION__',shell);
   const cached=fakeResponse({body:'offline'});
   await shell.put('https://tracker.test/index.html',cached);
   fetchImpl=async()=>{ throw new Error('offline'); };

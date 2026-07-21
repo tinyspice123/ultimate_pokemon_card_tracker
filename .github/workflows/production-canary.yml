@@ -1,0 +1,52 @@
+name: Production dependency canary
+
+on:
+  schedule:
+    - cron: "30 10 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  published-sheet:
+    name: Google Sheets delivery and CSP
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/index.html
+            /public/tracker.html
+            /public/sets.js
+            /scripts/sets_js.py
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Verify a live published sheet and its delivery host
+        shell: bash
+        run: |
+          set -euo pipefail
+          sheet_url="$(python - <<'PY'
+          from pathlib import Path
+          from scripts.sets_js import parse_sets
+
+          entry = next(item for item in parse_sets(Path("public/sets.js").read_text(encoding="utf-8")) if item.get("sheet"))
+          print(entry["sheet"])
+          PY
+          )"
+          final_url="$(curl --fail --silent --show-error --location --max-time 30 \
+            --output /tmp/published-sheet.csv --write-out '%{url_effective}' "$sheet_url")"
+          final_host="$(python -c 'import sys, urllib.parse; print(urllib.parse.urlparse(sys.argv[1]).hostname)' "$final_url")"
+          test -n "$final_host"
+          if head -c 256 /tmp/published-sheet.csv | grep -qi '<html'; then
+            echo "Published sheet returned HTML instead of CSV" >&2
+            exit 1
+          fi
+          grep -Fq "https://$final_host" public/index.html
+          grep -Fq "https://$final_host" public/tracker.html
+          echo "Published CSV is reachable through CSP-allowed host: $final_host"

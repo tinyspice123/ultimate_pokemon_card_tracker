@@ -154,6 +154,8 @@ catch (e) { fail('manifest.json invalid: ' + e.message); }
 // every local script and stylesheet used by the pages must be in the precache SHELL,
 // or an offline-installed PWA opens a page whose scripts 404 (real bug once)
 const swSrc = fs.readFileSync(sitePath('sw.js'), 'utf8');
+if (!swSrc.includes("const VERSION = 'shell-__BUILD_VERSION__'"))
+  fail('sw.js: deploy-time shell version placeholder is missing');
 if (!swSrc.includes("const IMAGE_CACHE = 'card-images-v2'"))
   fail('sw.js: persistent image cache is not configured');
 if (!swSrc.includes('IMAGE_CACHE_LIMIT'))
