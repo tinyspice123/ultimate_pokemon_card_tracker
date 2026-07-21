@@ -23,8 +23,9 @@ if (ids.length === 0) fail('no sets defined'); else ok(ids.length + ' active set
 const allowedSetFields = new Set([
   'name', 'sheet', 'sheetGid', 'tcgSet', 'tcgdexSet', 'code', 'logo',
   'eyebrow', 'subtitle', 'imgTemplate', 'promoSet', 'cardmarketSet',
-  'cardmarketUrl',
+  'cardmarketUrl', 'homeGroup',
 ]);
+const allowedHomeGroups = new Set(['sv', 'mega', 'misc']);
 for (const [id, cfg] of Object.entries(SETS)) {
   if (/^\d+$/.test(id)) fail(`key "${id}" is purely numeric - JS reorders these; rename it`);
   if (!/^[a-z0-9-]+$/.test(id)) fail(`key "${id}" is not kebab-case (lowercase letters, digits, hyphens only) - rename it to match the other set ids`);
@@ -33,6 +34,8 @@ for (const [id, cfg] of Object.entries(SETS)) {
     fail(`"${id}" has no Cardmarket set code or collection URL`);
   if (cfg.cardmarketUrl && !/^https:\/\/www\.cardmarket\.com\/en\/Pokemon\/Species\/[A-Za-z0-9-]+$/.test(cfg.cardmarketUrl))
     fail(`"${id}" has an invalid Cardmarket collection URL`);
+  if (!allowedHomeGroups.has(cfg.homeGroup))
+    fail(`"${id}" has an invalid or missing homeGroup`);
   for (const [field, value] of Object.entries(cfg)) {
     if (!allowedSetFields.has(field))
       fail(`"${id}" has unknown field "${field}" - possible typo`);
