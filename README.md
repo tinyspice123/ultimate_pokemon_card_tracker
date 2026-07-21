@@ -151,6 +151,13 @@ On pushes to `main` and pull requests, GitHub Actions runs:
 6. Post-deployment smoke checks for the home page, tracker, manifest, and
    service worker.
 
+### Maintenance mode
+
+To replace the site temporarily with its maintenance page, open **Actions →
+Toggle maintenance mode → Run workflow**, choose `enable`, and run it. Choose
+`disable` to redeploy the current site from `public/`. A later successful normal
+deployment also replaces maintenance mode with the live site.
+
 The workflow uses least-privilege job permissions. Pages deployment requires
 `pages: write` and `id-token: write`; SonarQube authentication also uses an OIDC
 token.
