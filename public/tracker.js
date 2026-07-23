@@ -78,31 +78,49 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   }
 });
 async function fetchCsvRows(url,source){
-  let res;
+  const res=await fetchCsvResponse(url,source);
+  ensureCsvResponse(res,source);
+  const text=await res.text();
+  ensureCsvText(text,source);
+  const rows=csvToRows(text);
+  ensureCsvColumns(rows,source);
+  return rows;
+}
+
+async function fetchCsvResponse(url,source){
   try{
-    res=await fetch(url,{cache:"no-store"});
+    return await fetch(url,{cache:"no-store"});
   }catch(error){
     throw new Error(source==='live'
       ? 'Google Sheets could not be reached. Check your connection and try again.'
       : 'The local backup could not be reached.',{cause:error});
   }
-  if(!res.ok){
-    if(source==='live' && res.status===403)
-      throw new Error('Google Sheets denied access. Check that the document is published to the web.');
-    if(source==='live' && res.status===404)
-      throw new Error('The published Google Sheet could not be found.');
-    throw new Error(`${source==='live'?'Google Sheets':'The local backup'} returned HTTP ${res.status}.`);
-  }
-  const text=await res.text();
-  if(/^\s*</.test(text))
-    throw new Error(source==='live'
-      ? 'Google Sheets returned a webpage instead of published CSV data.'
-      : 'The local backup is not valid CSV data.');
-  const rows=csvToRows(text);
+}
+
+function ensureCsvResponse(res,source){
+  if(res.ok) return;
+  const liveErrors={
+    403:'Google Sheets denied access. Check that the document is published to the web.',
+    404:'The published Google Sheet could not be found.',
+  };
+  if(source==='live' && liveErrors[res.status])
+    throw new Error(liveErrors[res.status]);
+  const label=source==='live'?'Google Sheets':'The local backup';
+  throw new Error(`${label} returned HTTP ${res.status}.`);
+}
+
+function ensureCsvText(text,source){
+  if(!/^\s*</.test(text)) return;
+  throw new Error(source==='live'
+    ? 'Google Sheets returned a webpage instead of published CSV data.'
+    : 'The local backup is not valid CSV data.');
+}
+
+function ensureCsvColumns(rows,source){
   const columns=detectColumns(rows[0]);
-  if(columns.cCard<0 || columns.cHave<0)
-    throw new Error(`${source==='live'?'The Google Sheet':'The local backup'} is missing required Card or Have columns.`);
-  return rows;
+  if(columns.cCard>=0 && columns.cHave>=0) return;
+  const label=source==='live'?'The Google Sheet':'The local backup';
+  throw new Error(`${label} is missing required Card or Have columns.`);
 }
 
 function showBackupBanner(liveError){
