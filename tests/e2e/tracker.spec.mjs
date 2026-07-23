@@ -34,6 +34,36 @@ test('loads data and filters cards', async ({ page }) => {
   await expect(page.locator('.item .nm')).toHaveText('Eevee');
 });
 
+test('uses the packaged backup and displays a warning when Google is unavailable', async ({ page }) => {
+  await page.unroute('https://docs.google.com/**');
+  await page.route('https://docs.google.com/**', route => route.abort('failed'));
+  await page.route('**/data/stellar-crown.csv', route => route.fulfill({
+    status: 200,
+    contentType: 'text/csv',
+    body: SHEET.replaceAll('Playwright','Packaged backup'),
+  }));
+
+  await page.goto('/tracker.html?set=stellar-crown', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.locator('.item')).toHaveCount(2);
+  await expect(page.locator('#dataBanner')).toBeVisible();
+  await expect(page.locator('#dataBanner')).toContainText('showing the latest backup');
+  await expect(page.locator('.item .src').first()).toHaveText('Packaged backup');
+});
+
+test('explains when neither live nor backup data can be loaded', async ({ page }) => {
+  await page.unroute('https://docs.google.com/**');
+  await page.route('https://docs.google.com/**', route => route.fulfill({status:403}));
+  await page.route('**/data/stellar-crown.csv', route => route.fulfill({status:404}));
+
+  await page.goto('/tracker.html?set=stellar-crown', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.locator('#notice')).toBeVisible();
+  await expect(page.locator('#notice')).toContainText('Collection data is temporarily unavailable');
+  await expect(page.locator('#notice')).toContainText('Google Sheets denied access');
+  await expect(page.locator('#notice')).toContainText('local backup');
+});
+
 test('builds marketplace searches from the card details', async ({ page }) => {
   const item=page.locator('.item').first();
   const ebay=item.locator('[data-market="ebay"]');

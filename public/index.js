@@ -5,7 +5,6 @@ const HOME_GROUPS={
   misc:"Mew & Miscellaneous",
 };
 const groupGrids=new Map();
-
 function groupGrid(key){
   const safeKey=Object.hasOwn(HOME_GROUPS,key)?key:'misc';
   if(groupGrids.has(safeKey)) return groupGrids.get(safeKey);
@@ -107,7 +106,6 @@ Object.entries(SETS).forEach(([id,cfg])=>{
     }).catch(()=>{ if(!cached) a.querySelector('[data-prog]').textContent=''; });
   }
 });
-
 document.getElementById('setSearch').addEventListener('input', e=>{
   const q=e.target.value.trim().toLowerCase();
   let visible=0;
@@ -121,5 +119,3 @@ document.getElementById('setSearch').addEventListener('input', e=>{
   });
   document.getElementById('noResults').style.display = visible? 'none':'block';
 });
-
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');

@@ -9,13 +9,17 @@ const IMAGE_CACHE = 'card-images-v2';
 const IMAGE_CACHE_LIMIT = 200;
 const SHELL = [
   './', 'index.html', '404.html', 'fonts.css', 'index.css', 'index.js',
-  'tracker.html', 'tracker.css', 'tracker.js',
+  'tracker.html', 'tracker.css', 'tracker.js', 'pwa.css', 'pwa.js',
   'assets/fonts/sora-latin.woff2', 'assets/fonts/unbounded-latin.woff2',
   'sets.js', 'lib.js', 'manifest.json'
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)));
+});
+
+self.addEventListener('message',event=>{
+  if(event.data?.type==='SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {

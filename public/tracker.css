@@ -38,6 +38,12 @@
     border:1px solid rgba(255,212,126,.4);background:rgba(255,212,126,.06);
     border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink);line-height:1.55;
   }
+  .data-banner{
+    display:none;max-width:1140px;margin:18px auto 0;border:1px solid rgba(255,212,126,.45);
+    background:rgba(255,212,126,.08);border-radius:12px;padding:12px 16px;
+    color:var(--tera4);font-size:13px;line-height:1.5;
+  }
+  .data-banner.show{display:block}
   .stats{
     max-width:1180px; margin:22px auto 0; padding:0 20px;
     display:none; grid-template-columns:auto 1fr; gap:22px; align-items:center;

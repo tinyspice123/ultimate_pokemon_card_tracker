@@ -4,6 +4,7 @@ const params = new URLSearchParams(location.search);
 const SET_ID = (typeof SETS!=="undefined" && SETS[params.get('set')]) ? params.get('set') : Object.keys(SETS)[0];
 const cfg = SETS[SET_ID];
 const SHEET_URL = cfg.sheet || "";
+const BACKUP_URL = `data/${encodeURIComponent(SET_ID)}.csv`;
 
 // header branding from config
 document.title = cfg.name + " — Pokemon Card Tracker";
@@ -65,19 +66,66 @@ window.addEventListener('DOMContentLoaded', async ()=>{
     return;
   }
   try{
-    const res = await fetch(SHEET_URL, {cache:"no-store"});
-    if(!res.ok) throw new Error(res.status);
-    const text = await res.text();
-    if(/^\s*</.test(text)) throw new Error("Got a web page, not CSV — use the Publish-to-web CSV link or /export?format=csv");
-    parseRows(csvToRows(text));
+    parseRows(await fetchCsvRows(SHEET_URL,'live'));
     markSynced();
-  }catch(e){
-    const n=document.getElementById('notice');
-    n.style.display='block';
-    n.querySelector('.inner').insertAdjacentHTML('afterbegin',
-      '<div class="notice-title">'+esc(String(e.message||e))+'</div>');
+  }catch(liveError){
+    try{
+      parseRows(await fetchCsvRows(BACKUP_URL,'backup'));
+      showBackupBanner(liveError);
+    }catch(backupError){
+      showDataFailure(liveError,backupError);
+    }
   }
 });
+async function fetchCsvRows(url,source){
+  let res;
+  try{
+    res=await fetch(url,{cache:"no-store"});
+  }catch(error){
+    throw new Error(source==='live'
+      ? 'Google Sheets could not be reached. Check your connection and try again.'
+      : 'The local backup could not be reached.',{cause:error});
+  }
+  if(!res.ok){
+    if(source==='live' && res.status===403)
+      throw new Error('Google Sheets denied access. Check that the document is published to the web.');
+    if(source==='live' && res.status===404)
+      throw new Error('The published Google Sheet could not be found.');
+    throw new Error(`${source==='live'?'Google Sheets':'The local backup'} returned HTTP ${res.status}.`);
+  }
+  const text=await res.text();
+  if(/^\s*</.test(text))
+    throw new Error(source==='live'
+      ? 'Google Sheets returned a webpage instead of published CSV data.'
+      : 'The local backup is not valid CSV data.');
+  const rows=csvToRows(text);
+  const columns=detectColumns(rows[0]);
+  if(columns.cCard<0 || columns.cHave<0)
+    throw new Error(`${source==='live'?'The Google Sheet':'The local backup'} is missing required Card or Have columns.`);
+  return rows;
+}
+
+function showBackupBanner(liveError){
+  const banner=document.getElementById('dataBanner');
+  banner.textContent='Live Google Sheet unavailable — showing the latest backup. Recent collection changes may not appear.';
+  banner.title=String(liveError.message||liveError);
+  banner.classList.add('show');
+}
+
+function showDataFailure(liveError,backupError){
+  const notice=document.getElementById('notice');
+  const inner=notice.querySelector('.inner');
+  inner.replaceChildren();
+  const title=document.createElement('div');
+  title.className='notice-title';
+  title.textContent='Collection data is temporarily unavailable';
+  const live=document.createElement('div');
+  live.textContent=String(liveError.message||liveError);
+  const backup=document.createElement('div');
+  backup.textContent=String(backupError.message||backupError);
+  inner.append(title,live,backup);
+  notice.style.display='block';
+}
 
 function parseRows(rows){
   items=rowsToItems(rows);
@@ -503,5 +551,3 @@ window.addEventListener('popstate',()=>{
 });
 
 // esc moved to lib.js
-
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');

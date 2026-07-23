@@ -41,20 +41,20 @@ jobs:
         run: |
           git config user.name "collection-backup[bot]"
           git config user.email "actions@github.com"
-          if [[ -n "$(git status --porcelain -- public/)" ]]; then
-            echo "public_changed=true" >> "$GITHUB_OUTPUT"
+          if [[ -n "$(git status --porcelain -- backups/ public/img/*/manifest.txt)" ]]; then
+            echo "deployment_data_changed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "public_changed=false" >> "$GITHUB_OUTPUT"
+            echo "deployment_data_changed=false" >> "$GITHUB_OUTPUT"
           fi
           git add backups/ public/img/*/manifest.txt
           if git diff --cached --quiet; then
             echo "No changes since last backup"
           else
-            git commit -m "Weekly collection backup [skip ci]"
+            git commit -m "Daily collection backup [skip ci]"
             git push
           fi
-      - name: Deploy synchronized public manifests
-        if: steps.commit.outputs.public_changed == 'true'
+      - name: Deploy synchronized backups and public manifests
+        if: steps.commit.outputs.deployment_data_changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run ci-quality-deploy.yml --ref main

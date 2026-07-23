@@ -71,13 +71,20 @@ function fakeResponse({ok=true,type='basic',body='network'}={}){
 
 beforeEach(loadWorker);
 
-test('install precaches the shell and activates immediately',async()=>{
+test('install precaches the shell and waits before activating an update',async()=>{
   const event=lifecycleEvent();
   listeners.install(event); await event.promise;
   assert.deepEqual(stores.get('shell-__BUILD_VERSION__').precached,
     ['./','index.html','404.html','fonts.css','index.css','index.js','tracker.html','tracker.css',
-      'tracker.js','assets/fonts/sora-latin.woff2','assets/fonts/unbounded-latin.woff2',
+      'tracker.js','pwa.css','pwa.js','assets/fonts/sora-latin.woff2','assets/fonts/unbounded-latin.woff2',
       'sets.js','lib.js','manifest.json']);
+  assert.equal(skipWaitingCalled,false);
+});
+
+test('refresh request activates the waiting service worker',()=>{
+  listeners.message({data:{type:'OTHER'}});
+  assert.equal(skipWaitingCalled,false);
+  listeners.message({data:{type:'SKIP_WAITING'}});
   assert.equal(skipWaitingCalled,true);
 });
 

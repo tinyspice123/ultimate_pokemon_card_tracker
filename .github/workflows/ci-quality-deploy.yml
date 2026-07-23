@@ -137,6 +137,8 @@ jobs:
         -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
         -Dsonar.qualitygate.wait=true
         -Dsonar.qualitygate.timeout=300
+    outputs:
+      backup_count: ${{ steps.package-backups.outputs.backup_count }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -145,6 +147,7 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/
+            /backups/
             /public/
             /scripts/
             /tests/
@@ -228,6 +231,20 @@ jobs:
             exit 1
           fi
 
+      - name: Package sheet fallbacks
+        if: github.event_name != 'pull_request'
+        id: package-backups
+        shell: bash
+        run: |
+          mkdir -p public/data
+          cp backups/*.csv public/data/
+          backup_count="$(find public/data -maxdepth 1 -type f -name '*.csv' | wc -l)"
+          if [[ "$backup_count" -eq 0 ]]; then
+            echo "No backup CSV files were packaged" >&2
+            exit 1
+          fi
+          echo "backup_count=$backup_count" >> "$GITHUB_OUTPUT"
+
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'
         # v5, pinned because this step is part of the trusted deployment path.
@@ -267,6 +284,7 @@ jobs:
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
 
       - name: Smoke test deployed site
+        id: smoke-test
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
@@ -286,9 +304,30 @@ jobs:
           smoke "$site_root/tracker.html" /tmp/tracker.html & tracker_pid=$!
           smoke "$site_root/manifest.json" /dev/null & manifest_pid=$!
           smoke "$site_root/sw.js" /dev/null & worker_pid=$!
+          smoke "$site_root/data/stellar-crown.csv" /dev/null & backup_pid=$!
           wait "$index_pid"
           wait "$tracker_pid"
           wait "$manifest_pid"
           wait "$worker_pid"
+          wait "$backup_pid"
           grep -q 'id="sets"' /tmp/index.html
           grep -q 'id="lightbox"' /tmp/tracker.html
+
+      - name: Publish deployment summary
+        if: always()
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+          BACKUP_COUNT: ${{ needs.browser-tests.outputs.backup_count }}
+          DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
+          SMOKE_OUTCOME: ${{ steps.smoke-test.outcome }}
+        run: |
+          {
+            echo "## Production deployment"
+            echo
+            echo "- **Site:** ${SITE_URL:-Unavailable}"
+            echo "- **Commit:** \`${GITHUB_SHA::8}\`"
+            echo "- **Quality:** site, unit, Python, browser and SonarQube checks passed"
+            echo "- **Sheet fallbacks:** ${BACKUP_COUNT} backup CSV files packaged"
+            echo "- **Deployment:** ${DEPLOY_OUTCOME}"
+            echo "- **Smoke tests:** ${SMOKE_OUTCOME}"
+          } >> "$GITHUB_STEP_SUMMARY"

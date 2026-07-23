@@ -8,6 +8,7 @@ const browserGlobals={
   Event:'readonly', IntersectionObserver:'readonly', Map:'readonly', Set:'readonly',
   Object:'readonly', Date:'readonly', console:'readonly', Response:'readonly',
   SETS:'readonly', csvToRows:'readonly', rowsToItems:'readonly', esc:'readonly',
+  detectColumns:'readonly',
   setSafeImageSource:'readonly', imgCandidatesPure:'readonly', manifestKey:'readonly',
   sortItems:'readonly', marketplaceSearchUrls:'readonly', priceMid:'readonly',
   matchesQuery:'readonly', exportText:'readonly', exportCsv:'readonly',
@@ -17,7 +18,7 @@ const browserGlobals={
 export default [
   {ignores:['public/sets.js','public/img/**']},
   {
-    files:['public/index.js','public/tracker.js'],
+    files:['public/index.js','public/tracker.js','public/pwa.js'],
     ...js.configs.recommended,
     languageOptions:{ecmaVersion:'latest',sourceType:'script',globals:browserGlobals},
     rules:{...js.configs.recommended.rules,'no-unused-vars':'off'},
