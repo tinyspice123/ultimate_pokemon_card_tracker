@@ -65,6 +65,39 @@ const workflow = fs.readFileSync('.github/workflows/ci-quality-deploy.yml', 'utf
 if (!workflow.includes('-Dsonar.qualitygate.wait=true'))
   fail('SonarQube analysis does not wait for the Quality Gate');
 else ok('SonarQube Quality Gate blocks the analysis job');
+if (
+  !workflow.includes('github.com/rhysd/actionlint/cmd/actionlint@') ||
+  !workflow.includes('-shellcheck=shellcheck')
+) fail('CI workflow does not validate workflows and embedded Bash');
+else ok('actionlint and shellcheck validate workflow code');
+
+const browserJob = workflow.match(/\n  browser-tests:\n([\s\S]*?)(?=\n  [a-z][a-z0-9-]*:\n)/)?.[1] || '';
+const sonarJob = workflow.match(/\n  sonar:\n([\s\S]*?)(?=\n  [a-z][a-z0-9-]*:\n)/)?.[1] || '';
+const packageJob = workflow.match(/\n  package-pages:\n([\s\S]*?)(?=\n  [a-z][a-z0-9-]*:\n)/)?.[1] || '';
+const deployJob = workflow.match(/\n  deploy:\n([\s\S]*)/)?.[1] || '';
+if (!browserJob || !sonarJob || !packageJob || !deployJob)
+  fail('CI workflow is missing a browser-tests, sonar, package-pages, or deploy job');
+else if (
+  !/needs:\s*\[browser-tests,\s*sonar\]/.test(packageJob) ||
+  !/needs:\s*package-pages/.test(deployJob)
+) fail('Pages packaging/deployment job dependencies are incorrect');
+else if (/sonarqube-scan-action|upload-pages-artifact/.test(browserJob))
+  fail('browser-tests still contains SonarQube analysis or Pages packaging');
+else ok('browser, SonarQube, packaging, and deployment jobs are separated');
+
+const backupWorkflow = fs.readFileSync('.github/workflows/backup.yml', 'utf8');
+const backupDispatchChecks = [
+  ['actions: write', 'backup job lacks permission to dispatch deployment'],
+  ['git status --porcelain -- backups/ public/img/*/manifest.txt', 'backup change detection excludes deployment data'],
+  ['deployment_data_changed=true', 'backup change detection does not publish its result'],
+  ["if: steps.commit.outputs.deployment_data_changed == 'true'", 'deployment dispatch is not conditional on changed backup data'],
+  ['gh workflow run ci-quality-deploy.yml --ref main', 'changed backup data does not dispatch deployment'],
+];
+for (const [marker, message] of backupDispatchChecks) {
+  if (!backupWorkflow.includes(marker)) fail(message);
+}
+if (backupDispatchChecks.every(([marker]) => backupWorkflow.includes(marker)))
+  ok('backup changes trigger the deployment workflow');
 
 const workflowFiles = fs.readdirSync('.github/workflows')
   .filter(file => file.endsWith('.yml'));
@@ -161,8 +194,19 @@ catch (e) { fail('manifest.json invalid: ' + e.message); }
 // every local script and stylesheet used by the pages must be in the precache SHELL,
 // or an offline-installed PWA opens a page whose scripts 404 (real bug once)
 const swSrc = fs.readFileSync(sitePath('sw.js'), 'utf8');
-if (!swSrc.includes("const VERSION = 'shell-__BUILD_VERSION__'"))
+const swVersionPlaceholder = 'shell-__BUILD_VERSION__';
+const placeholderCount = swSrc.split(swVersionPlaceholder).length - 1;
+if (placeholderCount !== 1)
   fail('sw.js: deploy-time shell version placeholder is missing');
+else {
+  const simulatedVersion = 'shell-01234567';
+  const deployedSw = swSrc.replace(swVersionPlaceholder, simulatedVersion);
+  if (
+    deployedSw.includes(swVersionPlaceholder) ||
+    !deployedSw.includes(`const VERSION = '${simulatedVersion}'`)
+  ) fail('sw.js: deploy-time shell version substitution failed');
+  else ok('sw.js deploy-time version substitution works');
+}
 if (!swSrc.includes("const IMAGE_CACHE = 'card-images-v2'"))
   fail('sw.js: persistent image cache is not configured');
 if (!swSrc.includes('IMAGE_CACHE_LIMIT'))

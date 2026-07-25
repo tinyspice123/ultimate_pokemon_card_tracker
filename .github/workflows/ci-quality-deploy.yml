@@ -45,6 +45,14 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Validate workflows and embedded shell
+        env:
+          ACTIONLINT_VERSION: v1.7.12
+        run: |
+          command -v shellcheck
+          go run "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}" \
+            -shellcheck=shellcheck
+
       - name: Install development tools
         run: npm ci --ignore-scripts --no-audit --no-fund
 
@@ -119,43 +127,23 @@ jobs:
 
 
   browser-tests:
-    name: Browser tests / SonarQube
+    name: Browser tests
     needs: [site-checks, python-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
-      pull-requests: read
-      id-token: write
-    env:
-      SONAR_SCANNER_ARGS: >-
-        -Dsonar.projectKey=tinyspice123_ultimate_pokemon_card_tracker
-        -Dsonar.organization=tinyspice123
-        -Dsonar.scm.provider=git
-        -Dsonar.python.file.suffixes=.py
-        -Dsonar.python.coverage.reportPaths=coverage.xml
-        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-        -Dsonar.qualitygate.wait=true
-        -Dsonar.qualitygate.timeout=300
-    outputs:
-      backup_count: ${{ steps.package-backups.outputs.backup_count }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          fetch-depth: 0
           sparse-checkout-cone-mode: false
           sparse-checkout: |
-            /.github/
-            /backups/
             /public/
-            /scripts/
             /tests/
             /package-lock.json
             /package.json
             /playwright.config.mjs
-            /requirements-dev.txt
-            /sonar-project.properties
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -176,6 +164,37 @@ jobs:
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
+
+  sonar:
+    name: SonarQube
+    needs: [site-checks, python-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    env:
+      SONAR_SCANNER_ARGS: >-
+        -Dsonar.projectKey=tinyspice123_ultimate_pokemon_card_tracker
+        -Dsonar.organization=tinyspice123
+        -Dsonar.scm.provider=git
+        -Dsonar.python.file.suffixes=.py
+        -Dsonar.python.coverage.reportPaths=coverage.xml
+        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+        -Dsonar.qualitygate.wait=true
+        -Dsonar.qualitygate.timeout=300
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+            /scripts/
+            /tests/
+            /sonar-project.properties
 
       - name: Download JavaScript coverage
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -219,8 +238,26 @@ jobs:
         with:
           args: ${{ env.SONAR_SCANNER_ARGS }}
 
+  package-pages:
+    name: Package Pages artifact
+    needs: [browser-tests, sonar]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      backup_count: ${{ steps.package-backups.outputs.backup_count }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /backups/
+            /public/
+
       - name: Inject service-worker build version
-        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           build_version="shell-${GITHUB_SHA::8}"
@@ -232,7 +269,6 @@ jobs:
           fi
 
       - name: Package sheet fallbacks
-        if: github.event_name != 'pull_request'
         id: package-backups
         shell: bash
         run: |
@@ -246,7 +282,6 @@ jobs:
           echo "backup_count=$backup_count" >> "$GITHUB_OUTPUT"
 
       - name: Upload Pages artifact
-        if: github.event_name != 'pull_request'
         # v5, pinned because this step is part of the trusted deployment path.
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
@@ -255,7 +290,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
 
-    needs: browser-tests
+    needs: package-pages
     timeout-minutes: 10
 
     concurrency:
@@ -317,7 +352,7 @@ jobs:
         if: always()
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
-          BACKUP_COUNT: ${{ needs.browser-tests.outputs.backup_count }}
+          BACKUP_COUNT: ${{ needs.package-pages.outputs.backup_count }}
           DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
           SMOKE_OUTCOME: ${{ steps.smoke-test.outcome }}
         run: |

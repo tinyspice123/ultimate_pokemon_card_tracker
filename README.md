@@ -190,7 +190,8 @@ npm run test:python
 ```
 
 - `npm run test:site` runs ESLint, then `tests/site/` validates configuration,
-  HTML, CSP, JavaScript syntax, workflow policy, and PWA precaching.
+  HTML, CSP, JavaScript syntax, workflow policy, deployment dispatch behavior,
+  service-worker version injection, and PWA precaching.
 - `tests/unit/` exercises shared JavaScript and service-worker behavior.
 - `tests/python/` tests the maintenance scripts without real network calls.
 - `tests/e2e/` runs the tracker in desktop and mobile Chrome with deterministic
@@ -206,11 +207,13 @@ On pushes to `main` and pull requests, GitHub Actions runs:
 
 1. Site checks and JavaScript unit coverage.
 2. Python unit coverage.
-3. Desktop and mobile Playwright tests.
-4. SonarQube analysis and Quality Gate validation.
-5. Injection of a commit-derived service-worker shell cache version, followed
-   by a GitHub Pages upload of `public/` when checks pass on `main`.
-6. Post-deployment smoke checks for the home page, tracker, manifest, and
+3. `actionlint` workflow validation with `shellcheck` applied to embedded Bash.
+4. Desktop and mobile Playwright tests and SonarQube Quality Gate validation
+   in parallel.
+5. A packaging job, gated on both browser and SonarQube success, injects a
+   commit-derived service-worker shell cache version and uploads `public/`.
+6. A narrowly permissioned deployment job publishes the Pages artifact.
+7. Post-deployment smoke checks for the home page, tracker, manifest, and
    service worker.
 
 The weekly **Production dependency canary** follows a live published-sheet
