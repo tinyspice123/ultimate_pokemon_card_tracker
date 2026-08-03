@@ -2,7 +2,7 @@ const main=document.getElementById('sets');
 const HOME_GROUPS={
   sv:"Scarlet & Violet",
   mega:"Mega Evolution Era",
-  misc:"Mew & Miscellaneous",
+  misc:"Misc Pokemon Sets",
 };
 const groupGrids=new Map();
 function groupGrid(key){
