@@ -1,1 +1,38 @@
-
+Arceus Lv. X|94/99|Regular|arceus_lv_x_94.png
+Arceus Lv. X|95/99|Regular|arceus_lv_x_95.png
+Arceus Lv. X|96/99|Regular|arceus_lv_x_96.png
+Arceus|AR1|Art series|arceus_ar1.png
+Arceus|AR2|Art series|arceus_ar2.png
+Arceus|AR3|Art series|arceus_ar3.png
+Arceus|AR4|Art series|arceus_ar4.png
+Arceus|AR5|Art series|arceus_ar5.png
+Arceus|AR6|Art series|arceus_ar6.png
+Arceus|AR7|Art series|arceus_ar7.png
+Arceus|AR8|Art series|arceus_ar8.png
+Arceus|AR9|Art series|arceus_ar9.png
+Arceus|DP50|Promo|arceus_dp50.png
+Arceus Lv. X|DP53|Promo|arceus_lv_x_dp53.png
+Arceus Lv. X|DP56|Promo|arceus_lv_x_dp56.png
+Arceus|20/22|JP exclusive|arceus_20_jp.jpg
+Arceus|21/22|JP exclusive|arceus_21_jp.jpg
+Arceus|22/22|JP exclusive|arceus_22_jp.jpg
+Arceus|40/DPt-P|JP exclusive|arceus_40_dpt_p_jp.jpg
+Arceus|XY83|Promo|arceus_xy83.png
+Arceus|XY116|Promo|arceus_xy116.png
+Arceus|XY197|Promo|arceus_xy197.png
+Shining Arceus|57/73|Shining|shining_arceus_57.png
+Arceus Prism|96/131|Prism Star|arceus_prism_96.png
+Arceus & Dialga & Palkia GX|156/236|Regular|arceus_dialga_palkia_gx_156.png
+Arceus & Dialga & Palkia GX|220/236|Full art|arceus_dialga_palkia_gx_220.png
+Arceus & Dialga & Palkia GX|221/236|Alt art|arceus_dialga_palkia_gx_221.png
+Arceus & Dialga & Palkia GX|258/236|Secret rare|arceus_dialga_palkia_gx_258.png
+Arceus V|122/172|Regular|arceus_v_122.png
+Arceus VSTAR|123/172|Regular|arceus_vstar_123.png
+Arceus V|165/172|Full art|arceus_v_165.png
+Arceus V|166/172|Alt art|arceus_v_166.png
+Arceus VSTAR|176/172|Secret rare|arceus_vstar_176.png
+Arceus VSTAR|184/172|Secret rare|arceus_vstar_184.png
+Arceus VSTAR|GG70/GG70|Galarian Gallery|arceus_vstar_gg70.png
+Arceus V|SWSH204|Promo|arceus_v_swsh204.png
+Arceus V|SWSH306|Promo|arceus_v_swsh306.png
+Arceus VSTAR|SWSH307|Promo|arceus_vstar_swsh307.png

@@ -1,1 +1,22 @@
-
+Keldeo|47/149|Regular|keldeo_47.png
+Keldeo|48/149|Regular|keldeo_48.png
+Keldeo EX|49/149|Regular|keldeo_ex_49.png
+Keldeo EX|142/149|Full art|keldeo_ex_142.png
+Keldeo EX|45/113|Regular|keldeo_ex_45.png
+Keldeo|BW60|Promo|keldeo_bw60.png
+Keldeo|15/47|Japanese only|keldeo_15_jp.jpg
+Keldeo|XY118|Promo|keldeo_xy118.png
+Keldeo|XY191|Promo|keldeo_xy191.png
+Keldeo|26/73|Regular|keldeo_26.png
+Keldeo GX|47/236|Regular|keldeo_gx_47.png
+Keldeo GX|219/236|Full art|keldeo_gx_219.png
+Keldeo GX|240/236|Secret rare|keldeo_gx_240.png
+Keldeo V|53/202|Regular|keldeo_v_53.png
+Keldeo|45/189|Regular|keldeo_45_astral_radiance.png
+Keldeo|46/195|Regular|keldeo_46.png
+Keldeo|GG7/GG70|Galarian Gallery|keldeo_gg7.png
+Keldeo|44/162|Regular|keldeo_44.png
+Keldeo ex|30/86|Regular|keldeo_ex_30.png
+Keldeo ex|159/86|Secret rare|keldeo_ex_159.png
+Keldeo ex|167/86|Secret rare|keldeo_ex_167.png
+Keldeo|19/86|Regular|keldeo_19.webp
