@@ -229,6 +229,22 @@ const SETS = {
     cardmarketUrl: "https://www.cardmarket.com/en/Pokemon/Species/Mew",
   },
 
+  "arceus-collection": {
+    name: "Arceus Collection",
+    homeGroup: "misc",
+    code: "ARCEUS",
+    sheetGid: "1824432590",
+    cardmarketUrl: "https://www.cardmarket.com/en/Pokemon/Species/Arceus",
+  },
+
+  "keldeo-collection": {
+    name: "Keldeo Collection",
+    homeGroup: "misc",
+    code: "KELDEO",
+    sheetGid: "508383132",
+    cardmarketUrl: "https://www.cardmarket.com/en/Pokemon/Species/Keldeo",
+  },
+
 };
 
 // Browser consumers continue to use cfg.sheet; only the registry stores gids.
