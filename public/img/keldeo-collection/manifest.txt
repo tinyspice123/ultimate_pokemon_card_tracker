@@ -1,6 +1,34 @@
-Keldeo|15/47|Japanese only|keldeo_15_114cd6.jpg
-Keldeo|BW60|Non-holo promo|keldeo_bw60_e4480a.png
-Keldeo|BW60|Tinsel holo promo|keldeo_bw60_af2f3d.png
-Keldeo|XY118|Full Art holo promo|keldeo_xy118_66645b.png
-Keldeo|XY191|Holo promo|keldeo_xy191_40f620.png
-Keldeo-EX|BW61|Holo promo|keldeo-ex_bw61_827b1b.png
+Keldeo|47/149|Holo|keldeo_47.png
+Keldeo|47/149|Reverse holo|keldeo_47.png
+Keldeo|48/149|Regular|keldeo_48.png
+Keldeo|48/149|Reverse holo|keldeo_48.png
+Keldeo-EX|49/149|Holo EX|keldeo_ex_49.png
+Keldeo-EX|142/149|Full Art|keldeo_ex_142.png
+Keldeo-EX|45/113|Holo EX|keldeo_ex_45.png
+Keldeo|BW60|Non-holo promo|keldeo_bw60.png
+Keldeo|BW60|Tinsel holo promo|keldeo_bw60.png
+Keldeo-EX|BW61|Holo promo|keldeo_bw61_80841f.png
+Keldeo|15/47|Japanese only|keldeo_15_jp.jpg
+Keldeo|XY118|Full Art holo promo|keldeo_xy118.png
+Keldeo|XY191|Holo promo|keldeo_xy191.png
+Keldeo|26/73|Reverse holo|keldeo_26.png
+Keldeo|26/73|Holo|keldeo_26.png
+Keldeo-GX|47/236|Holo GX|keldeo_gx_47.png
+Keldeo-GX|219/236|Full Art|keldeo_gx_219.png
+Keldeo-GX|240/236|Rainbow Rare|keldeo_gx_240.png
+Keldeo V|53/202|Holo V|keldeo_v_53.png
+Keldeo|45/189|Reverse holo|keldeo_45_astral_radiance.png
+Keldeo|45/189|Non-holo|keldeo_45_astral_radiance.png
+Keldeo|45/189|Cosmos holo|keldeo_45_astral_radiance.png
+Keldeo|45/189|Holo|keldeo_45_astral_radiance.png
+Keldeo|46/195|Reverse holo|keldeo_46.png
+Keldeo|46/195|Regular|keldeo_46.png
+Keldeo|GG7/GG70|Galarian Gallery holo|keldeo_gg7.png
+Keldeo|44/162|Reverse holo|keldeo_44.png
+Keldeo|44/162|Regular|keldeo_44.png
+Keldeo ex|30/86|Double Rare|keldeo_ex_30.png
+Keldeo ex|159/86|Ultra Rare|keldeo_ex_159.png
+Keldeo ex|167/86|Special Illustration Rare|keldeo_ex_167.png
+Keldeo|19/86|Holo|keldeo_19.webp
+Keldeo|19/86|Reverse holo|keldeo_19.webp
+Keldeo|19/86|Chaos Rising stamp holo|keldeo_19.webp

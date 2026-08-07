@@ -13,6 +13,7 @@ Usage:
 This will:
   - Read all Image column URLs from the CSV
   - Download each to img/[filename]
+  - Preserve existing local mappings for current rows with blank Image cells
   - Create img/manifest.txt mapping card|number|variant→filename
 
 The tracker will now check:
@@ -104,9 +105,41 @@ print(f"✓ Found {len(rows)} data rows")
 img_dir = Path("public/img") / set_id if set_id else Path("public/img")
 img_dir.mkdir(parents=True, exist_ok=True)
 
+def canonical(value):
+    """Match the runtime manifest identity while ignoring cosmetic punctuation."""
+    return " ".join(re.findall(r"[^\W_]+", value.casefold()))
+
+def identity(card, num, variant):
+    return tuple(canonical(value) for value in (card, num.split("(")[0], variant))
+
+# Existing files remain useful when a sheet row has no Image URL. Also index
+# them by Card+Number so newly added foil variants can share the same scan.
+mapfile = img_dir / "manifest.txt"
+existing = {}
+by_card_number = {}
+if mapfile.is_file():
+    for line in mapfile.read_text(encoding="utf-8-sig").splitlines():
+        parts = line.split("|")
+        if len(parts) != 4:
+            continue
+        card, num, variant, filename = parts
+        if Path(filename).name != filename or not (img_dir / filename).is_file():
+            continue
+        existing[identity(card, num, variant)] = filename
+        group = identity(card, num, "")[:2]
+        by_card_number.setdefault(group, set()).add(filename)
+
+def existing_filename(card, num, variant):
+    exact = existing.get(identity(card, num, variant))
+    if exact:
+        return exact
+    candidates = by_card_number.get(identity(card, num, "")[:2], set())
+    return next(iter(candidates)) if len(candidates) == 1 else None
+
 # Extract unique Image URLs
-urls_to_dl = {}  # url -> (card, variant, filename)
-downloaded = set()
+urls_to_dl = {}  # (card, number, variant) -> download details
+manifest_rows = {}
+seen_keys = set()
 
 dupes = []
 for row in rows:
@@ -115,23 +148,31 @@ for row in rows:
     variant = cell(row, "variant")
     img_url = cell(row, "img")
 
-    if not img_url or not card:
+    if not card:
         continue
 
     # Key on card + number + variant so same-name cards can't collide
     key = (card, num, variant)
-    if key in downloaded:
+    if key in seen_keys:
         dupes.append(key)
         continue
+    seen_keys.add(key)
 
-    # Filename: card name + number + short hash of the full key
+    # A blank Image cell retains a matching local image. If a new variant has
+    # the same Card+Number and only one scan exists, share that scan.
+    retained = existing_filename(card, num, variant)
+    if not img_url:
+        if retained:
+            manifest_rows[key] = (card, num, variant, retained)
+        continue
+
+    # Reuse the existing filename when possible, otherwise create a stable one.
     h = hashlib.md5(f"{card}|{num}|{variant}".encode()).hexdigest()[:6]
     ext = Path(urllib.parse.urlparse(img_url).path).suffix or ".jpg"
     numpart = num.split('/')[0].replace(' ', '').lower() or "x"
-    filename = f"{card.lower().replace(' ', '_')}_{numpart}_{h}{ext}"
+    filename = retained or f"{card.lower().replace(' ', '_')}_{numpart}_{h}{ext}"
 
     urls_to_dl[key] = (card, num, variant, img_url, filename)
-    downloaded.add(key)
 
 if dupes:
     print(f"\n\u26a0 {len(dupes)} row(s) share an identical Card+Number+Variant with an")
@@ -142,7 +183,6 @@ if dupes:
 
 print(f"\n[2/3] Downloading {len(urls_to_dl)} image(s)...")
 failed = []
-failed_keys = set()
 url_cache = {}  # url -> bytes, so a URL shared by several cards is fetched once
 for i, (key, (card, num, variant, url, filename)) in enumerate(urls_to_dl.items(), 1):
     filepath = img_dir / filename
@@ -154,23 +194,20 @@ for i, (key, (card, num, variant, url, filename)) in enumerate(urls_to_dl.items(
             with urllib.request.urlopen(req, timeout=10) as response:
                 url_cache[url] = response.read()
         filepath.write_bytes(url_cache[url])
+        manifest_rows[key] = (card, num, variant, filename)
         size_kb = filepath.stat().st_size / 1024
         print(f"{filename} ({size_kb:.1f} KB) ✓")
     except Exception as e:
         print(f"✗ {type(e).__name__}: {e}")
         failed.append((filename, str(e)))
-        failed_keys.add(filename)
         if filepath.exists():
-            filepath.unlink()
+            manifest_rows[key] = (card, num, variant, filename)
 
 # Write manifest
 print("\n[3/3] Creating manifest...")
-mapfile = img_dir / "manifest.txt"
 with open(mapfile, 'w') as f:
     written = 0
-    for key, (card, num, variant, url, filename) in sorted(urls_to_dl.items()):
-        if filename in failed_keys:
-            continue  # don't map cards to images that didn't download
+    for key, (card, num, variant, filename) in sorted(manifest_rows.items()):
         f.write(f"{card}|{num}|{variant}|{filename}\n")
         written += 1
 print(f"✓ Wrote {written} entries to {mapfile}")

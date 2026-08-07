@@ -125,16 +125,18 @@ python scripts/download_images.py backups/stellar-crown.csv stellar-crown
 ```
 
 The downloader reads every row with a Card and Image URL, downloads those files
-to `public/img/<set-id>/`, and generates `manifest.txt` automatically in this
+to `public/img/<set-id>/`, and updates `manifest.txt` automatically in this
 format:
 
 ```text
 Card|Number|Variant / Stamp|filename.jpg
 ```
 
-It replaces that set's current manifest with the successfully downloaded rows,
-so commit the images and manifest together. Rows without an Image URL continue
-using the configured card-image APIs.
+It preserves valid local mappings for current rows whose Image URL is blank,
+including newly added foil variants that share a Card and Number with one
+existing scan. Stale rows are removed. Commit the images and manifest together;
+rows without either a local mapping or an Image URL continue using the
+configured card-image APIs.
 
 If Card, Number, or Variant wording changes later, re-key the existing manifest
 without downloading the images again:

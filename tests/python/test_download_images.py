@@ -68,6 +68,29 @@ class DownloadImagesTest(unittest.TestCase):
         manifest = (self.imgdir / "manifest.txt").read_text()
         self.assertNotIn("Meltan", manifest)
 
+    def test_blank_urls_preserve_current_mappings_and_share_scans_with_new_variants(self):
+        case_dir = Path(tempfile.mkdtemp())
+        image_dir = case_dir / "public" / "img" / "example"
+        image_dir.mkdir(parents=True)
+        (image_dir / "keldeo.png").write_bytes(b"PNG")
+        (image_dir / "stale.png").write_bytes(b"PNG")
+        (image_dir / "manifest.txt").write_text(
+            "Keldeo|47/149|Regular|keldeo.png\n"
+            "Stale|1/1|Regular|stale.png\n", encoding="utf-8")
+        sheet = case_dir / "sheet.csv"
+        with sheet.open("w", newline="", encoding="utf-8") as handle:
+            csv.writer(handle).writerows([
+                ["Card", "Number", "Variant", "Image URL"],
+                ["Keldeo", "47/149", "Holo", ""],
+                ["Keldeo", "47/149", "Reverse holo", ""],
+            ])
+
+        code, _ = run_script([sheet, "example"], case_dir)
+        self.assertEqual(code, 0)
+        self.assertEqual((image_dir / "manifest.txt").read_text(encoding="utf-8"),
+            "Keldeo|47/149|Holo|keldeo.png\n"
+            "Keldeo|47/149|Reverse holo|keldeo.png\n")
+
     def test_filenames_include_number(self):
         files = [p.name for p in self.imgdir.glob("*.jpg")]
         self.assertTrue(any(f.startswith("iron_boulder_071_") for f in files), files)
