@@ -201,7 +201,7 @@ test('exportCsv / csvEscape', async (t) => {
 });
 
 test('marketplaceSearchUrls', async (t) => {
-  await t.test('encodes identifying card details and omits a generic variant', () => {
+  await t.test('uses only the Card and Number columns', () => {
     const urls=marketplaceSearchUrls(
       {card:'Mr. Mime & Friends',num:'12/100',variant:'Regular'});
     const ebay=new URL(urls.ebay);
@@ -219,7 +219,7 @@ test('marketplaceSearchUrls', async (t) => {
     assert.equal(cardmarket.searchParams.get('searchString'),
       'Archaludon SCR 107');
     assert.equal(new URL(urls.ebay).searchParams.get('_nkw'),
-      'Archaludon 107/142 Galaxy holo + GameStop stamp');
+      'Archaludon 107/142');
   });
   await t.test('keeps recognized promo prefixes without a set code', () => {
     const urls=marketplaceSearchUrls(
@@ -235,13 +235,13 @@ test('marketplaceSearchUrls', async (t) => {
         src:'Wizards Black Star Promos — English'}, 'MEW', species);
     assert.equal(urls.cardmarket,species);
     assert.equal(new URL(urls.ebay).searchParams.get('_nkw'),
-      'Mew 8 Normal — English Wizards Black Star Promos — English Pokemon card');
+      'Mew 8');
   });
   await t.test('falls back to the collection group when source is absent', () => {
     const urls=marketplaceSearchUrls(
       {card:'Mew ex',num:'151/165',variant:'Holofoil',group:'Pokemon 151'},
       '', 'https://www.cardmarket.com/en/Pokemon/Species/Mew');
     assert.equal(new URL(urls.ebay).searchParams.get('_nkw'),
-      'Mew ex 151/165 Holofoil Pokemon 151 Pokemon card');
+      'Mew ex 151/165');
   });
 });

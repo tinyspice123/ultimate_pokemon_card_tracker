@@ -220,10 +220,9 @@ function exportCsv(kind, list){
 }
 
 // Marketplace search URLs stay useful when listings change, unlike links to
-// individual offers. Generic variants add no search value and are omitted.
+// individual offers. eBay uses only Card and Number so extra sheet metadata
+// does not make its search results unnecessarily narrow.
 function marketplaceSearchUrls(it,cardmarketSet='',cardmarketUrl=''){
-  const variant=/^(?:regular|standard|normal)$/i.test((it.variant||'').trim())
-    ? '' : (it.variant||'').trim();
   const number=String(it.num||'').trim();
   const promo=/^[A-Za-z][A-Za-z0-9-]*\s+\d+$/.test(number);
   const regular=/^(\d+)(?:\/\d+)?$/.exec(number);
@@ -232,12 +231,7 @@ function marketplaceSearchUrls(it,cardmarketSet='',cardmarketUrl=''){
   else if(cardmarketSet && regular) cardmarketNumber=`${cardmarketSet} ${regular[1]}`;
   const cardmarketQuery=[it.card,cardmarketNumber]
     .map(v=>String(v||'').trim()).filter(Boolean).join(' ');
-  // Species and other mixed-set collections need their source set in the
-  // query. Without it, eBay can interpret names such as "Mew" as the MEW
-  // expansion code used by Scarlet & Violet—151.
-  const collectionSource=cardmarketUrl ? (it.src||it.group||'') : '';
-  const ebayQuery=[it.card,number,variant,collectionSource,
-    cardmarketUrl ? 'Pokemon card' : '']
+  const ebayQuery=[it.card,number]
     .map(v=>String(v||'').trim()).filter(Boolean).join(' ');
   return {
     cardmarket:cardmarketUrl || `https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=${encodeURIComponent(cardmarketQuery)}`,
