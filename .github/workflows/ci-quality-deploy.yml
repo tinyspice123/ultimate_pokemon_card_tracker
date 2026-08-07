@@ -184,9 +184,6 @@ jobs:
         -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
         -Dsonar.qualitygate.wait=true
         -Dsonar.qualitygate.timeout=300
-      # SonarQube's GitHub auto-configuration cannot retrieve Renovate PRs.
-      # Explicit parameters override that lookup; this is empty on main runs.
-      SONAR_PR_ARGS: ${{ github.event_name == 'pull_request' && format('-Dsonar.pullrequest.key={0} -Dsonar.pullrequest.branch={1} -Dsonar.pullrequest.base={2}', github.event.pull_request.number, github.head_ref, github.base_ref) || '' }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -218,7 +215,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          args: ${{ env.SONAR_SCANNER_ARGS }} ${{ env.SONAR_PR_ARGS }}
+          args: ${{ env.SONAR_SCANNER_ARGS }}
 
       - name: Back off before SonarQube retry
         if: steps.sonar-attempt-1.outcome == 'failure'
@@ -233,7 +230,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          args: ${{ env.SONAR_SCANNER_ARGS }} ${{ env.SONAR_PR_ARGS }}
+          args: ${{ env.SONAR_SCANNER_ARGS }}
 
   package-pages:
     name: Package Pages artifact
