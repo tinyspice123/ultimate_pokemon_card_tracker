@@ -1,1 +1,6 @@
-Keldeo|BW61|Promo|keldeo_bw61_80841f.png
+Keldeo|15/47|Japanese only|keldeo_15_114cd6.jpg
+Keldeo|BW60|Non-holo promo|keldeo_bw60_e4480a.png
+Keldeo|BW60|Tinsel holo promo|keldeo_bw60_af2f3d.png
+Keldeo|XY118|Full Art holo promo|keldeo_xy118_66645b.png
+Keldeo|XY191|Holo promo|keldeo_xy191_40f620.png
+Keldeo-EX|BW61|Holo promo|keldeo-ex_bw61_827b1b.png
