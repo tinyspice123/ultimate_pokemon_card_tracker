@@ -2,7 +2,7 @@
   "name": "ultimate-pokemon-card-tracker",
   "private": true,
   "scripts": {
-    "lint": "eslint public/*.js",
+    "lint": "eslint public/*.js --no-warn-ignored",
     "test:site": "npm run lint && node tests/site/ci_checks.mjs",
     "test:coverage": "c8 --reporter=lcov node --test tests/unit/*.test.mjs",
     "test:python": "python -m unittest discover -s tests/python -v",

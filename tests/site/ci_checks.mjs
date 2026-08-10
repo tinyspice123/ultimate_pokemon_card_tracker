@@ -32,7 +32,7 @@ for (const [id, cfg] of Object.entries(SETS)) {
   if (!cfg.name) fail(`"${id}" has no name`);
   if (!cfg.cardmarketSet && !cfg.cardmarketUrl)
     fail(`"${id}" has no Cardmarket set code or collection URL`);
-  if (cfg.cardmarketUrl && !/^https:\/\/www\.cardmarket\.com\/en\/Pokemon\/Species\/[A-Za-z0-9-]+$/.test(cfg.cardmarketUrl))
+  if (cfg.cardmarketUrl && !/^https:\/\/www\.cardmarket\.com\/en\/Pokemon\/(?:Species\/[A-Za-z0-9-]+|Products\/Search\?[^#]+)$/.test(cfg.cardmarketUrl))
     fail(`"${id}" has an invalid Cardmarket collection URL`);
   if (!allowedHomeGroups.has(cfg.homeGroup))
     fail(`"${id}" has an invalid or missing homeGroup`);
