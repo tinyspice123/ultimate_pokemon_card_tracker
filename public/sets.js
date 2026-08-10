@@ -245,6 +245,14 @@ const SETS = {
     cardmarketUrl: "https://www.cardmarket.com/en/Pokemon/Species/Keldeo",
   },
 
+  "break-collection": {
+    name: "Break Collection",
+    homeGroup: "misc",
+    code: "BREAK",
+    sheetGid: "1036333172",
+    cardmarketUrl: "https://www.cardmarket.com/en/Pokemon/Products/Search?category=-1&searchString=break&searchMode=v2",
+  },
+
 };
 
 // Browser consumers continue to use cfg.sheet; only the registry stores gids.
