@@ -43,6 +43,10 @@
   </div>
   <output id="authMessage" aria-live="polite"></output>
 </section>
+<section class="history initially-hidden" id="history" aria-label="Recent quantity changes">
+  <h2>Recent changes <span>past 30 days</span></h2>
+  <ol id="historyList"></ol>
+</section>
 
 <section class="stats" id="stats">
   <div class="ring">
@@ -71,7 +75,7 @@
   <input type="search" id="q" aria-label="Search cards" placeholder="Search card, number, stamp…">
   <select id="groupSel" aria-label="Filter by group"><option value="">All groups</option></select>
   <select id="sortSel" title="Sort cards" aria-label="Sort cards">
-    <option value="">Sheet order</option>
+    <option value="">Catalogue order</option>
     <option value="name">Name A–Z</option>
     <option value="price-desc">Price high → low</option>
     <option value="price-asc">Price low → high</option>

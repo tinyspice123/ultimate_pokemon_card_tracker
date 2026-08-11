@@ -81,5 +81,10 @@ const PokemonDb = (()=>{
       'Content-Type':'application/json',Prefer:'return=minimal'}),
       body:JSON.stringify({quantity})});
   }
-  return {currentSession,currentUser,signInWithGoogle,signOut,cards,isEditor,setQuantity};
+  async function quantityHistory(session,setId){
+    const since=new Date(Date.now()-30*24*60*60*1000).toISOString();
+    const path=`/rest/v1/quantity_history?set_id=eq.${encodeURIComponent(setId)}&changed_at=gte.${encodeURIComponent(since)}&select=card_name,previous_quantity,new_quantity,changed_at&order=changed_at.desc&limit=100`;
+    return await (await request(path,{headers:headers(session)})).json();
+  }
+  return {currentSession,currentUser,signInWithGoogle,signOut,cards,isEditor,setQuantity,quantityHistory};
 })();

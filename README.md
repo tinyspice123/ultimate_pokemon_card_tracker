@@ -196,7 +196,7 @@ If Card, Number, or Variant wording changes later, re-key the existing manifest
 without downloading the images again:
 
 ```bash
-python scripts/sync_manifest.py path/to/sheet.csv stellar-crown
+python scripts/sync_manifest.py backups/stellar-crown.csv stellar-crown
 ```
 
 Use `--check` to report drift without editing the manifest. Cosmetic case and
@@ -236,7 +236,7 @@ Validate every configured backup and exact-variant image mapping offline with:
 python scripts/validate_data.py
 ```
 
-The validator rejects malformed sheet columns, missing collector numbers,
+The validator rejects malformed backup columns, missing collector numbers,
 duplicate card variants, invalid quantities, stale manifest mappings, missing
 image files, and orphaned local images.
 
@@ -279,10 +279,9 @@ On pushes to `main` and pull requests, GitHub Actions runs:
 7. Post-deployment smoke checks for the home page, tracker, manifest, and
    service worker.
 
-The weekly **Production dependency canary** follows a live published-sheet
-redirect, rejects HTML/error responses, and verifies that the final Google
-delivery host remains in both CSP allowlists. This monitors shard changes even
-when no deployment occurs.
+The weekly **Production dependency canary** checks that the live Supabase
+catalogue API returns configured card data. This monitors the primary data
+source even when no deployment occurs.
 
 ### Maintenance mode
 
@@ -291,7 +290,7 @@ Toggle maintenance mode → Run workflow**, choose `enable`, and run it. Choose
 `disable` to redeploy the current site from `public/`. A later successful normal
 deployment also replaces maintenance mode with the live site.
 
-For rollback, sheet restoration, outage and image-repair procedures, see the
+For rollback, database restoration, outage and image-repair procedures, see the
 [recovery runbook](docs/RECOVERY.md).
 
 The workflow uses least-privilege job permissions. Pages deployment requires

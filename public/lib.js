@@ -67,7 +67,7 @@ function parseHaveQty(haveRaw){
 }
 
 // Finds each known column by header text (case-insensitive substring match)
-// so sheet columns can be reordered/removed freely.
+// so backup columns can be reordered/removed freely.
 function detectColumns(headerRow){
   const hdr=(headerRow||[]).map(h=>String(h).toLowerCase());
   const col=name=>hdr.findIndex(h=>h.includes(name));
@@ -80,7 +80,7 @@ function detectColumns(headerRow){
   };
 }
 
-// Turns raw sheet rows (row 0 = header) into tracker items. Rows with a
+// Turns raw backup rows (row 0 = header) into tracker items. Rows with a
 // Group but no Card are section headers (they set the running group for
 // subsequent rows); rows with no Card are skipped.
 function rowsToItems(rows){
@@ -108,7 +108,7 @@ function tcgdexBaseFor(cfg){
   return s ? `https://assets.tcgdex.net/en/${s[0].toLowerCase()}/${cfg.tcgdexSet}` : null;
 }
 
-// Stable manifest identity: cosmetic punctuation/case edits in a sheet should
+// Stable manifest identity: cosmetic punctuation/case edits in a backup should
 // not disconnect an exact local image. Collector annotations such as "(IR)"
 // are display text, not part of the printed card number.
 function canonicalManifestText(value){
@@ -120,7 +120,7 @@ function manifestKey(card,number,variant){
   return [card,stableNumber,variant].map(canonicalManifestText).join('|');
 }
 
-// Ordered list of image URLs to try for a card: sheet Image column, local
+// Ordered list of image URLs to try for a card: database Image column, local
 // img/<setId>/ copy, imgTemplate, pokemontcg.io, TCGdex (both paddings),
 // then an SVP promo lookup. Callers render the first URL and fall back
 // through the rest on error.
@@ -168,7 +168,7 @@ function setSafeImageSource(image,candidate,baseUrl){
   return true;
 }
 
-// Sort a list of items by mode: "" = sheet order (returns the list as-is),
+// Sort a list of items by mode: "" = catalogue order (returns the list as-is),
 // "name" = card name then numeric-aware number, "price-asc"/"price-desc" =
 // by priceMid with unpriced cards always sinking to the bottom.
 function sortItems(list, mode){

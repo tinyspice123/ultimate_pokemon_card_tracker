@@ -22,8 +22,7 @@ Add an entry to `public/sets.js`:
 },
 ```
 
-Valid `homeGroup` values are `sv`, `mega`, and `misc`. `sheetGid` is legacy
-metadata and is not required for new sets.
+Valid `homeGroup` values are `sv`, `mega`, and `misc`.
 
 ## 2. Insert the database rows
 

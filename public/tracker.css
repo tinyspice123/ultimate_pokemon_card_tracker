@@ -54,6 +54,11 @@
   .account button{padding:8px 11px}.account button:hover,.qtyedit button:hover{border-color:var(--tera2)}
   .account button:disabled,.qtyedit button:disabled{opacity:.5;cursor:wait}
   #viewerOnly{color:var(--tera4)}#authMessage{color:var(--tera4)}
+  .history{max-width:1140px;margin:12px auto 0;padding:14px 16px;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px}
+  .history h2{font:600 13px "Unbounded",sans-serif}.history h2 span{font:400 10px "Sora",sans-serif;color:var(--dim);margin-left:8px}
+  .history ol{list-style:none;margin-top:10px;display:grid;gap:6px}
+  .history li{font-size:12px;color:var(--dim)}.history time{color:var(--faint);margin-right:7px}
   .stats{
     max-width:1180px; margin:22px auto 0; padding:0 20px;
     display:none; grid-template-columns:auto 1fr; gap:22px; align-items:center;

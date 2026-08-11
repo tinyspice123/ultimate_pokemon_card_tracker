@@ -21,7 +21,7 @@ const ids = Object.keys(SETS);
 if (ids.length === 0) fail('no sets defined'); else ok(ids.length + ' active set(s)');
 
 const allowedSetFields = new Set([
-  'name', 'sheet', 'sheetGid', 'tcgSet', 'tcgdexSet', 'code', 'logo',
+  'name', 'tcgSet', 'tcgdexSet', 'code', 'logo',
   'eyebrow', 'subtitle', 'imgTemplate', 'promoSet', 'cardmarketSet',
   'cardmarketUrl', 'homeGroup',
 ]);
@@ -42,18 +42,9 @@ for (const [id, cfg] of Object.entries(SETS)) {
     if (typeof value !== 'string')
       fail(`"${id}.${field}" must be a string`);
   }
-  if (cfg.sheetGid && !/^\d+$/.test(cfg.sheetGid)) fail(`"${id}" sheetGid must contain digits only`);
   if (!fs.existsSync(sitePath(path.join('img', id, 'manifest.txt'))))
     fail(`"${id}" has no image manifest`);
 }
-const gids = Object.entries(SETS).flatMap(([id, c]) => c.sheetGid ? [[id,c.sheetGid]] : []);
-const seen = {};
-for (const [id, gid] of gids) {
-  if (seen[gid]) fail(`"${id}" and "${seen[gid]}" share gid=${gid} - one tab feeding two sets`);
-  seen[gid] = id;
-}
-if (gids.length && Object.keys(seen).length === gids.length) ok('sheet gids are unique');
-
 // A successful scan upload is not the same as a passing server-side gate.
 // Keep deployment blocked until SonarCloud has computed and passed the gate.
 const workflow = fs.readFileSync('.github/workflows/ci-quality-deploy.yml', 'utf8');

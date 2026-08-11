@@ -88,6 +88,23 @@ async function initAuth(){
   document.getElementById('signedIn').style.display=authUser?'flex':'none';
   document.getElementById('accountEmail').textContent=authUser?.email||'';
   document.getElementById('viewerOnly').style.display=authUser&&!canEdit?'inline':'none';
+  if(canEdit) loadQuantityHistory();
+}
+
+async function loadQuantityHistory(){
+  const section=document.getElementById('history'), list=document.getElementById('historyList');
+  try{
+    const entries=await PokemonDb.quantityHistory(authSession,SET_ID);
+    if(!entries.length) return;
+    list.replaceChildren(...entries.map(entry=>{
+      const item=document.createElement('li'), time=document.createElement('time');
+      const when=new Date(entry.changed_at);
+      time.dateTime=when.toISOString(); time.textContent=when.toLocaleString();
+      item.append(time,`${entry.card_name}: ${entry.previous_quantity} → ${entry.new_quantity}`);
+      return item;
+    }));
+    section.style.display='block';
+  }catch{ /* History is optional until its migration has been applied. */ }
 }
 
 document.getElementById('googleSignIn').addEventListener('click',()=>PokemonDb.signInWithGoogle());
@@ -387,6 +404,7 @@ async function updateQuantity(it,delta){
       label:'Undo',
       run:()=>updateQuantity(it,previous-it.qty),
     });
+    loadQuantityHistory();
   }catch(error){
     it.qty=previous;
     toast(`Could not save quantity: ${String(error.message||error)}`);

@@ -1,6 +1,6 @@
 // Pokemon Card Tracker service worker.
 // Strategy: network-first for pages/config (so updates land immediately),
-// cache-first for images and logos (fast + offline), never cache sheet CSVs
+// cache-first for images and logos (fast + offline), never cache backup CSVs
 // beyond a session fallback.
 const VERSION = 'shell-__BUILD_VERSION__';
 // Keep downloaded card art across shell releases. Browser storage quotas still

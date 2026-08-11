@@ -44,3 +44,10 @@ where user_id = 'AUTH-USER-UUID-HERE';
 Revocation takes effect on the next permission check. The user may remain a
 valid Supabase Auth user but will have view-only access.
 
+## Quantity history
+
+Apply `supabase/migrations/202608120005_quantity_history.sql` after the editor
+allowlist migration. Supabase then records every quantity change with its
+previous value, new value, user ID, and timestamp. The authorized editor sees
+the latest 30 days for the open set in the tracker; it is not public.
+
