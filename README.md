@@ -6,9 +6,10 @@ the same reusable tracker with shareable filtering, ownership totals, prices,
 owned/missing/spares exports, offline caching, local card images, and
 marketplace search links. Display and sort preferences persist in the browser.
 
-The site has no application bundling step. GitHub Pages receives `public/`
-directly after CI replaces the service worker's cache-version placeholder with
-the deploying commit's short SHA.
+The site has no application bundling step. Before GitHub Pages receives
+`public/`, CI replaces the service worker's cache-version placeholder with the
+deploying commit's short SHA and copies the canonical `backups/*.csv` snapshots
+into a generated `public/backups/` directory.
 
 ## Quick start
 
@@ -30,7 +31,9 @@ node tests/e2e/static-server.mjs public
 ```
 
 Then open <http://127.0.0.1:4173/>. The local server is deliberately small and
-serves only `public/`, matching the files deployed by GitHub Pages.
+serves only the checked-in files under `public/`. It does not package the root
+backup snapshots; deterministic Playwright tests mock the deployed
+`/backups/<set-id>.csv` endpoint when exercising outage behavior.
 
 Sora and Unbounded are self-hosted under `public/assets/fonts/`, including
 their OFL license files, so typography works without Google Fonts or a network
@@ -46,6 +49,15 @@ connection.
   CSV. Exports respect the active search and group filters.
 - Press `/` to focus search and `m` to toggle missing-only while keeping the
   shareable URL synchronized.
+
+## Install on a phone
+
+The tracker is a Progressive Web App named **Card Tracker**. Its Mew launcher
+art is stored in `public/assets/` at 192px, 512px, and Android maskable sizes.
+On Android, open the deployed site in Chrome and choose **Install app** or
+**Add to Home screen**. On iPhone, open it in Safari and choose
+**Share → Add to Home Screen**. Remove and reinstall an existing shortcut after
+an icon change so the phone refreshes the cached launcher artwork.
 
 ## Add or edit a set
 
@@ -170,6 +182,13 @@ deployment pipeline so production never waits for an unrelated push.
 Sheet downloads are paced and temporary timeouts, rate limits, and server errors
 receive three attempts with exponential backoff.
 
+At runtime the tracker requests Google Sheets first. If that request fails or
+returns invalid CSV, it requests `backups/<set-id>.csv` from the deployed site
+and shows a warning that the latest snapshot is in use. Only root `backups/` is
+version-controlled; CI creates `public/backups/` while packaging the Pages
+artifact, so the repository does not store duplicate CSV copies. Earlier
+snapshots remain recoverable through Git history.
+
 Validate every configured backup and exact-variant image mapping offline with:
 
 ```bash
@@ -213,7 +232,8 @@ On pushes to `main` and pull requests, GitHub Actions runs:
 4. Desktop and mobile Playwright tests and SonarQube Quality Gate validation
    in parallel.
 5. A packaging job, gated on both browser and SonarQube success, injects a
-   commit-derived service-worker shell cache version and uploads `public/`.
+   commit-derived service-worker shell cache version, copies `backups/*.csv`
+   into generated `public/backups/`, and uploads `public/`.
 6. A narrowly permissioned deployment job publishes the Pages artifact.
 7. Post-deployment smoke checks for the home page, tracker, manifest, and
    service worker.
@@ -252,6 +272,7 @@ token.
 │   ├── fonts.css           # Self-hosted font declarations
 │   ├── manifest.json       # PWA metadata
 │   ├── assets/             # Icons, fonts/licenses, and mirrored set logos
+│   ├── backups/            # Generated only in the deployed Pages artifact
 │   └── img/<set-id>/       # Local card variants and manifest
 ├── scripts/                # Download, validation, and backup tools
 ├── tests/
