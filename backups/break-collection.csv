@@ -1,42 +1,42 @@
-Group,Card,Number,Variant,Source,Status,Have,Image,Price Estimate
+Group,Card,Number,Variant / Stamp,Source,Status,Price,Have,Image URL
 XY Black Star Promos,,,,,,,,
-,Empoleon BREAK,XY134,Holo,BREAK Evolution Box,Confirmed,,https://images.pokemontcg.io/xyp/XY134.png,£14
-,Beheeyem BREAK,XY135,Holo,BREAK Evolution Box,Confirmed,,https://images.pokemontcg.io/xyp/XY135.png,£7
-,Noctowl BREAK,XY136,Holo,BREAK Evolution Box,Confirmed,,https://images.pokemontcg.io/xyp/XY136.png,£11
-,Ho-Oh BREAK,XY154,Holo,BREAK Evolution Box: Ho-Oh & Lugia,Confirmed,1,https://images.pokemontcg.io/xyp/XY154.png,£27
-,Wobbuffet BREAK,XY155,Holo,Black Star Promo,Confirmed,,https://images.pokemontcg.io/xyp/XY155.png,£13
-,Arcanine BREAK,XY180,Holo,BREAK Evolution Box: Arcanine,Confirmed,,https://images.pokemontcg.io/xyp/XY180.png,£20
-,Crobat BREAK,XY181,Holo,BREAK Evolution Box: Arcanine,Confirmed,,https://images.pokemontcg.io/xyp/XY181.png,£8
-,Mandibuzz BREAK,XY182,Holo,BREAK Evolution Box: Arcanine,Confirmed,,https://images.pokemontcg.io/xyp/XY182.png,£4
+,Empoleon BREAK,XY134,Holo,BREAK Evolution Box,Confirmed,£14,0,https://images.pokemontcg.io/xyp/XY134.png
+,Beheeyem BREAK,XY135,Holo,BREAK Evolution Box,Confirmed,£7,0,https://images.pokemontcg.io/xyp/XY135.png
+,Noctowl BREAK,XY136,Holo,BREAK Evolution Box,Confirmed,£11,0,https://images.pokemontcg.io/xyp/XY136.png
+,Ho-Oh BREAK,XY154,Holo,BREAK Evolution Box: Ho-Oh & Lugia,Confirmed,£27,1,https://images.pokemontcg.io/xyp/XY154.png
+,Wobbuffet BREAK,XY155,Holo,Black Star Promo,Confirmed,£13,0,https://images.pokemontcg.io/xyp/XY155.png
+,Arcanine BREAK,XY180,Holo,BREAK Evolution Box: Arcanine,Confirmed,£20,0,https://images.pokemontcg.io/xyp/XY180.png
+,Crobat BREAK,XY181,Holo,BREAK Evolution Box: Arcanine,Confirmed,£8,0,https://images.pokemontcg.io/xyp/XY181.png
+,Mandibuzz BREAK,XY182,Holo,BREAK Evolution Box: Arcanine,Confirmed,£4,0,https://images.pokemontcg.io/xyp/XY182.png
 BREAKthrough,,,,,,,,
-,Chesnaught BREAK,12/162,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy8/12.png,~£1.50-4
-,Raichu BREAK,50/162,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy8/50.png,£9
-,Marowak BREAK,79/162,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy8/79.png,£4.70
-,Zoroark BREAK,92/162,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy8/92.png,£4.50
-,Florges BREAK,104/162,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy8/104.png,~£1.50-4
-,Noivern BREAK,113/162,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy8/113.png,~£1.50-4
+,Chesnaught BREAK,12/162,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy8/12.png
+,Raichu BREAK,50/162,Holo,BREAK Rare,Confirmed,£9,0,https://images.pokemontcg.io/xy8/50.png
+,Marowak BREAK,79/162,Holo,BREAK Rare,Confirmed,£4.70,0,https://images.pokemontcg.io/xy8/79.png
+,Zoroark BREAK,92/162,Holo,BREAK Rare,Confirmed,£4.50,0,https://images.pokemontcg.io/xy8/92.png
+,Florges BREAK,104/162,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy8/104.png
+,Noivern BREAK,113/162,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy8/113.png
 BREAKpoint,,,,,,,,
-,Golduck BREAK,18/122,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy9/18.png,£4.50
-,Greninja BREAK,41/122,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy9/41.png,£19
-,Luxray BREAK,47/122,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy9/47.png,£5
-,Trevenant BREAK,66/122,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy9/66.png,~£1.50-4
-,Raticate BREAK,89/122,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy9/89.png,~£1.50-4
+,Golduck BREAK,18/122,Holo,BREAK Rare,Confirmed,£4.50,0,https://images.pokemontcg.io/xy9/18.png
+,Greninja BREAK,41/122,Holo,BREAK Rare,Confirmed,£19,0,https://images.pokemontcg.io/xy9/41.png
+,Luxray BREAK,47/122,Holo,BREAK Rare,Confirmed,£5,0,https://images.pokemontcg.io/xy9/47.png
+,Trevenant BREAK,66/122,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy9/66.png
+,Raticate BREAK,89/122,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy9/89.png
 Fates Collide,,,,,,,,
-,Delphox BREAK,14/124,Holo,BREAK Rare,Confirmed,1,https://images.pokemontcg.io/xy10/14.png,~£2-4
-,Omastar BREAK,19/124,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy10/19.png,~£1.50-4
-,Carbink BREAK,51/124,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy10/51.png,~£1.50-4
-,Bronzong BREAK,62/124,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy10/62.png,~£1.50-4
-,Lugia BREAK,79/124,Holo,BREAK Rare / Ho-Oh & Lugia box,Confirmed,1,https://images.pokemontcg.io/xy10/79.png,£17
+,Delphox BREAK,14/124,Holo,BREAK Rare,Confirmed,~£2-4,1,https://images.pokemontcg.io/xy10/14.png
+,Omastar BREAK,19/124,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy10/19.png
+,Carbink BREAK,51/124,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy10/51.png
+,Bronzong BREAK,62/124,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy10/62.png
+,Lugia BREAK,79/124,Holo,BREAK Rare / Ho-Oh & Lugia box,Confirmed,£17,1,https://images.pokemontcg.io/xy10/79.png
 Steam Siege,,,,,,,,
-,Yanmega BREAK,8/114,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy11/8.png,~£1.50-4
-,Talonflame BREAK,21/114,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy11/21.png,~£1.50-4
-,Pyroar BREAK,24/114,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy11/24.png,~£1.50-4
-,Clawitzer BREAK,35/114,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy11/35.png,~£1.50-4
-,Yveltal BREAK,66/114,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy11/66.png,£5.50
-,Xerneas BREAK,82/114,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy11/82.png,£5
-,Hydreigon BREAK,87/114,Holo,BREAK Rare,Confirmed,1,https://images.pokemontcg.io/xy11/87.png,£4.30
+,Yanmega BREAK,8/114,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy11/8.png
+,Talonflame BREAK,21/114,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy11/21.png
+,Pyroar BREAK,24/114,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy11/24.png
+,Clawitzer BREAK,35/114,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy11/35.png
+,Yveltal BREAK,66/114,Holo,BREAK Rare,Confirmed,£5.50,0,https://images.pokemontcg.io/xy11/66.png
+,Xerneas BREAK,82/114,Holo,BREAK Rare,Confirmed,£5,0,https://images.pokemontcg.io/xy11/82.png
+,Hydreigon BREAK,87/114,Holo,BREAK Rare,Confirmed,£4.30,1,https://images.pokemontcg.io/xy11/87.png
 Evolutions,,,,,,,,
-,Ninetales BREAK,16/108,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy12/16.png,~£2-4
-,Starmie BREAK,32/108,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy12/32.png,~£1.50-4
-,Nidoking BREAK,46/108,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy12/46.png,~£1.50-4
-,Machamp BREAK,60/108,Holo,BREAK Rare,Confirmed,,https://images.pokemontcg.io/xy12/60.png,~£2-4
+,Ninetales BREAK,16/108,Holo,BREAK Rare,Confirmed,~£2-4,0,https://images.pokemontcg.io/xy12/16.png
+,Starmie BREAK,32/108,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy12/32.png
+,Nidoking BREAK,46/108,Holo,BREAK Rare,Confirmed,~£1.50-4,0,https://images.pokemontcg.io/xy12/46.png
+,Machamp BREAK,60/108,Holo,BREAK Rare,Confirmed,~£2-4,0,https://images.pokemontcg.io/xy12/60.png
