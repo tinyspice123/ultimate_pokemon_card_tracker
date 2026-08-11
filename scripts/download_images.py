@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Download card images from Google Sheet into public/img/.
+Download card images from an exported collection CSV into public/img/.
 
 Usage:
   1. Export the set's sheet TAB as CSV (File → Download → CSV)

@@ -161,7 +161,7 @@ class MainTests(unittest.TestCase):
         with mock.patch("validate_data.validate_repository", return_value=[]), \
                 redirect_stdout(output):
             self.assertEqual(main(), 0)
-        self.assertIn("sheet backup(s)", output.getvalue())
+        self.assertIn("database snapshot(s)", output.getvalue())
 
 
 if __name__ == "__main__":

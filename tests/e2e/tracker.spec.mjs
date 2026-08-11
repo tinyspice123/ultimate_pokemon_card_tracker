@@ -13,9 +13,9 @@ async function mockTrackerData(page, highResolutionDelay = 0) {
   await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_cards**', route => route.fulfill({
     status: 404,
     contentType: 'application/json',
-    body: JSON.stringify({message:'Test uses the sheet fallback'}),
+    body: JSON.stringify({message:'Test uses the snapshot fallback'}),
   }));
-  await page.route('https://docs.google.com/**', route => route.fulfill({
+  await page.route('**/backups/stellar-crown.csv', route => route.fulfill({
     status: 200,
     contentType: 'text/csv',
     body: SHEET,
@@ -71,9 +71,8 @@ test('authorized Google account can update a database quantity', async ({ page }
   expect(savedQuantity).toBe(2);
 });
 
-test('uses the packaged backup and displays a warning when Google is unavailable', async ({ page }) => {
-  await page.unroute('https://docs.google.com/**');
-  await page.route('https://docs.google.com/**', route => route.abort('failed'));
+test('uses the repository snapshot and displays a warning when Supabase is unavailable', async ({ page }) => {
+  await page.unroute('**/backups/stellar-crown.csv');
   await page.route('**/backups/stellar-crown.csv', route => route.fulfill({
     status: 200,
     contentType: 'text/csv',
@@ -84,21 +83,20 @@ test('uses the packaged backup and displays a warning when Google is unavailable
 
   await expect(page.locator('.item')).toHaveCount(2);
   await expect(page.locator('#dataBanner')).toBeVisible();
-  await expect(page.locator('#dataBanner')).toContainText('showing the latest backup');
+  await expect(page.locator('#dataBanner')).toContainText('repository snapshot');
   await expect(page.locator('.item .src').first()).toHaveText('Packaged backup');
 });
 
-test('explains when neither live nor backup data can be loaded', async ({ page }) => {
-  await page.unroute('https://docs.google.com/**');
-  await page.route('https://docs.google.com/**', route => route.fulfill({status:403}));
+test('explains when neither database nor snapshot can be loaded', async ({ page }) => {
+  await page.unroute('**/backups/stellar-crown.csv');
   await page.route('**/backups/stellar-crown.csv', route => route.fulfill({status:404}));
 
   await page.goto('/tracker.html?set=stellar-crown', { waitUntil: 'domcontentloaded' });
 
   await expect(page.locator('#notice')).toBeVisible();
   await expect(page.locator('#notice')).toContainText('Collection data is temporarily unavailable');
-  await expect(page.locator('#notice')).toContainText('Google Sheets denied access');
-  await expect(page.locator('#notice')).toContainText('local backup');
+  await expect(page.locator('#notice')).toContainText('Test uses the snapshot fallback');
+  await expect(page.locator('#notice')).toContainText('database snapshot');
 });
 
 test('builds marketplace searches from the card details', async ({ page }) => {

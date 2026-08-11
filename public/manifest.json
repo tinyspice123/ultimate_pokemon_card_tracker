@@ -1,7 +1,7 @@
 {
   "name": "Pokemon Card Tracker",
   "short_name": "Card Tracker",
-  "description": "Master set, promo and variant checklists fed live from Google Sheets",
+  "description": "Master set, promo and variant checklists backed by Supabase",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -1,7 +1,7 @@
-# Collection history: snapshots every set's sheet into backups/ daily.
+# Collection history: exports Supabase into per-set CSV snapshots daily.
 # Git history makes each snapshot diffable — you can see exactly which
 # cards were added between any two weeks, and restore any past state.
-name: Backup collection sheets
+name: Backup Supabase collection
 
 on:
   schedule:
@@ -22,8 +22,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.14"
-      - name: Fetch all sheets
-        run: python scripts/backup_sheets.py
+      - name: Export Supabase collection
+        run: python scripts/backup_supabase.py
       - name: Synchronize image manifests
         shell: bash
         run: |

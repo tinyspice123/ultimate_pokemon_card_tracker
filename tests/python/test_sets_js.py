@@ -1,5 +1,5 @@
 """Tests for sets_js.parse_sets — the one copy of the sets.js parser
-that download_assets.py, backup_sheets.py and check_logos.py all share."""
+that download_assets.py, backup_supabase.py and check_logos.py all share."""
 import sys
 import unittest
 from pathlib import Path

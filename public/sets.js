@@ -2,15 +2,12 @@
 //  SET REGISTRY — add a new set here and it appears on the home page
 //  and gets its own tracker at tracker.html?set=<id>
 //
-//  To activate a templated set below:
-//   1. Add a tab for it in the spreadsheet (same columns)
-//   2. Click the tab and copy the number after #gid= in the address bar
-//   3. Replace PASTE_TAB_GID in that entry and un-comment the block
-//  (The whole document is published, so no re-publishing is needed.)
+//  Card rows and quantities live in Supabase's pokemon_cards table. This
+//  registry supplies presentation and external image/API metadata only.
 //
 //  Fields:
 //   name       display name  ·  code: display code for the home tile
-//   sheetGid   numeric Google Sheets tab id; the shared URL lives below
+//   sheetGid   legacy import reference; unused by the website
 //   tcgSet     pokemontcg.io id (images + logo; covers sets up to ~2025)
 //   tcgdexSet  TCGdex id (images + logo; covers newer sets incl. Mega era)
 //   cardmarketSet  Cardmarket catalog code used in marketplace searches
@@ -18,8 +15,6 @@
 //   homeGroup  home-page section: sv, mega, or misc
 //   logo / imgTemplate / promoSet / subtitle / eyebrow: optional
 // =====================================================================
-
-const SHEET_BASE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPhhxFigR_Cyyp3Vi-Ne6yUBj2OrgG6VjbMNrBEzCm7dppuZkRgNj-9aeF7LbHYK3F3C4cIDm35GpE/pub";
 
 const SETS = {
 
@@ -254,10 +249,3 @@ const SETS = {
   },
 
 };
-
-// Browser consumers continue to use cfg.sheet; only the registry stores gids.
-for(const cfg of Object.values(SETS)){
-  if(cfg.sheetGid){
-    cfg.sheet=`${SHEET_BASE_URL}?gid=${encodeURIComponent(cfg.sheetGid)}&single=true&output=csv`;
-  }
-}

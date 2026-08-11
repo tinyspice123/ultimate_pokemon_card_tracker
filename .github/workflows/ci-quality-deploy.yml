@@ -103,7 +103,7 @@ jobs:
           python -m py_compile \
           scripts/download_images.py \
           scripts/download_assets.py \
-          scripts/backup_sheets.py \
+          scripts/backup_supabase.py \
           scripts/check_logos.py \
           scripts/sets_js.py \
           scripts/validate_data.py \

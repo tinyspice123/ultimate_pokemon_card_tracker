@@ -10,7 +10,7 @@ from unittest import mock
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-import backup_sheets  # noqa: E402
+import backup_supabase  # noqa: E402
 import check_logos  # noqa: E402
 import download_assets  # noqa: E402
 
@@ -29,84 +29,58 @@ class Response:
         return self.data
 
 
-class BackupSheetsTest(unittest.TestCase):
-    def test_google_delivery_host_must_match_csp(self):
-        source = "https://docs.google.com/spreadsheets/example"
-        backup_sheets.validate_delivery_host(
-            source,
-            f"https://{backup_sheets.SHEET_DELIVERY_HOST}/published.csv")
-        with self.assertRaisesRegex(ValueError, "update the Content Security Policy"):
-            backup_sheets.validate_delivery_host(
-                source, "https://different-shard.googleusercontent.com/file.csv")
+class BackupSupabaseTest(unittest.TestCase):
+    def test_public_config_is_parsed(self):
+        source = 'url: "https://project.supabase.co", publishableKey: "sb_publishable_test"'
+        self.assertEqual(backup_supabase.parse_supabase_config(source),
+                         ("https://project.supabase.co", "sb_publishable_test"))
+        with self.assertRaisesRegex(ValueError, "missing"):
+            backup_supabase.parse_supabase_config("const nope = true")
 
-    def test_no_sheet_links_is_success(self):
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            result = backup_sheets.backup([{"id": "empty"}])
-        self.assertEqual(result, 0)
-        self.assertIn("No sets", output.getvalue())
+    def test_rows_export_in_existing_csv_format(self):
+        text = backup_supabase.rows_to_csv([
+            {"group_name": "Promos", "card_name": "Pikachu",
+             "collector_number": "SVP 1", "variant": "Stamped",
+             "source": "Box", "status": "Confirmed", "price": "£2",
+             "quantity": 2, "image_url": "https://example.test/p.png"},
+        ])
+        self.assertIn("Group,Card,Number,Variant / Stamp", text)
+        self.assertIn("Promos,,,,,,,,", text)
+        self.assertIn(",Pikachu,SVP 1,Stamped,Box,Confirmed,£2,2,", text)
 
-    def test_success_html_response_and_network_failure(self):
+    def test_export_success_and_empty_set_failure(self):
         out = Path(tempfile.mkdtemp()) / "backups"
-        seen = []
-
+        payloads = {
+            "good": [{"group_name": "Main", "card_name": "Eevee",
+                      "collector_number": "1/1", "quantity": 1}],
+            "empty": [],
+        }
         def opener(request, timeout):
-            seen.append((request, timeout))
-            if request.full_url.endswith("good"):
-                return Response(b"Card,Have\nPikachu,1\n")
-            if request.full_url.endswith("html"):
-                return Response(b" <html>not published</html>")
-            raise OSError("offline")
-
-        entries = [
-            {"id": "good", "sheet": "https://example.test/good"},
-            {"id": "html", "sheet": "https://example.test/html"},
-            {"id": "bad", "sheet": "https://example.test/bad"},
-            {"id": "ignored"},
-        ]
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            result = backup_sheets.backup(
-                entries, out, opener, sleeper=lambda _seconds: None,
-                pace_seconds=0)
-        self.assertEqual(result, 1)
-        self.assertEqual((out / "good.csv").read_text(encoding="utf-8"),
-                         "Card,Have\nPikachu,1\n")
-        self.assertEqual([timeout for _, timeout in seen],
-                         [backup_sheets.REQUEST_TIMEOUT] * 5)
-        self.assertIn("card-tracker-backup", seen[0][0].get_header("User-agent"))
-        self.assertIn("Failed: html, bad", output.getvalue())
-
-    def test_all_sheets_backed_up_returns_success(self):
-        out = Path(tempfile.mkdtemp()) / "backups"
-        opener = lambda *_args, **_kwargs: Response(b"Card,Have\nEevee,1\n")
+            set_id = "good" if "eq.good" in request.full_url else "empty"
+            return Response(__import__("json").dumps(payloads[set_id]).encode())
         with contextlib.redirect_stdout(io.StringIO()):
-            result = backup_sheets.backup(
-                [{"id": "eevee", "sheet": "https://example.test/sheet"}],
-                out, opener, pace_seconds=0)
-        self.assertEqual(result, 0)
-        self.assertTrue((out / "eevee.csv").exists())
+            result = backup_supabase.backup(
+                [{"id": "good"}, {"id": "empty"}], "https://db.test", "key",
+                out, opener, sleeper=lambda _seconds: None)
+        self.assertEqual(result, 1)
+        self.assertTrue((out / "good.csv").exists())
+        self.assertFalse((out / "empty.csv").exists())
 
     def test_temporary_failure_retries_with_backoff(self):
-        attempts = []
-        delays = []
-
+        attempts, delays = [], []
         def opener(*_args, **_kwargs):
             attempts.append(1)
             if len(attempts) < 3:
                 raise TimeoutError("timed out")
-            return Response(b"Card,Have\nMew,1\n")
-
-        data = backup_sheets.fetch_csv(
-            "https://example.test/sheet", opener, delays.append)
-        self.assertEqual(data, "Card,Have\nMew,1\n")
-        self.assertEqual(len(attempts), 3)
+            return Response(b"[]")
+        data = backup_supabase.fetch_json(
+            "https://db.test/rest", "key", opener, delays.append)
+        self.assertEqual(data, [])
         self.assertEqual(delays, [2, 4])
 
-    def test_main_handles_registry_without_sheets(self):
-        with mock.patch.object(backup_sheets, "parse_sets", return_value=[]), \
-                contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(backup_sheets.main(), 0)
+    def test_empty_registry_is_success(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(backup_supabase.backup([], "url", "key"), 0)
 
 
 class CheckLogosTest(unittest.TestCase):

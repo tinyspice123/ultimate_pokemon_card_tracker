@@ -1,7 +1,7 @@
 """
 Shared parser for the SETS registry in sets.js.
 
-Used by download_assets.py, backup_sheets.py and check_logos.py — the
+Used by download_assets.py, backup_supabase.py and check_logos.py — the
 same comment-stripping + entry-extraction logic used to live as three
 separate copies, which is exactly how they drift apart. Tested in
 tests/test_sets_js.py.

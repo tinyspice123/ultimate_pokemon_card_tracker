@@ -166,7 +166,7 @@ def validate_repository(root: Path) -> list[str]:
     errors: list[str] = []
     sets_source = (root / "public" / "sets.js").read_text(encoding="utf-8")
     sets = parse_sets(sets_source)
-    configured = {entry["id"] for entry in sets if entry.get("sheet")}
+    configured = {entry["id"] for entry in sets}
     keys_by_set: dict[str, set[str]] = {}
 
     for set_id in sorted(configured):
@@ -204,9 +204,8 @@ def main() -> int:
             print(f"  - {error}", file=sys.stderr)
         return 1
     sets_source = (root / "public" / "sets.js").read_text(encoding="utf-8")
-    configured_count = sum(1 for entry in parse_sets(sets_source)
-                           if entry.get("sheet"))
-    print(f"Collection data valid: {configured_count} sheet backup(s) and image manifests checked")
+    configured_count = len(parse_sets(sets_source))
+    print(f"Collection data valid: {configured_count} database snapshot(s) and image manifests checked")
     return 0
 
 

@@ -21,10 +21,9 @@ function groupGrid(key){
   return grid;
 }
 
-async function sheetProgress(cfg){
-  if(!cfg.sheet) return null;
-  const res=await fetch(cfg.sheet,{cache:"no-store"});
-  if(!res.ok) throw new Error('sheet fetch failed: '+res.status);
+async function csvProgress(url){
+  const res=await fetch(url,{cache:"no-store"});
+  if(!res.ok) throw new Error('backup fetch failed: '+res.status);
   const text=await res.text();
   if(/^\s*</.test(text)) throw new Error('got a web page, not CSV');
   const rows=csvToRows(text);
@@ -51,8 +50,8 @@ async function progress(id,cfg){
   try{
     const cards=await PokemonDb.cards(id);
     if(cards.length) return {owned:cards.filter(card=>Number(card.quantity)>0).length,total:cards.length};
-  }catch{ /* retain the published Sheet as a read-only outage fallback */ }
-  return sheetProgress(cfg);
+  }catch{ /* retain the committed database export as an outage fallback */ }
+  return csvProgress(`backups/${encodeURIComponent(id)}.csv`);
 }
 
 // ---- cache last-seen progress per set so returning visitors see numbers
@@ -71,13 +70,9 @@ function paintProgress(a,p){
 }
 
 Object.entries(SETS).forEach(([id,cfg])=>{
-  const a=document.createElement(cfg.sheet?'a':'article');
+  const a=document.createElement('a');
   a.className='setcard';
-  if(cfg.sheet) a.href='tracker.html?set='+encodeURIComponent(id);
-  else{
-    a.classList.add('unconfigured');
-    a.setAttribute('aria-disabled','true');
-  }
+  a.href='tracker.html?set='+encodeURIComponent(id);
   const logoCands=['assets/logos/'+id+'.png'];
   if(cfg.logo) logoCands.push(cfg.logo);
   if(cfg.tcgSet) logoCands.push('https://images.pokemontcg.io/'+cfg.tcgSet+'/logo.png');
@@ -102,17 +97,13 @@ Object.entries(SETS).forEach(([id,cfg])=>{
   setSafeImageSource(logoImg,logoCands[0]||'',document.baseURI);
   a.dataset.search=(id+" "+cfg.name+" "+(cfg.tcgSet||"")+" "+(cfg.code||"")+" "+(cfg.tcgdexSet||"")).toLowerCase();
   groupGrid(cfg.homeGroup||'misc').appendChild(a);
-  if(!cfg.sheet){
-    a.querySelector('[data-prog]').textContent='Not configured';
-  } else {
-    const cached=getCachedProgress(id);
-    if(cached) paintProgress(a,cached);
-    progress(id,cfg).then(p=>{
-      if(!p) return; // keep showing the cached value (or "…") rather than blanking
-      paintProgress(a,p);
-      setCachedProgress(id,p);
-    }).catch(()=>{ if(!cached) a.querySelector('[data-prog]').textContent=''; });
-  }
+  const cached=getCachedProgress(id);
+  if(cached) paintProgress(a,cached);
+  progress(id,cfg).then(p=>{
+    if(!p) return; // keep showing the cached value (or "…") rather than blanking
+    paintProgress(a,p);
+    setCachedProgress(id,p);
+  }).catch(()=>{ if(!cached) a.querySelector('[data-prog]').textContent=''; });
 });
 document.getElementById('setSearch').addEventListener('input', e=>{
   const q=e.target.value.trim().toLowerCase();

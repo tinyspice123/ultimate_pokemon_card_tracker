@@ -1,7 +1,7 @@
 # Ultimate Pokémon Card Tracker
 
 A static, multi-set Pokémon card collection tracker backed by Supabase, with
-published Google Sheets retained as a read-only fallback. The home page lists configured sets and their completion; each set opens
+versioned database exports retained as a read-only fallback. The home page lists configured sets and their completion; each set opens
 the same reusable tracker with shareable filtering, ownership totals, prices,
 owned/missing/spares exports, offline caching, local card images, and
 marketplace search links. Display and sort preferences persist in the browser.
@@ -68,7 +68,6 @@ the `SETS` object:
 "stellar-crown": {
   name: "Stellar Crown",
   code: "SV7",
-  sheetGid: "123",
   tcgSet: "sv7",
   tcgdexSet: "sv07",
   subtitle: "English master set",
@@ -78,9 +77,7 @@ the `SETS` object:
 Rules:
 
 - Use a unique, kebab-case key such as `stellar-crown`.
-- Publish the spreadsheet as CSV and store only the tab's numeric `sheetGid`.
-- Keep the shared publication URL in `SHEET_BASE_URL` and make sure each
-  configured set uses a different `sheetGid`.
+- Insert the set's card rows into Supabase with this registry key as `set_id`.
 - `tcgSet` is the Pokémon TCG API set code; `tcgdexSet` is the TCGdex code.
 - Optional fields include `logo`, `eyebrow`, `subtitle`, `imgTemplate`,
   `promoSet`, and `cardmarketSet`.
@@ -109,7 +106,7 @@ That restriction is enforced by Row Level Security in
 3. In **Authentication → URL Configuration**, set the deployed GitHub Pages
    site URL and add the deployed tracker URL plus
    `http://127.0.0.1:4173/tracker.html` as allowed redirect URLs.
-4. Import the current checked-in Sheet snapshots into the database:
+4. Import the current checked-in CSV snapshots into the database:
 
 ```powershell
 $env:SUPABASE_URL = "https://ekyngjwtoxvkqfalxebm.supabase.co"
@@ -123,11 +120,11 @@ The secret key is only for this local import command. Never put it in
 in `public/supabase-config.js` is intentionally public and remains constrained
 by the database policy.
 
-The importer preserves quantities from the `Have` columns. Until the migration
-and import are complete, the tracker automatically falls back to the published
-Sheets and remains read-only.
+The importer preserves quantities from the `Have` columns. If Supabase is
+temporarily unavailable, the tracker automatically falls back to the latest
+committed database export and remains read-only.
 
-## Prepare the Google Sheet fallback
+## CSV snapshot format
 
 Import [`docs/template.csv`](docs/template.csv) into a new sheet tab and replace
 the example rows. The tracker recognises these columns:
@@ -144,8 +141,8 @@ the example rows. The tracker recognises these columns:
 | Have | Owned quantity, `x`, or `TRUE` |
 | Image URL | Optional exact image override |
 
-Publish that tab with **File → Share → Publish to web**, select the tab and CSV,
-then paste its generated URL into `public/sets.js`.
+This format is produced automatically by `scripts/backup_supabase.py`. It can
+also be prepared manually for an initial bulk import.
 
 ## Local logos and card images
 
@@ -160,11 +157,11 @@ python scripts/download_assets.py
 
 ### Create a card-image manifest
 
-Put the correct source URL in the sheet's **Image** column, refresh the backup,
+Put the correct source URL in Supabase's `image_url` column, refresh the snapshot,
 then run the downloader with the set's `sets.js` key:
 
 ```bash
-python scripts/backup_sheets.py
+python scripts/backup_supabase.py
 python scripts/download_images.py backups/stellar-crown.csv stellar-crown
 ```
 
@@ -195,28 +192,27 @@ handles unambiguous wording changes and refuses uncertain matches.
 The scheduled backup workflow runs synchronization automatically before
 validating and committing refreshed backups. It deliberately does not download
 new image files; generating and reviewing repository assets remains an explicit
-step. At runtime, a sheet Image URL takes priority, followed by its local
-manifest override and then the configured API fallbacks. Clear the sheet Image
-cell after downloading if the committed local copy should take priority.
+step. At runtime, a local manifest image takes priority, followed by the
+database `image_url` and then the configured API fallbacks.
 
 ## Back up collection data
 
-Run this manually to snapshot every configured sheet into `backups/`:
+Run this manually to export every configured set from Supabase into `backups/`:
 
 ```bash
-python scripts/backup_sheets.py
+python scripts/backup_supabase.py
 ```
 
 The scheduled backup workflow runs the same command daily and commits only
-when sheet data changed. It also synchronizes image manifests; when that changes
+when database data changed. It also synchronizes image manifests; when that changes
 anything under `public/`, the workflow explicitly dispatches the normal test and
 deployment pipeline so production never waits for an unrelated push.
-Sheet downloads are paced and temporary timeouts, rate limits, and server errors
-receive three attempts with exponential backoff.
+Temporary timeouts, rate limits, and server errors receive three attempts with
+exponential backoff.
 
-At runtime the tracker requests Google Sheets first. If that request fails or
-returns invalid CSV, it requests `backups/<set-id>.csv` from the deployed site
-and shows a warning that the latest snapshot is in use. Only root `backups/` is
+At runtime the tracker requests Supabase first. If that request fails, it
+requests `backups/<set-id>.csv` from the deployed site and shows a warning that
+the latest snapshot is in use. Only root `backups/` is
 version-controlled; CI creates `public/backups/` while packaging the Pages
 artifact, so the repository does not store duplicate CSV copies. Earlier
 snapshots remain recoverable through Git history.
@@ -248,7 +244,7 @@ npm run test:python
 - `tests/unit/` exercises shared JavaScript and service-worker behavior.
 - `tests/python/` tests the maintenance scripts without real network calls.
 - `tests/e2e/` runs the tracker in desktop and mobile Chrome with deterministic
-  mocked sheet data, plus a service-worker-enabled offline reload integration
+  mocked database/snapshot data, plus a service-worker-enabled offline reload integration
   test.
 
 JavaScript coverage is written to `coverage/`; Playwright failures are written
@@ -333,9 +329,8 @@ worker behavior.
 `public/sets.js`. The key must be kebab-case and the sheet URL must end with a
 published CSV output parameter.
 
-**Sheet data does not load** — confirm the individual tab is published to the
-web and that its URL contains `output=csv`. A normal edit/share URL is not a CSV
-endpoint.
+**Database data does not load** — confirm the migration and initial import ran,
+the table is named `pokemon_cards`, and its public SELECT policy is enabled.
 If the URL works directly, check the browser console for a CSP error on a
 changed `doc-XX-YY-sheets.googleusercontent.com` shard and follow the
 [recovery runbook](docs/RECOVERY.md).

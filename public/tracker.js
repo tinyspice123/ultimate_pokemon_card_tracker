@@ -3,7 +3,6 @@
 const params = new URLSearchParams(location.search);
 const SET_ID = (typeof SETS!=="undefined" && SETS[params.get('set')]) ? params.get('set') : Object.keys(SETS)[0];
 const cfg = SETS[SET_ID];
-const SHEET_URL = cfg.sheet || "";
 const BACKUP_URL = `backups/${encodeURIComponent(SET_ID)}.csv`;
 
 // header branding from config
@@ -42,8 +41,7 @@ let authUser=null;
 let canEdit=false;
 const pendingCards=new Set();
 
-// ---- "synced Xs ago" — so a reload's staleness (Google's ~5 min publish
-// cache) is visible instead of silently trusted ----
+// ---- "synced Xs ago" ------------------------------------------------
 let lastSyncedAt=null;
 function markSynced(){ lastSyncedAt=Date.now(); updateSyncedLabel(); }
 function updateSyncedLabel(){
@@ -74,15 +72,10 @@ window.addEventListener('DOMContentLoaded', async ()=>{
     markSynced();
   }catch(databaseError){
     try{
-      parseRows(await fetchCsvRows(SHEET_URL,'live'));
+      parseRows(await fetchCsvRows(BACKUP_URL));
       showDatabaseFallback(databaseError);
-    }catch(liveError){
-      try{
-        parseRows(await fetchCsvRows(BACKUP_URL,'backup'));
-        showBackupBanner(liveError);
-      }catch(backupError){
-        showDataFailure(liveError,backupError);
-      }
+    }catch(backupError){
+      showDataFailure(databaseError,backupError);
     }
   }
 });
@@ -109,62 +102,43 @@ function finishLoad(){
   document.getElementById('controls').style.display='flex';
   document.getElementById('foot').style.display='block';
 }
-async function fetchCsvRows(url,source){
-  const res=await fetchCsvResponse(url,source);
-  ensureCsvResponse(res,source);
+async function fetchCsvRows(url){
+  const res=await fetchCsvResponse(url);
+  ensureCsvResponse(res);
   const text=await res.text();
-  ensureCsvText(text,source);
+  ensureCsvText(text);
   const rows=csvToRows(text);
-  ensureCsvColumns(rows,source);
+  ensureCsvColumns(rows);
   return rows;
 }
 
-async function fetchCsvResponse(url,source){
+async function fetchCsvResponse(url){
   try{
     return await fetch(url,{cache:"no-store"});
   }catch(error){
-    throw new Error(source==='live'
-      ? 'Google Sheets could not be reached. Check your connection and try again.'
-      : 'The local backup could not be reached.',{cause:error});
+    throw new Error('The database snapshot could not be reached.',{cause:error});
   }
 }
 
-function ensureCsvResponse(res,source){
+function ensureCsvResponse(res){
   if(res.ok) return;
-  const liveErrors={
-    403:'Google Sheets denied access. Check that the document is published to the web.',
-    404:'The published Google Sheet could not be found.',
-  };
-  if(source==='live' && liveErrors[res.status])
-    throw new Error(liveErrors[res.status]);
-  const label=source==='live'?'Google Sheets':'The local backup';
-  throw new Error(`${label} returned HTTP ${res.status}.`);
+  throw new Error(`The database snapshot returned HTTP ${res.status}.`);
 }
 
-function ensureCsvText(text,source){
+function ensureCsvText(text){
   if(!/^\s*</.test(text)) return;
-  throw new Error(source==='live'
-    ? 'Google Sheets returned a webpage instead of published CSV data.'
-    : 'The local backup is not valid CSV data.');
+  throw new Error('The database snapshot is not valid CSV data.');
 }
 
-function ensureCsvColumns(rows,source){
+function ensureCsvColumns(rows){
   const columns=detectColumns(rows[0]);
   if(columns.cCard>=0 && columns.cHave>=0) return;
-  const label=source==='live'?'The Google Sheet':'The local backup';
-  throw new Error(`${label} is missing required Card or Have columns.`);
-}
-
-function showBackupBanner(liveError){
-  const banner=document.getElementById('dataBanner');
-  banner.textContent='Live Google Sheet unavailable — showing the latest backup. Recent collection changes may not appear.';
-  banner.title=String(liveError.message||liveError);
-  banner.classList.add('show');
+  throw new Error('The database snapshot is missing required Card or Have columns.');
 }
 
 function showDatabaseFallback(error){
   const banner=document.getElementById('dataBanner');
-  banner.textContent='Database unavailable — showing the read-only Google Sheet copy.';
+  banner.textContent='Database unavailable — showing the latest read-only repository snapshot.';
   banner.title=String(error.message||error);
   banner.classList.add('show');
 }
