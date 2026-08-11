@@ -67,11 +67,19 @@ const PokemonDb = (()=>{
     const path=`/rest/v1/pokemon_cards?set_id=eq.${encodeURIComponent(setId)}&select=${fields}&order=sort_order.asc`;
     return await (await request(path,{headers:headers(null)})).json();
   }
+  async function isEditor(session){
+    if(!session) return false;
+    try{
+      const response=await request('/rest/v1/rpc/is_collection_editor',{
+        method:'POST',headers:headers(session,{'Content-Type':'application/json'}),body:'{}'});
+      return (await response.json())===true;
+    }catch{return false;}
+  }
   async function setQuantity(session,cardId,quantity){
     const path=`/rest/v1/pokemon_cards?id=eq.${encodeURIComponent(cardId)}`;
     await request(path,{method:'PATCH',headers:headers(session,{
       'Content-Type':'application/json',Prefer:'return=minimal'}),
       body:JSON.stringify({quantity})});
   }
-  return {currentSession,currentUser,signInWithGoogle,signOut,cards,setQuantity};
+  return {currentSession,currentUser,signInWithGoogle,signOut,cards,isEditor,setQuantity};
 })();

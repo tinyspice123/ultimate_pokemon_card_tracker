@@ -1,87 +1,76 @@
 # Recovery runbook
 
-This runbook covers the failures most likely to affect the static tracker. It
-assumes repository access and permission to run GitHub Actions deployments.
+This runbook covers the most likely production failures. It assumes repository
+access and permission to run GitHub Actions deployments.
 
 ## Put the site into maintenance mode
 
 1. Open **GitHub → Actions → Toggle maintenance mode → Run workflow**.
-2. Select `enable` and run the workflow from `main`.
-3. Verify the Pages URL shows the maintenance screen and that a direct URL such
-   as `tracker.html` also leads to it.
+2. Select `enable` and run it from `main`.
+3. Verify the Pages URL and a direct tracker URL show the maintenance screen.
 
-To restore service, run the same workflow with `disable`. A successful normal
-deployment from `main` also replaces maintenance mode with the live site.
+Run the same workflow with `disable` to restore the site. A successful normal
+deployment also replaces maintenance mode.
 
 ## Roll back a bad release
 
 1. Find the last known-good commit in **Actions → Tests / Security / Deploy**.
 2. Revert the bad commit with a new commit; do not rewrite or force-push `main`.
-3. Push the revert and wait for every required test and the SonarQube Quality
-   Gate to pass.
-4. Confirm the deployment smoke test succeeds, then open the home page and one
-   configured tracker page in a private browser window.
+3. Push the revert and wait for site, browser, and SonarQube checks to pass.
+4. Confirm the deployment smoke test, home page, and one tracker page.
 
 If the normal pipeline cannot run, enable maintenance mode while diagnosing it.
-Disable maintenance only after a full site artifact has deployed successfully.
 
 ## Restore collection data
 
-Published Google Sheets are the live source. Versioned snapshots are stored as
-`backups/<set-id>.csv` by the daily backup workflow.
+Supabase is the live source. Versioned CSV recovery snapshots are stored under
+`backups/<set-id>.csv` by the daily **Backup Supabase collection** workflow.
 
-1. Identify the last good CSV using Git history.
-2. Download that revision of the backup.
-3. Import it into the matching Google Sheets tab, checking that columns align.
-4. Run **Actions → Backup collection sheets** manually.
-5. Confirm its validation step passes before relying on the restored sheet.
+1. Identify the last good CSV with Git history and download that revision.
+2. Restore its rows into Supabase's `public.pokemon_cards` table with the Table
+   Editor, CSV import, or reviewed SQL. Preserve its `set_id`.
+3. Run **Backup Supabase collection** manually.
+4. Confirm validation passes and check the restored set on the site.
 
-Never restore one set's CSV into another tab: the sheet `gid` identifies the tab
-but does not validate its contents.
+Never import one set's CSV under a different `set_id`.
 
-## Respond to a sheet outage
+## Respond to a Supabase outage
 
-1. Open the configured CSV URL from `public/sets.js` directly.
-2. Check the browser console for a CSP violation involving a different
-   `doc-XX-YY-sheets.googleusercontent.com` host. Google can change the shard
-   used by its published-CSV redirect without producing an application log.
-3. Confirm it returns CSV rather than a Google sign-in or HTML error page.
-4. In Google Sheets, use **Share → Publish to web**, choose the individual tab
-   and CSV, then compare the resulting URL with `sets.js`.
-5. If the delivery hostname changes, update the CSP in `public/index.html` and
-   `public/tracker.html` only after verifying that the redirect belongs to
-   Google, then update `scripts/backup_sheets.py` with the same allowlisted host.
-6. Run the site, Python, and browser checks before deployment.
+1. Open the [Supabase dashboard](SERVICES.md) and check project status and API
+   logs.
+2. The deployed tracker automatically reads its matching CSV snapshot and is
+   read-only while Supabase is unavailable.
+3. Do not edit fallback CSVs as a substitute for the database. Apply changes
+   after recovery, then run **Backup Supabase collection**.
+4. Confirm live data and the signed-in quantity controls work before closing the
+   incident.
 
 ## Repair missing or incorrect images
 
-1. Check the row's Card, Number, and Variant text against
-   `public/img/<set-id>/manifest.txt`; cosmetic case and punctuation differences
-   are ignored.
-2. Correct the sheet Image URL and regenerate the images and manifest with
-   `python scripts/download_images.py backups/<set-id>.csv <set-id>`.
+1. Check the Card, Number, and Variant text against
+   `public/img/<set-id>/manifest.txt`.
+2. Correct the Supabase `image_url`, then run:
+
+   ```bash
+   python scripts/backup_supabase.py
+   python scripts/download_images.py backups/<set-id>.csv <set-id>
+   ```
+
 3. If only labels changed, run
-   `python scripts/sync_manifest.py path/to/sheet.csv <set-id>` to re-key the
-   existing images without downloading them again.
-4. Run `python scripts/validate_data.py`. It detects missing files, duplicate or
-   stale mappings, unsafe filenames, and unreferenced images.
-5. Open the affected card in both card and table views after deployment.
+   `python scripts/sync_manifest.py backups/<set-id>.csv <set-id>`.
+4. Run `python scripts/validate_data.py`, commit the image and manifest changes,
+   and verify the affected card after deployment.
 
 ## Clear a stale browser release
 
-The service worker updates automatically, but an already-open tab may still be
-running an earlier release. Close all tracker tabs and reopen the site. If that
-does not work, remove the site's stored data/service worker in browser developer
-tools and reload. Do this only on the affected browser; it is not a server-side
-rollback procedure.
+Close tracker tabs and reopen the site. If needed, remove that site's stored
+data/service worker in browser developer tools and reload. This is limited to
+the affected browser; it is not a server-side rollback.
 
 ## Final recovery checks
 
-- Home page, tracker page, manifest and service worker return successful HTTP
-  responses.
-- A configured sheet loads and progress totals appear.
-- One exact promo/variant override displays its local image.
-- Missing/owned/spares exports work and a copied filtered URL restores its
-  search, group, and missing-only state.
-- The latest deployment smoke test, production dependency canary, and scheduled
-  backup validation are green.
+- The home page, tracker, manifest, and service worker return successfully.
+- A configured Supabase set loads and progress totals appear.
+- One exact promo or variant override displays its local image.
+- Missing, owned, and spares exports work.
+- The latest deployment, production canary, and scheduled backup are green.

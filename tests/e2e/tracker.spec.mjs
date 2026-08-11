@@ -46,8 +46,11 @@ test('authorized Google account can update a database quantity', async ({ page }
   })));
   await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/auth/v1/user', route => route.fulfill({
     status:200,contentType:'application/json',body:JSON.stringify({
-      id:'00000000-0000-0000-0000-000000000001',email:'collection-owner',
+      id:'00000000-0000-0000-0000-000000000001',email:'owner@example.test',
     }),
+  }));
+  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/rpc/is_collection_editor', route => route.fulfill({
+    status:200,contentType:'application/json',body:'true',
   }));
   let savedQuantity=null;
   await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_cards**', async route => {

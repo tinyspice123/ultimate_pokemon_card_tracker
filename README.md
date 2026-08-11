@@ -39,6 +39,19 @@ Sora and Unbounded are self-hosted under `public/assets/fonts/`, including
 their OFL license files, so typography works without Google Fonts or a network
 connection.
 
+## Operations guides
+
+Routine maintenance is documented separately:
+
+- [Add or edit cards](docs/ADDING_CARDS.md)
+- [Add a new set](docs/ADDING_SETS.md)
+- [Delete or archive a set](docs/DELETING_SETS.md)
+- [Manage editor access](docs/EDITOR_ACCESS.md)
+- [Manage card images](docs/IMAGES.md)
+- [Backups and restore](docs/BACKUPS.md)
+- [Repository recovery](docs/RECOVERY.md)
+- [Service consoles and routine checks](docs/SERVICES.md)
+
 ## Tracker controls
 
 - Search, group, and missing-only filters are encoded in the URL so a filtered
@@ -95,9 +108,9 @@ second checks external logo fallbacks and therefore needs internet access.
 ## Supabase database and owner login
 
 Supabase is the primary catalogue and collection store. The collection is
-publicly readable, but only `collection-owner` can change quantities.
-That restriction is enforced by Row Level Security in
-`supabase/migrations/202608120001_collection_schema.sql`.
+publicly readable, but only user IDs in the private editor allowlist can change
+quantities. That restriction is enforced by Row Level Security without
+publishing the owner's email address.
 
 1. Apply the migration through the Supabase SQL editor or the linked-repository
    migration workflow.

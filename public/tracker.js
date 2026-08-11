@@ -83,7 +83,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
 async function initAuth(){
   authSession=await PokemonDb.currentSession();
   authUser=await PokemonDb.currentUser(authSession);
-  canEdit=authUser?.email?.toLowerCase()===SUPABASE_CONFIG.editorEmail.toLowerCase();
+  canEdit=await PokemonDb.isEditor(authSession);
   document.getElementById('googleSignIn').style.display=authUser?'none':'block';
   document.getElementById('signedIn').style.display=authUser?'flex':'none';
   document.getElementById('accountEmail').textContent=authUser?.email||'';

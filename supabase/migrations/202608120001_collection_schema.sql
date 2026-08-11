@@ -21,13 +21,5 @@ drop policy if exists "Cards are publicly readable" on public.cards;
 create policy "Cards are publicly readable"
   on public.cards for select to anon, authenticated using (true);
 
-drop policy if exists "Owner updates quantities" on public.cards;
-create policy "Owner updates quantities"
-  on public.cards for update to authenticated
-  using ((select auth.jwt() ->> 'email') = 'collection-owner')
-  with check ((select auth.jwt() ->> 'email') = 'collection-owner');
-
 revoke all on public.cards from anon, authenticated;
 grant select on public.cards to anon, authenticated;
-grant update (quantity) on public.cards to authenticated;
-
