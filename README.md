@@ -1,7 +1,7 @@
 # Ultimate Pokémon Card Tracker
 
-A static, multi-set Pokémon card collection tracker backed by published Google
-Sheets. The home page lists configured sets and their completion; each set opens
+A static, multi-set Pokémon card collection tracker backed by Supabase, with
+published Google Sheets retained as a read-only fallback. The home page lists configured sets and their completion; each set opens
 the same reusable tracker with shareable filtering, ownership totals, prices,
 owned/missing/spares exports, offline caching, local card images, and
 marketplace search links. Display and sort preferences persist in the browser.
@@ -95,7 +95,39 @@ python scripts/check_logos.py
 The first command catches malformed configuration and missing site assets. The
 second checks external logo fallbacks and therefore needs internet access.
 
-## Prepare the Google Sheet
+## Supabase database and owner login
+
+Supabase is the primary catalogue and collection store. The collection is
+publicly readable, but only `collection-owner` can change quantities.
+That restriction is enforced by Row Level Security in
+`supabase/migrations/202608120001_collection_schema.sql`.
+
+1. Apply the migration through the Supabase SQL editor or the linked-repository
+   migration workflow.
+2. In **Authentication → Providers → Google**, enable Google and enter the
+   OAuth client ID and client secret from Google Cloud.
+3. In **Authentication → URL Configuration**, set the deployed GitHub Pages
+   site URL and add the deployed tracker URL plus
+   `http://127.0.0.1:4173/tracker.html` as allowed redirect URLs.
+4. Import the current checked-in Sheet snapshots into the database:
+
+```powershell
+$env:SUPABASE_URL = "https://ekyngjwtoxvkqfalxebm.supabase.co"
+$env:SUPABASE_SECRET_KEY = "your-rotated-secret-key"
+python scripts/import_supabase_cards.py
+Remove-Item Env:SUPABASE_SECRET_KEY
+```
+
+The secret key is only for this local import command. Never put it in
+`public/`, commit it, or expose it to browser code. The publishable browser key
+in `public/supabase-config.js` is intentionally public and remains constrained
+by the database policy.
+
+The importer preserves quantities from the `Have` columns. Until the migration
+and import are complete, the tracker automatically falls back to the published
+Sheets and remains read-only.
+
+## Prepare the Google Sheet fallback
 
 Import [`docs/template.csv`](docs/template.csv) into a new sheet tab and replace
 the example rows. The tracker recognises these columns:

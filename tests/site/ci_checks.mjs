@@ -168,7 +168,7 @@ if (!fs.readFileSync(sitePath('robots.txt'), 'utf8').includes('sitemap.xml'))
 else ok('production metadata and crawler files present');
 
 // ---------- local JavaScript ----------
-for (const file of ['lib.js', 'index.js', 'tracker.js', 'pwa.js']) {
+for (const file of ['lib.js', 'index.js', 'supabase-config.js', 'supabase-client.js', 'tracker.js', 'pwa.js']) {
   console.log(file);
   try { new Function(fs.readFileSync(sitePath(file), 'utf8')); ok('syntax OK'); } // NOSONAR
   catch (e) { fail('syntax error: ' + e.message); }

@@ -9,7 +9,7 @@ const IMAGE_CACHE = 'card-images-v2';
 const IMAGE_CACHE_LIMIT = 200;
 const SHELL = [
   './', 'index.html', '404.html', 'fonts.css', 'index.css', 'index.js',
-  'tracker.html', 'tracker.css', 'tracker.js', 'pwa.css', 'pwa.js',
+  'tracker.html', 'tracker.css', 'tracker.js', 'supabase-config.js', 'supabase-client.js', 'pwa.css', 'pwa.js',
   'assets/fonts/sora-latin.woff2', 'assets/fonts/unbounded-latin.woff2',
   'assets/icon-192.png', 'assets/icon-512.png', 'assets/icon-maskable-512.png',
   'sets.js', 'lib.js', 'manifest.json'

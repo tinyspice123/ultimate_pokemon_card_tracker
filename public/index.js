@@ -21,7 +21,7 @@ function groupGrid(key){
   return grid;
 }
 
-async function progress(cfg){
+async function sheetProgress(cfg){
   if(!cfg.sheet) return null;
   const res=await fetch(cfg.sheet,{cache:"no-store"});
   if(!res.ok) throw new Error('sheet fetch failed: '+res.status);
@@ -45,6 +45,14 @@ async function progress(cfg){
     if(parseHaveQty(rows[r][haveI])>0) owned++;
   }
   return {owned,total};
+}
+
+async function progress(id,cfg){
+  try{
+    const cards=await PokemonDb.cards(id);
+    if(cards.length) return {owned:cards.filter(card=>Number(card.quantity)>0).length,total:cards.length};
+  }catch{ /* retain the published Sheet as a read-only outage fallback */ }
+  return sheetProgress(cfg);
 }
 
 // ---- cache last-seen progress per set so returning visitors see numbers
@@ -99,7 +107,7 @@ Object.entries(SETS).forEach(([id,cfg])=>{
   } else {
     const cached=getCachedProgress(id);
     if(cached) paintProgress(a,cached);
-    progress(cfg).then(p=>{
+    progress(id,cfg).then(p=>{
       if(!p) return; // keep showing the cached value (or "…") rather than blanking
       paintProgress(a,p);
       setCachedProgress(id,p);

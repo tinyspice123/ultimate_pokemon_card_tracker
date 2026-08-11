@@ -13,15 +13,16 @@ const browserGlobals={
   sortItems:'readonly', marketplaceSearchUrls:'readonly', priceMid:'readonly',
   matchesQuery:'readonly', exportText:'readonly', exportCsv:'readonly',
   parseHaveQty:'readonly',
+  SUPABASE_CONFIG:'readonly', PokemonDb:'readonly',
 };
 
 export default [
   {ignores:['public/sets.js','public/img/**']},
   {
-    files:['public/index.js','public/tracker.js','public/pwa.js'],
+    files:['public/index.js','public/tracker.js','public/pwa.js','public/supabase-*.js'],
     ...js.configs.recommended,
     languageOptions:{ecmaVersion:'latest',sourceType:'script',globals:browserGlobals},
-    rules:{...js.configs.recommended.rules,'no-unused-vars':'off'},
+    rules:{...js.configs.recommended.rules,'no-unused-vars':'off','no-redeclare':'off'},
   },
   {
     files:['public/lib.js'],

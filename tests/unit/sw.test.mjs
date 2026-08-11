@@ -76,7 +76,8 @@ test('install precaches the shell and waits before activating an update',async()
   listeners.install(event); await event.promise;
   assert.deepEqual(stores.get('shell-__BUILD_VERSION__').precached,
     ['./','index.html','404.html','fonts.css','index.css','index.js','tracker.html','tracker.css',
-      'tracker.js','pwa.css','pwa.js','assets/fonts/sora-latin.woff2','assets/fonts/unbounded-latin.woff2',
+      'tracker.js','supabase-config.js','supabase-client.js','pwa.css','pwa.js',
+      'assets/fonts/sora-latin.woff2','assets/fonts/unbounded-latin.woff2',
       'assets/icon-192.png','assets/icon-512.png','assets/icon-maskable-512.png',
       'sets.js','lib.js','manifest.json']);
   assert.equal(skipWaitingCalled,false);

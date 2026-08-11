@@ -37,6 +37,10 @@ if(cfg.subtitle){
 // ----------------------------------------------------------------------
 
 let items=[];
+let authSession=null;
+let authUser=null;
+let canEdit=false;
+const pendingCards=new Set();
 
 // ---- "synced Xs ago" — so a reload's staleness (Google's ~5 min publish
 // cache) is visible instead of silently trusted ----
@@ -57,26 +61,54 @@ setInterval(updateSyncedLabel, 15000);
 
 window.addEventListener('DOMContentLoaded', async ()=>{
   await loadImgManifest();
-  if(!SHEET_URL){
-    const n=document.getElementById('notice');
-    n.style.display='block';
-    n.querySelector('.inner').insertAdjacentHTML('afterbegin',
-      '<div class="notice-title">No sheet configured for this set yet — '+
-      'add its published CSV link to <b>sets.js</b> (see the commented sheet line).</div>');
-    return;
-  }
+  await initAuth();
   try{
-    parseRows(await fetchCsvRows(SHEET_URL,'live'));
+    const cards=await PokemonDb.cards(SET_ID);
+    if(!cards.length) throw new Error('The database has no cards for this set yet.');
+    items=cards.map(card=>({
+      id:card.id,group:card.group_name,card:card.card_name,num:card.collector_number,
+      variant:card.variant,src:card.source,price:card.price,status:card.status,
+      qty:Number(card.quantity)||0,img:card.image_url,
+    }));
+    finishLoad();
     markSynced();
-  }catch(liveError){
+  }catch(databaseError){
     try{
-      parseRows(await fetchCsvRows(BACKUP_URL,'backup'));
-      showBackupBanner(liveError);
-    }catch(backupError){
-      showDataFailure(liveError,backupError);
+      parseRows(await fetchCsvRows(SHEET_URL,'live'));
+      showDatabaseFallback(databaseError);
+    }catch(liveError){
+      try{
+        parseRows(await fetchCsvRows(BACKUP_URL,'backup'));
+        showBackupBanner(liveError);
+      }catch(backupError){
+        showDataFailure(liveError,backupError);
+      }
     }
   }
 });
+
+async function initAuth(){
+  authSession=await PokemonDb.currentSession();
+  authUser=await PokemonDb.currentUser(authSession);
+  canEdit=authUser?.email?.toLowerCase()===SUPABASE_CONFIG.editorEmail.toLowerCase();
+  document.getElementById('googleSignIn').style.display=authUser?'none':'block';
+  document.getElementById('signedIn').style.display=authUser?'flex':'none';
+  document.getElementById('accountEmail').textContent=authUser?.email||'';
+  document.getElementById('viewerOnly').style.display=authUser&&!canEdit?'inline':'none';
+}
+
+document.getElementById('googleSignIn').addEventListener('click',()=>PokemonDb.signInWithGoogle());
+document.getElementById('signOut').addEventListener('click',async ()=>{
+  await PokemonDb.signOut(authSession);
+  location.reload();
+});
+
+function finishLoad(){
+  buildGroupSel(); applyFilterParams(); render();
+  document.getElementById('stats').style.display='grid';
+  document.getElementById('controls').style.display='flex';
+  document.getElementById('foot').style.display='block';
+}
 async function fetchCsvRows(url,source){
   const res=await fetchCsvResponse(url,source);
   ensureCsvResponse(res,source);
@@ -130,6 +162,13 @@ function showBackupBanner(liveError){
   banner.classList.add('show');
 }
 
+function showDatabaseFallback(error){
+  const banner=document.getElementById('dataBanner');
+  banner.textContent='Database unavailable — showing the read-only Google Sheet copy.';
+  banner.title=String(error.message||error);
+  banner.classList.add('show');
+}
+
 function showDataFailure(liveError,backupError){
   const notice=document.getElementById('notice');
   const inner=notice.querySelector('.inner');
@@ -147,11 +186,7 @@ function showDataFailure(liveError,backupError){
 
 function parseRows(rows){
   items=rowsToItems(rows);
-  buildGroupSel(); applyFilterParams(); render();
-  document.getElementById('stats').style.display='grid';
-  document.getElementById('controls').style.display='flex';
-  const foot=document.getElementById('foot');
-  foot.style.display='block';
+  finishLoad();
 }
 
 // ---- img folder manifest (downloaded copies of sheet Image URLs)
@@ -341,14 +376,45 @@ function __imgFallback(img){
     {className:'ph',innerHTML:'<b>'+(img.dataset.ph||'?')+'</b><span>no image</span>'}));
 }
 
+function quantityHtml(it){
+  if(!canEdit||!it.id) return `<div class="qtytag ${it.qty?'':'zero'}">×${it.qty}</div>`;
+  const disabled=pendingCards.has(it.id)?' disabled':'';
+  return `<div class="qtyedit" aria-label="Quantity for ${esc(it.card)}">
+    <button type="button" data-delta="-1" aria-label="Remove one ${esc(it.card)}"${disabled}>−</button>
+    <output>${it.qty}</output>
+    <button type="button" data-delta="1" aria-label="Add one ${esc(it.card)}"${disabled}>+</button>
+  </div>`;
+}
+
+function bindQuantityControls(root,it){
+  root.querySelectorAll('[data-delta]').forEach(button=>button.addEventListener('click',()=>{
+    updateQuantity(it,Number(button.dataset.delta));
+  }));
+}
+
+async function updateQuantity(it,delta){
+  if(!canEdit||!authSession||!it.id||pendingCards.has(it.id)) return;
+  const previous=it.qty, next=Math.max(0,previous+delta);
+  if(next===previous) return;
+  it.qty=next; pendingCards.add(it.id); render();
+  try{
+    await PokemonDb.setQuantity(authSession,it.id,next);
+    markSynced();
+  }catch(error){
+    it.qty=previous;
+    toast(`Could not save quantity: ${String(error.message||error)}`);
+  }finally{
+    pendingCards.delete(it.id); render();
+  }
+}
+
 function cardEl(it){
   const d=document.createElement('div');
   d.className='item'+(it.qty>0?' owned':'');
   const cands=imgCandidates(it);
   const url=cands[0]||null, alts=cands.slice(1);
   const initial=esc(it.card.replace(/[^A-Za-z]/g,'').slice(0,2)||'?');
-  const zeroCls = it.qty ? '' : 'zero';
-  const qtyHtml=`<div class="qtytag ${zeroCls}">×${it.qty}</div>`;
+  const qtyHtml=quantityHtml(it);
   d.innerHTML=`
     <div class="imgwrap${/reverse\s*holo/i.test(it.variant)?' rh':''}">
       ${url?`<img loading="lazy" decoding="async" fetchpriority="low" alt="${esc(it.card)}" data-src="${esc(url)}"
@@ -372,6 +438,7 @@ function cardEl(it){
     img.addEventListener('error',()=>__imgFallback(img));
     img.addEventListener('click',()=>openLightbox(it,img.src));
   }
+  bindQuantityControls(d,it);
   d.__item=it;
   return d;
 }
@@ -390,8 +457,7 @@ function marketplaceLinks(it){
 function rowEl(it){
   const row=document.createElement('tr');
   row.className=it.qty>0?'owned':'';
-  const zeroCls=it.qty?'':'zero';
-  const qtyHtml=`<div class="qtytag ${zeroCls}">×${it.qty}</div>`;
+  const qtyHtml=quantityHtml(it);
   row.innerHTML=`
     <td class="cardname">${esc(it.card)}</td>
     <td class="cardnum">${esc(it.num)}</td>
@@ -401,6 +467,7 @@ function rowEl(it){
     <td>${marketplaceLinks(it)}</td>
     <td><span class="havechip ${it.qty>0?'y':'n'}">${it.qty>0?'OWNED':'NEED'}</span></td>
     <td>${qtyHtml}</td>`;
+  bindQuantityControls(row,it);
   return row;
 }
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://images.pokemontcg.io https://assets.tcgdex.net; connect-src 'self' https://docs.google.com https://doc-08-3o-sheets.googleusercontent.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://images.pokemontcg.io https://assets.tcgdex.net; connect-src 'self' https://docs.google.com https://doc-08-3o-sheets.googleusercontent.com https://ekyngjwtoxvkqfalxebm.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests">
 <title>Stellar Crown — Collection Tracker</title>
 <meta name="description" content="Browse a Pokémon card set checklist, filter missing cards and track collection progress.">
 <meta name="robots" content="noindex,follow">
@@ -34,6 +34,16 @@
   <div class="inner"></div>
 </div>
 <output class="data-banner" id="dataBanner" aria-live="polite"></output>
+
+<section class="account" id="account" aria-label="Collection editor account">
+  <button type="button" id="googleSignIn">Sign in with Google to edit</button>
+  <div id="signedIn" class="initially-hidden">
+    <span>Signed in as <b id="accountEmail"></b></span>
+    <span id="viewerOnly" class="initially-hidden">This account has view-only access.</span>
+    <button type="button" id="signOut">Sign out</button>
+  </div>
+  <output id="authMessage" aria-live="polite"></output>
+</section>
 
 <section class="stats" id="stats">
   <div class="ring">
@@ -99,7 +109,7 @@
 <div class="empty" id="empty">Nothing matches those filters.</div>
 
 <footer id="foot" class="initially-hidden">
-  This page is read-only: edit quantities in the Google Sheet (the Have column — “x” or a number), then refresh.
+  Collection quantities are public. Only the authorized Google account can edit them with the + and − controls.
   Card photos come from the configured image sources; unusual variants without an image show a crystal placeholder.
   Prices are read from the sheet's Price column.
 </footer>
@@ -112,6 +122,8 @@
   </figure>
 </dialog>
 
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
 <script src="tracker.js"></script>
 <script src="pwa.js"></script>
 

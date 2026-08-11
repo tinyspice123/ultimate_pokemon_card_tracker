@@ -10,6 +10,11 @@ const SHEET = [
 const TEST_IMAGE = path.resolve('public/assets/icon-192.png');
 
 async function mockTrackerData(page, highResolutionDelay = 0) {
+  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/cards**', route => route.fulfill({
+    status: 404,
+    contentType: 'application/json',
+    body: JSON.stringify({message:'Test uses the sheet fallback'}),
+  }));
   await page.route('https://docs.google.com/**', route => route.fulfill({
     status: 200,
     contentType: 'text/csv',
@@ -32,6 +37,38 @@ test('loads data and filters cards', async ({ page }) => {
   await page.getByRole('searchbox', { name: 'Search cards' }).fill('Eevee');
   await expect(page.locator('.item')).toHaveCount(1);
   await expect(page.locator('.item .nm')).toHaveText('Eevee');
+});
+
+test('authorized Google account can update a database quantity', async ({ page }) => {
+  await page.unroute('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/cards**');
+  await page.addInitScript(() => localStorage.setItem('pokemon-tracker:supabase-session', JSON.stringify({
+    access_token:'test-access',refresh_token:'test-refresh',expires_at:4102444800,
+  })));
+  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/auth/v1/user', route => route.fulfill({
+    status:200,contentType:'application/json',body:JSON.stringify({
+      id:'00000000-0000-0000-0000-000000000001',email:'collection-owner',
+    }),
+  }));
+  let savedQuantity=null;
+  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/cards**', async route => {
+    if(route.request().method()==='PATCH'){
+      savedQuantity=route.request().postDataJSON().quantity;
+      await route.fulfill({status:204,body:''});
+      return;
+    }
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([
+      {id:'pikachu',group_name:'Test Group',card_name:'Pikachu',collector_number:'1/100',
+        variant:'Standard',source:'Database',price:'£1',status:'',image_url:'',quantity:1},
+      {id:'eevee',group_name:'Test Group',card_name:'Eevee',collector_number:'2/100',
+        variant:'Standard',source:'Database',price:'£2',status:'',image_url:'',quantity:0},
+    ])});
+  });
+
+  await page.reload({waitUntil:'domcontentloaded'});
+  await expect(page.locator('.qtyedit')).toHaveCount(2);
+  await page.locator('.qtyedit button[data-delta="1"]').first().click();
+  await expect(page.locator('.qtyedit output').first()).toHaveText('2');
+  expect(savedQuantity).toBe(2);
 });
 
 test('uses the packaged backup and displays a warning when Google is unavailable', async ({ page }) => {
