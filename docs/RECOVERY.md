@@ -27,7 +27,7 @@ Supabase is the live source. Versioned CSV recovery snapshots are stored under
 `backups/<set-id>.csv` by the daily **Backup Supabase collection** workflow.
 
 1. Identify the last good CSV with Git history and download that revision.
-2. Restore its rows into Supabase's `public.pokemon_cards` table with the Table
+2. Restore its rows into Supabase's `public.pokemon_card_main` table with the Table
    Editor, CSV import, or reviewed SQL. Preserve its `set_id`.
 3. Run **Backup Supabase collection** manually.
 4. Confirm validation passes and check the restored set on the site.

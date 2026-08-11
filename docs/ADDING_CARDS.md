@@ -1,6 +1,6 @@
 # Add or edit cards
 
-Cards live in Supabase's `public.pokemon_cards` table. Changes appear on the
+Cards live in Supabase's `public.pokemon_card_main` table. Changes appear on the
 website immediately; a code deployment is not required unless an image or set
 configuration file also changes.
 
@@ -9,7 +9,7 @@ configuration file also changes.
 Open **Supabase → SQL Editor** and adapt this query:
 
 ```sql
-insert into public.pokemon_cards (
+insert into public.pokemon_card_main (
   id, set_id, sort_order, group_name, card_name, collector_number,
   variant, source, status, price, quantity, image_url
 )
@@ -26,7 +26,7 @@ select
   '',
   0,
   ''
-from public.pokemon_cards
+from public.pokemon_card_main
 where set_id = 'stellar-crown';
 ```
 
@@ -38,7 +38,7 @@ Required rules:
 - `quantity` must be zero or greater.
 - Variants of the same printed card need separate rows and IDs.
 
-Use **Table Editor → pokemon_cards** for simple corrections to an existing
+Use **Table Editor → pokemon_card_main** for simple corrections to an existing
 row. Quantity changes can normally be made with the website's `+` and `−`
 buttons.
 

@@ -11,7 +11,7 @@ const browserGlobals={
   detectColumns:'readonly',
   setSafeImageSource:'readonly', imgCandidatesPure:'readonly', manifestKey:'readonly',
   sortItems:'readonly', marketplaceSearchUrls:'readonly', priceMid:'readonly',
-  matchesQuery:'readonly', exportText:'readonly', exportCsv:'readonly',
+  matchesQuery:'readonly', exportText:'readonly', exportCsv:'readonly', csvEscape:'readonly',
   parseHaveQty:'readonly',
   SUPABASE_CONFIG:'readonly', PokemonDb:'readonly',
 };

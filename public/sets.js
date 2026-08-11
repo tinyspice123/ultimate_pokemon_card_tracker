@@ -2,7 +2,7 @@
 //  SET REGISTRY — add a new set here and it appears on the home page
 //  and gets its own tracker at tracker.html?set=<id>
 //
-//  Card rows and quantities live in Supabase's pokemon_cards table. This
+//  Card rows and quantities live in Supabase's pokemon_card_main table. This
 //  registry supplies presentation and external image/API metadata only.
 //
 //  Fields:

@@ -7,7 +7,7 @@ snapshots under `backups/`.
 
 The **Backup Supabase collection** workflow runs daily. It:
 
-1. Reads every configured set from `public.pokemon_cards`.
+1. Reads every configured set from `public.pokemon_card_main`.
 2. Writes `backups/<set-id>.csv` in stable set order.
 3. Synchronizes local image manifests.
 4. Validates every snapshot and manifest.

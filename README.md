@@ -342,7 +342,7 @@ worker behavior.
 published CSV output parameter.
 
 **Database data does not load** — confirm the migration and initial import ran,
-the table is named `pokemon_cards`, and its public SELECT policy is enabled.
+the table is named `pokemon_card_main`, and its public SELECT policy is enabled.
 If the URL works directly, check the browser console for a CSP error on a
 changed `doc-XX-YY-sheets.googleusercontent.com` shard and follow the
 [recovery runbook](docs/RECOVERY.md).

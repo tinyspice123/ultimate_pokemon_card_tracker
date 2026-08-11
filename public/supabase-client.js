@@ -64,7 +64,7 @@ const PokemonDb = (()=>{
   }
   async function cards(setId){
     const fields='id,group_name,card_name,collector_number,variant,source,price,status,image_url,quantity';
-    const path=`/rest/v1/pokemon_cards?set_id=eq.${encodeURIComponent(setId)}&select=${fields}&order=sort_order.asc`;
+    const path=`/rest/v1/pokemon_card_main?set_id=eq.${encodeURIComponent(setId)}&select=${fields}&order=sort_order.asc`;
     return await (await request(path,{headers:headers(null)})).json();
   }
   async function isEditor(session){
@@ -76,14 +76,15 @@ const PokemonDb = (()=>{
     }catch{return false;}
   }
   async function setQuantity(session,cardId,quantity){
-    const path=`/rest/v1/pokemon_cards?id=eq.${encodeURIComponent(cardId)}`;
+    const path=`/rest/v1/pokemon_card_main?id=eq.${encodeURIComponent(cardId)}`;
     await request(path,{method:'PATCH',headers:headers(session,{
       'Content-Type':'application/json',Prefer:'return=minimal'}),
       body:JSON.stringify({quantity})});
   }
-  async function quantityHistory(session,setId){
-    const since=new Date(Date.now()-30*24*60*60*1000).toISOString();
-    const path=`/rest/v1/quantity_history?set_id=eq.${encodeURIComponent(setId)}&changed_at=gte.${encodeURIComponent(since)}&select=card_name,previous_quantity,new_quantity,changed_at&order=changed_at.desc&limit=100`;
+  async function quantityHistory(session,setId,fromDate,toDate){
+    const from=new Date(`${fromDate}T00:00:00`).toISOString();
+    const end=new Date(`${toDate}T00:00:00`); end.setDate(end.getDate()+1);
+    const path=`/rest/v1/pokemon_card_quantity_history?set_id=eq.${encodeURIComponent(setId)}&changed_at=gte.${encodeURIComponent(from)}&changed_at=lt.${encodeURIComponent(end.toISOString())}&select=card_name,collector_number,set_id,previous_quantity,new_quantity,changed_at&order=changed_at.desc&limit=500`;
     return await (await request(path,{headers:headers(session)})).json();
   }
   return {currentSession,currentUser,signInWithGoogle,signOut,cards,isEditor,setQuantity,quantityHistory};

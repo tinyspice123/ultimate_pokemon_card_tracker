@@ -98,18 +98,31 @@ async function initAuth(){
 async function loadQuantityHistory(){
   const section=document.getElementById('history'), list=document.getElementById('historyList');
   try{
-    const entries=await PokemonDb.quantityHistory(authSession,SET_ID);
-    if(!entries.length) return;
-    list.replaceChildren(...entries.map(entry=>{
+    const entries=await PokemonDb.quantityHistory(authSession,SET_ID,
+      document.getElementById('historyFrom').value,document.getElementById('historyTo').value);
+    const rows=entries.length?entries.map(entry=>{
       const item=document.createElement('li'), time=document.createElement('time');
       const when=new Date(entry.changed_at);
       time.dateTime=when.toISOString(); time.textContent=when.toLocaleString();
-      item.append(time,`${entry.card_name}: ${entry.previous_quantity} → ${entry.new_quantity}`);
+      item.append(time,`${entry.card_name} · ${entry.collector_number||'no number'} · ${entry.set_id}: ${entry.previous_quantity} → ${entry.new_quantity}`);
       return item;
-    }));
+    }):[Object.assign(document.createElement('li'),{textContent:'No changes in this date range.'})];
+    list.replaceChildren(...rows);
     section.style.display='block';
   }catch{ /* History is optional until its migration has been applied. */ }
 }
+function localDate(daysAgo=0){
+  const date=new Date(); date.setDate(date.getDate()-daysAgo);
+  const pad=value=>String(value).padStart(2,'0');
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+}
+document.getElementById('historyFrom').value=localDate(1);
+document.getElementById('historyTo').value=localDate();
+document.getElementById('historyApply').addEventListener('click',()=>{
+  const from=document.getElementById('historyFrom').value, to=document.getElementById('historyTo').value;
+  if(!from||!to||from>to){ toast('Choose a valid history date range.'); return; }
+  loadQuantityHistory();
+});
 
 document.getElementById('googleSignIn').addEventListener('click',()=>PokemonDb.signInWithGoogle());
 document.getElementById('signOut').addEventListener('click',async ()=>{
@@ -282,18 +295,10 @@ function toggleGroup(g){
 }
 
 let toastTimer=null;
-function toast(msg,action){
+function toast(msg){
   let el=document.getElementById('saveToast');
   if(!el){ el=document.createElement('div'); el.id='saveToast'; document.body.appendChild(el); }
   el.replaceChildren(document.createTextNode(msg));
-  if(false&&action){
-    const button=document.createElement('button');
-    button.type='button'; button.textContent=action.label;
-    button.addEventListener('click',()=>{
-      clearTimeout(toastTimer); el.classList.remove('show'); action.run();
-    },{once:true});
-    el.append(' ',button);
-  }
   el.classList.add('show');
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1600);
 }
@@ -438,7 +443,7 @@ document.getElementById('bulkStart').addEventListener('click',()=>setBulkMode(tr
 document.getElementById('bulkCancel').addEventListener('click',()=>setBulkMode(false));
 document.getElementById('bulkConfirm').addEventListener('click',async ()=>{
   const selected=items.filter(item=>bulkSelections.has(item.id));
-  if(!selected.length||!confirm(`Add one copy to ${selected.length} selected card${selected.length===1?'':'s'}?`)) return;
+  if(!selected.length||!window.confirm(`Add one copy to ${selected.length} selected card${selected.length===1?'':'s'}?`)) return;
   selected.forEach(item=>{ item.qty+=1; pendingCards.add(item.id); });
   render();
   const results=await Promise.allSettled(selected.map(item=>PokemonDb.setQuantity(authSession,item.id,item.qty)));

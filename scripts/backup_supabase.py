@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export pokemon_cards to per-set CSV snapshots under backups/."""
+"""Export pokemon_card_main to per-set CSV snapshots under backups/."""
 from __future__ import annotations
 
 import csv
@@ -74,7 +74,7 @@ def fetch_set(base_url, key, set_id, opener=urllib.request.urlopen,
             "limit": PAGE_SIZE,
             "offset": offset,
         })
-        page = fetch_json(f"{base_url}/rest/v1/pokemon_cards?{query}", key,
+        page = fetch_json(f"{base_url}/rest/v1/pokemon_card_main?{query}", key,
                           opener, sleeper)
         if not isinstance(page, list):
             raise ValueError("Supabase returned a non-list response")

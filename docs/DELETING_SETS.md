@@ -22,7 +22,7 @@ Replace `example-new-set` and run this read-only query in Supabase SQL Editor:
 
 ```sql
 select set_id, count(*) as card_rows, sum(quantity) as total_copies
-from public.pokemon_cards
+from public.pokemon_card_main
 where set_id = 'example-new-set'
 group by set_id;
 ```
@@ -34,7 +34,7 @@ Stop if the returned set ID or row count is unexpected.
 After verifying the target, run:
 
 ```sql
-delete from public.pokemon_cards
+delete from public.pokemon_card_main
 where set_id = 'example-new-set';
 ```
 

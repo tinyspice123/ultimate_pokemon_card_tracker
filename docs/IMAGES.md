@@ -3,7 +3,7 @@
 The tracker uses a hybrid image system. It tries candidates in this order:
 
 1. A committed local file mapped by the set's `manifest.txt`.
-2. The row's `pokemon_cards.image_url` value.
+2. The row's `pokemon_card_main.image_url` value.
 3. A URL generated from the set's Pokémon TCG API configuration.
 4. A URL generated from its TCGdex configuration.
 5. The built-in placeholder.

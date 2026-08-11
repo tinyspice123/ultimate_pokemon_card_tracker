@@ -46,8 +46,10 @@ valid Supabase Auth user but will have view-only access.
 
 ## Quantity history
 
-Apply `supabase/migrations/202608120005_quantity_history.sql` after the editor
-allowlist migration. Supabase then records every quantity change with its
-previous value, new value, user ID, and timestamp. The authorized editor sees
-the latest 30 days for the open set in the tracker; it is not public.
+Apply `supabase/migrations/202608120005_quantity_history.sql` and
+`202608120006_history_card_identity.sql` after the editor allowlist migration.
+Supabase then records every quantity change with its card name, collector
+number, set ID, previous value, new value, user ID, and timestamp. The
+authorized editor sees the latest 30 days for the open set in the tracker; it
+is not public.
 

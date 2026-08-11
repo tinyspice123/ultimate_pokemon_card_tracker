@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.use({ serviceWorkers: 'allow' });
 
 test('a previously visited tracker shell reloads while offline', async ({ page, context }) => {
-  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_cards**', route => route.fulfill({
+  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_card_main**', route => route.fulfill({
     status: 404,
     contentType: 'application/json',
     body: JSON.stringify({message:'offline fallback test'}),

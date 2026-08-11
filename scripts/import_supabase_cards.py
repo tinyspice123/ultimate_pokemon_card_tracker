@@ -1,4 +1,4 @@
-"""Import checked-in collection snapshots into the Supabase pokemon_cards table."""
+"""Import checked-in collection snapshots into the Supabase pokemon_card_main table."""
 from __future__ import annotations
 
 import csv
@@ -64,7 +64,7 @@ def main() -> int:
              for card in rows_for_set(path.stem, path)]
     for start in range(0, len(cards), 250):
         payload = json.dumps(cards[start:start + 250]).encode()
-        request = Request(base + "/rest/v1/pokemon_cards?on_conflict=id", data=payload,
+        request = Request(base + "/rest/v1/pokemon_card_main?on_conflict=id", data=payload,
             method="POST", headers={"apikey": secret, "Authorization": f"Bearer {secret}",
             "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"})
         with urlopen(request, timeout=60) as response:

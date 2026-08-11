@@ -43,10 +43,15 @@
   </div>
   <output id="authMessage" aria-live="polite"></output>
 </section>
-<section class="history initially-hidden" id="history" aria-label="Recent quantity changes">
-  <h2>Recent changes <span>past 30 days</span></h2>
+<details class="history initially-hidden" id="history">
+  <summary>Recent changes</summary>
+  <div class="historyfilters">
+    <label>From <input type="date" id="historyFrom"></label>
+    <label>To <input type="date" id="historyTo"></label>
+    <button type="button" id="historyApply">Apply</button>
+  </div>
   <ol id="historyList"></ol>
-</section>
+</details>
 
 <section class="stats" id="stats">
   <div class="ring">

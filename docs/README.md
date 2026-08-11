@@ -11,6 +11,6 @@ Use these guides for routine collection maintenance:
 - [Repository recovery](RECOVERY.md)
 - [Service consoles and routine checks](SERVICES.md)
 
-Supabase's `pokemon_cards` table is the live source of truth. Files under
+Supabase's `pokemon_card_main` table is the live source of truth. Files under
 `backups/` are generated recovery snapshots and should not normally be edited
 by hand after the initial database import.

@@ -26,7 +26,7 @@ Valid `homeGroup` values are `sv`, `mega`, and `misc`.
 
 ## 2. Insert the database rows
 
-Add the cards to `public.pokemon_cards` using the registry key as `set_id`.
+Add the cards to `public.pokemon_card_main` using the registry key as `set_id`.
 Start `sort_order` at zero and increment it for every card/variant row. See
 [Add or edit cards](ADDING_CARDS.md) for SQL and CSV examples.
 
