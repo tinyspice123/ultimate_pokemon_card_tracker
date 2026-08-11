@@ -48,6 +48,8 @@ valid Supabase Auth user but will have view-only access.
 
 Apply `supabase/migrations/202608120005_quantity_history.sql` and
 `202608120006_history_card_identity.sql` after the editor allowlist migration.
+If you have already renamed the tables before applying `006`, also apply
+`202608120008_repair_renamed_history_identity.sql`.
 Supabase then records every quantity change with its card name, collector
 number, set ID, previous value, new value, user ID, and timestamp. The
 authorized editor sees the latest 30 days for the open set in the tracker; it
