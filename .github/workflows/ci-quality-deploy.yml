@@ -178,6 +178,7 @@ jobs:
       SONAR_SCANNER_ARGS: >-
         -Dsonar.projectKey=tinyspice123_ultimate_pokemon_card_tracker
         -Dsonar.organization=tinyspice123
+        -Dsonar.projectVersion=run-${{ github.run_number }}
         -Dsonar.scm.provider=git
         -Dsonar.python.file.suffixes=.py
         -Dsonar.python.coverage.reportPaths=coverage.xml
