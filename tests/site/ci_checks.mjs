@@ -186,7 +186,7 @@ else ok('tracker card images allow no-cors display');
 
 // ---------- PWA files ----------
 console.log('pwa');
-for (const f of ['manifest.json', 'sw.js', '404.html', 'assets/icon-192.png', 'assets/icon-512.png']) {
+for (const f of ['manifest.json', 'sw.js', '404.html', 'assets/icon-192.png', 'assets/icon-512.png', 'assets/icon-maskable-512.png']) {
   if (!fs.existsSync(sitePath(f))) fail('missing ' + f);
 }
 try { JSON.parse(fs.readFileSync(sitePath('manifest.json'), 'utf8')); ok('manifest.json is valid JSON'); }
