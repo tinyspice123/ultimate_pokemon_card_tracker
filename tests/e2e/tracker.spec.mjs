@@ -37,7 +37,7 @@ test('loads data and filters cards', async ({ page }) => {
 test('uses the packaged backup and displays a warning when Google is unavailable', async ({ page }) => {
   await page.unroute('https://docs.google.com/**');
   await page.route('https://docs.google.com/**', route => route.abort('failed'));
-  await page.route('**/data/stellar-crown.csv', route => route.fulfill({
+  await page.route('**/backups/stellar-crown.csv', route => route.fulfill({
     status: 200,
     contentType: 'text/csv',
     body: SHEET.replaceAll('Playwright','Packaged backup'),
@@ -54,7 +54,7 @@ test('uses the packaged backup and displays a warning when Google is unavailable
 test('explains when neither live nor backup data can be loaded', async ({ page }) => {
   await page.unroute('https://docs.google.com/**');
   await page.route('https://docs.google.com/**', route => route.fulfill({status:403}));
-  await page.route('**/data/stellar-crown.csv', route => route.fulfill({status:404}));
+  await page.route('**/backups/stellar-crown.csv', route => route.fulfill({status:404}));
 
   await page.goto('/tracker.html?set=stellar-crown', { waitUntil: 'domcontentloaded' });
 
