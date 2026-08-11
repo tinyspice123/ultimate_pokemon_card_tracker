@@ -85,6 +85,12 @@
     <option value="table">Text table (data saver)</option>
   </select>
   <label class="toggle"><input type="checkbox" id="missOnly"> Missing only</label>
+  <button type="button" class="exportbtn initially-hidden" id="liveCsv">Download live CSV</button>
+  <button type="button" class="exportbtn initially-hidden" id="bulkStart">Select cards to add</button>
+  <span class="bulkactions initially-hidden" id="bulkActions">
+    <button type="button" class="exportbtn" id="bulkConfirm" disabled>Confirm 0 additions</button>
+    <button type="button" class="exportbtn" id="bulkCancel">Cancel</button>
+  </span>
   <span class="exportwrap">
     <button type="button" class="exportbtn" id="exportMissing" aria-haspopup="menu" aria-expanded="false">⤓ Missing</button>
     <div class="exportmenu" data-menu>

@@ -176,6 +176,9 @@
   .qtyedit output{text-align:center;font-family:"Unbounded",sans-serif;font-size:12px}
   .listtable .qtyedit{border:0;min-width:120px;padding:0}
   .exportwrap{position:relative;display:inline-block}
+  .bulkactions{display:inline-flex;gap:6px}.bulkpick{display:flex;justify-content:center;gap:6px;
+    padding:8px 4px;border-top:1px solid var(--line);font-size:11px;color:var(--tera2);cursor:pointer}
+  .listtable .bulkpick{border:0;padding:4px;white-space:nowrap}
   .exportbtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);
     border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
   .exportbtn:hover{border-color:var(--tera2)}

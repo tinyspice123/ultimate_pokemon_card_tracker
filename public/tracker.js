@@ -40,6 +40,8 @@ let authSession=null;
 let authUser=null;
 let canEdit=false;
 const pendingCards=new Set();
+let bulkMode=false;
+const bulkSelections=new Set();
 
 // ---- "synced Xs ago" ------------------------------------------------
 let lastSyncedAt=null;
@@ -88,6 +90,8 @@ async function initAuth(){
   document.getElementById('signedIn').style.display=authUser?'flex':'none';
   document.getElementById('accountEmail').textContent=authUser?.email||'';
   document.getElementById('viewerOnly').style.display=authUser&&!canEdit?'inline':'none';
+  document.getElementById('liveCsv').style.display=canEdit?'inline-block':'none';
+  document.getElementById('bulkStart').style.display=canEdit?'inline-block':'none';
   if(canEdit) loadQuantityHistory();
 }
 
@@ -282,7 +286,7 @@ function toast(msg,action){
   let el=document.getElementById('saveToast');
   if(!el){ el=document.createElement('div'); el.id='saveToast'; document.body.appendChild(el); }
   el.replaceChildren(document.createTextNode(msg));
-  if(action){
+  if(false&&action){
     const button=document.createElement('button');
     button.type='button'; button.textContent=action.label;
     button.addEventListener('click',()=>{
@@ -291,7 +295,7 @@ function toast(msg,action){
     el.append(' ',button);
   }
   el.classList.add('show');
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),action?10000:1600);
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1600);
 }
 function render(){
   const q=document.getElementById('q').value.toLowerCase();
@@ -377,6 +381,7 @@ function __imgFallback(img){
 }
 
 function quantityHtml(it){
+  if(bulkMode&&canEdit&&it.id) return `<label class="bulkpick"><input type="checkbox" data-bulk-id="${esc(it.id)}"${bulkSelections.has(it.id)?' checked':''}> Add one</label>`;
   if(!canEdit||!it.id) return `<div class="qtytag ${it.qty?'':'zero'}">×${it.qty}</div>`;
   const disabled=pendingCards.has(it.id)?' disabled':'';
   return `<div class="qtyedit" aria-label="Quantity for ${esc(it.card)}">
@@ -387,6 +392,10 @@ function quantityHtml(it){
 }
 
 function bindQuantityControls(root,it){
+  root.querySelectorAll('[data-bulk-id]').forEach(input=>input.addEventListener('change',()=>{
+    input.checked?bulkSelections.add(it.id):bulkSelections.delete(it.id);
+    updateBulkControls();
+  }));
   root.querySelectorAll('[data-delta]').forEach(button=>button.addEventListener('click',()=>{
     updateQuantity(it,Number(button.dataset.delta));
   }));
@@ -412,6 +421,36 @@ async function updateQuantity(it,delta){
     pendingCards.delete(it.id); render();
   }
 }
+
+function updateBulkControls(){
+  const confirm=document.getElementById('bulkConfirm');
+  confirm.disabled=!bulkSelections.size;
+  confirm.textContent=`Confirm ${bulkSelections.size} addition${bulkSelections.size===1?'':'s'}`;
+}
+function setBulkMode(enabled){
+  bulkMode=enabled;
+  if(!enabled) bulkSelections.clear();
+  document.getElementById('bulkStart').style.display=enabled?'none':(canEdit?'inline-block':'none');
+  document.getElementById('bulkActions').style.display=enabled?'inline-flex':'none';
+  updateBulkControls(); render();
+}
+document.getElementById('bulkStart').addEventListener('click',()=>setBulkMode(true));
+document.getElementById('bulkCancel').addEventListener('click',()=>setBulkMode(false));
+document.getElementById('bulkConfirm').addEventListener('click',async ()=>{
+  const selected=items.filter(item=>bulkSelections.has(item.id));
+  if(!selected.length||!confirm(`Add one copy to ${selected.length} selected card${selected.length===1?'':'s'}?`)) return;
+  selected.forEach(item=>{ item.qty+=1; pendingCards.add(item.id); });
+  render();
+  const results=await Promise.allSettled(selected.map(item=>PokemonDb.setQuantity(authSession,item.id,item.qty)));
+  let failures=0;
+  results.forEach((result,index)=>{
+    const item=selected[index]; pendingCards.delete(item.id);
+    if(result.status==='rejected'){ item.qty-=1; failures+=1; }
+  });
+  if(failures) toast(`${failures} addition${failures===1?'':'s'} could not be saved.`);
+  else { markSynced(); toast(`${selected.length} addition${selected.length===1?'':'s'} saved.`); loadQuantityHistory(); }
+  setBulkMode(false);
+});
 
 function cardEl(it){
   const d=document.createElement('div');
@@ -598,6 +637,26 @@ function doExport(kind,act){
     toast(`Downloaded ${list.length} ${kind} card${list.length===1?'':'s'}`);
   }
 }
+function downloadCsv(filename,text){
+  const blob=new Blob([text],{type:'text/csv'}), link=document.createElement('a');
+  link.href=URL.createObjectURL(blob); link.download=filename; link.click();
+  URL.revokeObjectURL(link.href);
+}
+document.getElementById('liveCsv').addEventListener('click',async ()=>{
+  if(!canEdit) return;
+  const button=document.getElementById('liveCsv'); button.disabled=true;
+  try{
+    const rows=await PokemonDb.cards(SET_ID);
+    const header=['ID','Set ID','Group','Card','Number','Variant / Stamp','Source','Status','Price','Have','Image URL'];
+    const lines=rows.map(card=>[
+      card.id,card.set_id,card.group_name,card.card_name,card.collector_number,
+      card.variant,card.source,card.status,card.price,card.quantity,card.image_url,
+    ].map(csvEscape).join(','));
+    downloadCsv(`${SET_ID}-live-${new Date().toISOString().slice(0,10)}.csv`,[header.map(csvEscape).join(','),...lines].join('\n')+'\n');
+    toast(`Downloaded ${rows.length} live database card${rows.length===1?'':'s'}`);
+  }catch(error){ toast(`Could not download live data: ${String(error.message||error)}`); }
+  finally{ button.disabled=false; }
+});
 function closeExportMenus(){
   document.querySelectorAll('.exportmenu.open').forEach(m=>m.classList.remove('open'));
   document.querySelectorAll('.exportbtn[aria-expanded="true"]').forEach(b=>b.setAttribute('aria-expanded','false'));

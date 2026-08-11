@@ -2,7 +2,7 @@
 -- only when the current user is in the private editor allowlist.
 create table if not exists public.quantity_history (
   id bigint generated always as identity primary key,
-  card_id uuid not null references public.pokemon_cards(id) on delete cascade,
+  card_id text not null references public.pokemon_cards(id) on delete cascade,
   set_id text not null,
   card_name text not null,
   previous_quantity integer not null check (previous_quantity >= 0),
