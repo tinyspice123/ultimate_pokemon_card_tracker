@@ -64,15 +64,14 @@ const PokemonDb = (()=>{
   }
   async function cards(setId){
     const fields='id,group_name,card_name,collector_number,variant,source,price,status,image_url,quantity';
-    const path=`/rest/v1/cards?set_id=eq.${encodeURIComponent(setId)}&select=${fields}&order=sort_order.asc`;
+    const path=`/rest/v1/pokemon_cards?set_id=eq.${encodeURIComponent(setId)}&select=${fields}&order=sort_order.asc`;
     return await (await request(path,{headers:headers(null)})).json();
   }
   async function setQuantity(session,cardId,quantity){
-    const path=`/rest/v1/cards?id=eq.${encodeURIComponent(cardId)}`;
+    const path=`/rest/v1/pokemon_cards?id=eq.${encodeURIComponent(cardId)}`;
     await request(path,{method:'PATCH',headers:headers(session,{
       'Content-Type':'application/json',Prefer:'return=minimal'}),
       body:JSON.stringify({quantity})});
   }
   return {currentSession,currentUser,signInWithGoogle,signOut,cards,setQuantity};
 })();
-

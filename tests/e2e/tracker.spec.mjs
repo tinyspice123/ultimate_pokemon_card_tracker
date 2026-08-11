@@ -10,7 +10,7 @@ const SHEET = [
 const TEST_IMAGE = path.resolve('public/assets/icon-192.png');
 
 async function mockTrackerData(page, highResolutionDelay = 0) {
-  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/cards**', route => route.fulfill({
+  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_cards**', route => route.fulfill({
     status: 404,
     contentType: 'application/json',
     body: JSON.stringify({message:'Test uses the sheet fallback'}),
@@ -40,7 +40,7 @@ test('loads data and filters cards', async ({ page }) => {
 });
 
 test('authorized Google account can update a database quantity', async ({ page }) => {
-  await page.unroute('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/cards**');
+  await page.unroute('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_cards**');
   await page.addInitScript(() => localStorage.setItem('pokemon-tracker:supabase-session', JSON.stringify({
     access_token:'test-access',refresh_token:'test-refresh',expires_at:4102444800,
   })));
@@ -50,7 +50,7 @@ test('authorized Google account can update a database quantity', async ({ page }
     }),
   }));
   let savedQuantity=null;
-  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/cards**', async route => {
+  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_cards**', async route => {
     if(route.request().method()==='PATCH'){
       savedQuantity=route.request().postDataJSON().quantity;
       await route.fulfill({status:204,body:''});
