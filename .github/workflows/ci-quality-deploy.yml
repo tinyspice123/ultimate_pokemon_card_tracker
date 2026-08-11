@@ -204,9 +204,8 @@ jobs:
 
       - name: Analyze with SonarQube
         id: sonar-attempt-1
-        # SonarCloud occasionally returns a transient 5xx while creating or
-        # loading an analysis. Permit one backed-off retry below; the final
-        # attempt still blocks CI.
+        # A quality-gate failure must block CI immediately. The retry below is
+        # reserved for an analysis still processing after the scanner timeout.
         continue-on-error: true
         # v8.2.1, pinned to prevent a mutable tag from changing CI code.
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
@@ -217,12 +216,33 @@ jobs:
         with:
           args: ${{ env.SONAR_SCANNER_ARGS }}
 
-      - name: Back off before SonarQube retry
+      - name: Retry only an analysis still processing after timeout
+        id: sonar-retry
         if: steps.sonar-attempt-1.outcome == 'failure'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          task_url="$(sed -n 's/^ceTaskUrl=//p' .scannerwork/report-task.txt)"
+          if [[ -z "$task_url" ]]; then
+            echo "No SonarQube task URL was produced; not retrying."
+            echo "should_retry=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          task_status="$(curl --fail --silent --show-error --user "${SONAR_TOKEN}:" "$task_url" | jq -r '.task.status')"
+          if [[ "$task_status" == "PENDING" || "$task_status" == "IN_PROGRESS" ]]; then
+            echo "SonarQube task is still $task_status after the scanner wait timeout."
+            echo "should_retry=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "SonarQube task finished as $task_status; not retrying."
+            echo "should_retry=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Back off before timed-out SonarQube retry
+        if: steps.sonar-retry.outputs.should_retry == 'true'
         run: sleep 60
 
-      - name: Retry SonarQube analysis once
-        if: steps.sonar-attempt-1.outcome == 'failure'
+      - name: Retry timed-out SonarQube analysis once
+        if: steps.sonar-retry.outputs.should_retry == 'true'
         # v8.2.1, pinned to prevent a mutable tag from changing CI code.
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
@@ -231,6 +251,10 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: ${{ env.SONAR_SCANNER_ARGS }}
+
+      - name: Fail completed SonarQube Quality Gate
+        if: steps.sonar-attempt-1.outcome == 'failure' && steps.sonar-retry.outputs.should_retry != 'true'
+        run: exit 1
 
   package-pages:
     name: Package Pages artifact
