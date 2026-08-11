@@ -414,10 +414,7 @@ async function updateQuantity(it,delta){
   try{
     await PokemonDb.setQuantity(authSession,it.id,next);
     markSynced();
-    toast(`${it.card}: ${previous} → ${next}`,{
-      label:'Undo',
-      run:()=>updateQuantity(it,previous-it.qty),
-    });
+    toast(`${it.card}: ${previous} → ${next}`);
     loadQuantityHistory();
   }catch(error){
     it.qty=previous;

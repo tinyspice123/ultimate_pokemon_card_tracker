@@ -63,7 +63,7 @@ const PokemonDb = (()=>{
     try{if(session) await request('/auth/v1/logout',{method:'POST',headers:headers(session)});}finally{saveSession(null);}
   }
   async function cards(setId){
-    const fields='id,group_name,card_name,collector_number,variant,source,price,status,image_url,quantity';
+    const fields='id,set_id,group_name,card_name,collector_number,variant,source,price,status,image_url,quantity';
     const path=`/rest/v1/pokemon_card_main?set_id=eq.${encodeURIComponent(setId)}&select=${fields}&order=sort_order.asc`;
     return await (await request(path,{headers:headers(null)})).json();
   }
