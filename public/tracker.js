@@ -261,11 +261,20 @@ function toggleGroup(g){
 }
 
 let toastTimer=null;
-function toast(msg){
+function toast(msg,action){
   let el=document.getElementById('saveToast');
   if(!el){ el=document.createElement('div'); el.id='saveToast'; document.body.appendChild(el); }
-  el.textContent=msg; el.classList.add('show');
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1600);
+  el.replaceChildren(document.createTextNode(msg));
+  if(action){
+    const button=document.createElement('button');
+    button.type='button'; button.textContent=action.label;
+    button.addEventListener('click',()=>{
+      clearTimeout(toastTimer); el.classList.remove('show'); action.run();
+    },{once:true});
+    el.append(' ',button);
+  }
+  el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),action?10000:1600);
 }
 function render(){
   const q=document.getElementById('q').value.toLowerCase();
@@ -374,6 +383,10 @@ async function updateQuantity(it,delta){
   try{
     await PokemonDb.setQuantity(authSession,it.id,next);
     markSynced();
+    toast(`${it.card}: ${previous} → ${next}`,{
+      label:'Undo',
+      run:()=>updateQuantity(it,previous-it.qty),
+    });
   }catch(error){
     it.qty=previous;
     toast(`Could not save quantity: ${String(error.message||error)}`);

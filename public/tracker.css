@@ -187,7 +187,9 @@
   #saveToast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;
     background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-size:12px;
     border-radius:999px;padding:8px 16px;opacity:0;transition:opacity .25s;pointer-events:none}
-  #saveToast.show{opacity:1}
+  #saveToast.show{opacity:1;pointer-events:auto}
+  #saveToast button{margin-left:6px;border:0;background:none;color:var(--tera2);font:inherit;
+    font-weight:700;cursor:pointer;text-decoration:underline}
   .initially-hidden{display:none}
   .notice-title{margin-bottom:8px;color:#ffd47e}
   .empty{display:none;text-align:center;color:var(--dim);padding:60px 0;font-size:14px}
