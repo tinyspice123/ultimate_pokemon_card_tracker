@@ -193,6 +193,14 @@ const SETS = {
     cardmarketSet: "PBL",
   },
 
+  "30th-celebration": {
+    name: "30th Celebration",
+    homeGroup: "mega",
+    code: "30C",
+    tcgdexSet: "30th",
+    cardmarketSet: "30C",
+  },
+
   "mew-collection": {
     name: "Mew Collection",
     homeGroup: "misc",
