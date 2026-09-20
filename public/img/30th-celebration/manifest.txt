@@ -28,6 +28,14 @@ Arceus VSTAR|027/030|Holofoil|classic_027.jpg
 Zacian V|028/030|Holofoil|classic_028.jpg
 Lugia|029/030|Holofoil|classic_029.jpg
 Magikarp|030/030|Holofoil|classic_030.jpg
+Grass Energy|001/008|Holofoil|energy_001.jpg
+Fire Energy|002/008|Holofoil|energy_002.jpg
+Water Energy|003/008|Holofoil|energy_003.jpg
+Lightning Energy|004/008|Holofoil|energy_004.jpg
+Psychic Energy|005/008|Holofoil|energy_005.jpg
+Fighting Energy|006/008|Holofoil|energy_006.jpg
+Darkness Energy|007/008|Holofoil|energy_007.jpg
+Metal Energy|008/008|Holofoil|energy_008.jpg
 Mew|R/RGB|RGB Secret Rare|mew_rgb_r.webp
 Mew|G/RGB|RGB Secret Rare|mew_rgb_g.webp
 Mew|B/RGB|RGB Secret Rare|mew_rgb_b.webp
