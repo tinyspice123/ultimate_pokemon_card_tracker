@@ -1,1 +1,33 @@
-
+Charizard|001/030|Holofoil|classic_001.jpg
+Delcatty|002/030|Holofoil|classic_002.jpg
+Metagross|003/030|Holofoil|classic_003.jpg
+Genesect EX|004/030|Holofoil|classic_004.jpg
+Misty|005/030|Holofoil|classic_005.jpg
+Dark Tyranitar|006/030|Holofoil|classic_006.jpg
+Sneasel|007/030|Holofoil|classic_007.jpg
+Pikachu & Zekrom GX|008/030|Holofoil|classic_008.jpg
+Greninja BREAK|009/030|Holofoil|classic_009.jpg
+Uxie|010/030|Holofoil|classic_010.jpg
+Crobat G|011/030|Holofoil|classic_011.jpg
+Raikou|012/030|Holofoil|classic_012.jpg
+Buzzwole GX|013/030|Holofoil|classic_013.jpg
+Pikachu|014/030|Holofoil|classic_014.jpg
+Erika's Jigglypuff|015/030|Holofoil|classic_015.jpg
+Rayquaza EX|016/030|Holofoil|classic_016.jpg
+Solgaleo GX|017/030|Holofoil|classic_017.jpg
+Gengar|018/030|Holofoil|classic_018.jpg
+Darkrai & Cresselia LEGEND|019/030|Holofoil|classic_019.jpg
+Darkrai & Cresselia LEGEND|020/030|Holofoil|classic_020.jpg
+N|021/030|Holofoil|classic_021.jpg
+Palkia|022/030|Holofoil|classic_022.jpg
+M Gardevoir EX|023/030|Holofoil|classic_023.jpg
+Shining Celebi|024/030|Holofoil|classic_024.jpg
+Scizor ex|025/030|Holofoil|classic_025.jpg
+Mew VMAX|026/030|Holofoil|classic_026.jpg
+Arceus VSTAR|027/030|Holofoil|classic_027.jpg
+Zacian V|028/030|Holofoil|classic_028.jpg
+Lugia|029/030|Holofoil|classic_029.jpg
+Magikarp|030/030|Holofoil|classic_030.jpg
+Mew|R/RGB|RGB Secret Rare|mew_rgb_r.webp
+Mew|G/RGB|RGB Secret Rare|mew_rgb_g.webp
+Mew|B/RGB|RGB Secret Rare|mew_rgb_b.webp
