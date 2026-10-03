@@ -1,0 +1,58 @@
+# Creates SemVer GitHub Releases from Conventional Commits after production CI succeeds.
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["Tests / Security / Deploy"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Create release
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+
+      - name: Calculate SemVer release
+        id: semver
+        run: node scripts/release.mjs
+
+      - name: Create tag and GitHub Release
+        if: steps.semver.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
+          NOTES: ${{ steps.semver.outputs.notes }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          if git rev-parse "$NEXT_TAG" >/dev/null 2>&1; then
+            echo "Tag $NEXT_TAG already exists; skipping."
+            exit 0
+          fi
+          git tag "$NEXT_TAG" "$TARGET_SHA"
+          git push origin "$NEXT_TAG"
+          gh release create "$NEXT_TAG" \
+            --title "$NEXT_TAG" \
+            --notes "$NOTES" \
+            --target "$TARGET_SHA"

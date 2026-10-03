@@ -57,10 +57,11 @@ if (
 ) fail('CI workflow does not validate workflows and embedded Bash');
 else ok('actionlint and shellcheck validate workflow code');
 
-const browserJob = workflow.match(/\n  browser-tests:\n([\s\S]*?)(?=\n  [a-z][a-z0-9-]*:\n)/)?.[1] || '';
-const sonarJob = workflow.match(/\n  sonar:\n([\s\S]*?)(?=\n  [a-z][a-z0-9-]*:\n)/)?.[1] || '';
-const packageJob = workflow.match(/\n  package-pages:\n([\s\S]*?)(?=\n  [a-z][a-z0-9-]*:\n)/)?.[1] || '';
-const deployJob = workflow.match(/\n  deploy:\n([\s\S]*)/)?.[1] || '';
+const nl = String.raw`\r?\n`;
+const browserJob = workflow.match(new RegExp(`${nl}  browser-tests:${nl}([\\s\\S]*?)(?=${nl}  sonar:${nl})`))?.[1] || '';
+const sonarJob = workflow.match(new RegExp(`${nl}  sonar:${nl}([\\s\\S]*?)(?=${nl}  package-pages:${nl})`))?.[1] || '';
+const packageJob = workflow.match(new RegExp(`${nl}  package-pages:${nl}([\\s\\S]*?)(?=${nl}  deploy:${nl})`))?.[1] || '';
+const deployJob = workflow.match(new RegExp(`${nl}  deploy:${nl}([\\s\\S]*)`))?.[1] || '';
 if (!browserJob || !sonarJob || !packageJob || !deployJob)
   fail('CI workflow is missing a browser-tests, sonar, package-pages, or deploy job');
 else if (

@@ -83,13 +83,13 @@
   }
   .controls input[type=search]{
     flex:1;min-width:180px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:10px 14px;color:var(--ink);font-family:inherit;font-size:14px;outline:none;
+    padding:10px 14px;color:var(--ink);font-family:inherit;font-size:16px;outline:none;
   }
   .controls input[type=search]:focus{border-color:var(--tera2)}
   .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);cursor:pointer;user-select:none;
     background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
   .toggle input{accent-color:#e29bff}
-  select{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font-family:inherit;font-size:13px;outline:none}
+  select{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font-family:inherit;font-size:16px;outline:none}
 
   main{max-width:1180px;margin:8px auto 0;padding:0 20px}
   .grouphead{margin:30px 0 12px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;cursor:pointer;user-select:none}
@@ -204,3 +204,25 @@
   .empty{display:none;text-align:center;color:var(--dim);padding:60px 0;font-size:14px}
   footer{max-width:1180px;margin:50px auto 0;padding:0 20px;font-size:11px;color:var(--faint);line-height:1.6}
   :focus-visible{outline:2px solid var(--tera2);outline-offset:2px}
+
+  @media (max-width: 520px){
+    header{padding:20px 14px 6px}
+    .notice,.stats,.controls,main,footer{padding-left:14px;padding-right:14px}
+    .account,.history,.data-banner{margin-left:14px;margin-right:14px}
+    .setlogo{max-width:min(300px,86vw)}
+    .stats{grid-template-columns:1fr;gap:14px}
+    .ring{margin:0 auto}
+    .statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .controls{gap:8px}
+    .controls input[type=search],select,.toggle,.exportbtn{width:100%}
+    .exportwrap,.bulkactions{width:100%}
+    .bulkactions{display:flex;flex-direction:column}
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .meta{padding:9px 9px 10px}
+    .meta .nm{font-size:12px}
+  }
+
+  @media (max-width: 340px){
+    .grid{grid-template-columns:minmax(0,1fr)}
+    .statgrid{grid-template-columns:1fr}
+  }
