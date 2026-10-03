@@ -23,7 +23,7 @@ jobs:
 
   site-checks:
     name: Site checks + JavaScript unit tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -72,7 +72,7 @@ jobs:
 
   python-tests:
     name: Python tests (scripts)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -129,7 +129,7 @@ jobs:
   browser-tests:
     name: Browser tests
     needs: [site-checks, python-tests]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     permissions:
       contents: read
@@ -168,7 +168,7 @@ jobs:
   sonar:
     name: SonarQube
     needs: [site-checks, python-tests]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
       contents: read
@@ -261,7 +261,7 @@ jobs:
     name: Package Pages artifact
     needs: [browser-tests, sonar]
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -327,7 +327,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Setup Pages
