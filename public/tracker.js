@@ -482,7 +482,7 @@ function cardEl(it){
   const img=d.querySelector('.imgwrap img');
   if(img){
     img.addEventListener('error',()=>__imgFallback(img));
-    img.addEventListener('click',()=>openLightbox(it,img.src));
+    img.addEventListener('click',()=>openLightbox(it,lightboxSource(img)));
   }
   bindQuantityControls(d,it);
   d.__item=it;
@@ -521,7 +521,12 @@ function rowEl(it){
 const lb=document.getElementById('lightbox'), lbImg=document.getElementById('lbImg');
 let lbList=[], lbIndex=-1;
 let lbRequest=0;
+function lightboxSource(img){
+  const current=img.currentSrc || img.getAttribute('src') || '';
+  return current || img.dataset.src || '';
+}
 function openLightbox(it,shownSrc){
+  if(!shownSrc) return;
   const request=++lbRequest;
   lbList=[...document.querySelectorAll('.item')].filter(card=>card.__item && card.querySelector('.imgwrap img'));
   lbIndex=lbList.findIndex(card=>card.__item===it);
@@ -563,7 +568,7 @@ function lbStep(dir){
   lbIndex=(lbIndex+dir+lbList.length)%lbList.length;
   const card=lbList[lbIndex];
   const im=card.querySelector('.imgwrap img');
-  const src=im.src || im.dataset.src;
+  const src=lightboxSource(im);
   if(card.__item && src) openLightboxKeepList(card.__item, src);
 }
 function openLightboxKeepList(it,src){
