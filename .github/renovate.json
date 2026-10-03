@@ -11,6 +11,16 @@
         "github-actions"
       ],
       "groupName": "GitHub Actions updates"
+    },
+    {
+      "description": "Keep GitHub-hosted runner images pinned manually",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "github-runner"
+      ],
+      "enabled": false
     }
   ]
 }
