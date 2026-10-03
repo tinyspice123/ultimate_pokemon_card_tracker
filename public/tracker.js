@@ -531,6 +531,7 @@ function openLightbox(it,shownSrc){
   document.getElementById('lbVar').textContent=it.variant;
   lbImg.alt=it.card;
   lbImg.classList.add('loading');
+  lbImg.removeAttribute('src');
   lbImg.onload=()=>{
     if(request===lbRequest) lbImg.classList.remove('loading');
   };
