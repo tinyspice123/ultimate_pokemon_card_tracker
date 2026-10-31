@@ -44,7 +44,10 @@ Manual release runs require the numeric ID of a successful main
 **Tests / Security / Deploy** run, preventing an unvalidated commit or a release
 without its deployed artifact from being published.
 
-Pull requests enter GitHub's merge queue after their required checks pass. The
-queue rebuilds and retests the proposed `main` commit, avoiding stale-branch
-auto-merge failures. Automation PRs contain one maintained status comment that
-distinguishes review requirements from checks and queue state.
+GitHub Merge Queue is unavailable while this public repository is owned by a
+personal account; GitHub limits that feature to organization-owned public
+repositories. The workflows already support `merge_group` for a future
+organization transfer. Meanwhile, the generated-PR status workflow updates
+behind automation branches so protected checks rerun against current `main`.
+Automation PRs contain one maintained comment distinguishing reviews, checks,
+and merge state.

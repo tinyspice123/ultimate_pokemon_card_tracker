@@ -191,6 +191,8 @@ const generatedStatusWorkflow = fs.readFileSync('.github/workflows/generated-pr-
 if (!generatedStatusWorkflow.includes('scripts/generated_pr_status.sh') ||
     !fs.existsSync('scripts/generated_pr_status.sh'))
   fail('generated pull requests do not receive automated status summaries');
+else if (!fs.readFileSync('scripts/generated_pr_status.sh', 'utf8').includes('/update-branch'))
+  fail('behind generated pull requests are not automatically updated');
 else ok('generated pull requests receive automated status summaries');
 
 const workflowFiles = fs.readdirSync('.github/workflows')
