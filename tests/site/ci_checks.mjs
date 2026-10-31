@@ -122,17 +122,16 @@ else ok('release workflow maintains CHANGELOG.md');
 
 const backupWorkflow = fs.readFileSync('.github/workflows/backup.yml', 'utf8');
 const backupDispatchChecks = [
-  ['actions: write', 'backup job lacks permission to dispatch deployment'],
-  ['git status --porcelain -- backups/ public/img/*/manifest.txt', 'backup change detection excludes deployment data'],
-  ['deployment_data_changed=true', 'backup change detection does not publish its result'],
-  ["if: steps.commit.outputs.deployment_data_changed == 'true'", 'deployment dispatch is not conditional on changed backup data'],
-  ['gh workflow run ci-quality-deploy.yml --ref main', 'changed backup data does not dispatch deployment'],
+  ['pull-requests: write', 'backup job cannot create its protected update PR'],
+  ['git add backups/ public/img/*/manifest.txt', 'backup change detection excludes deployment data'],
+  ['gh pr create --base main', 'backup changes are not proposed through a pull request'],
+  ['gh pr merge "$pr_url" --auto --squash', 'backup pull request does not wait for protected checks and auto-merge'],
 ];
 for (const [marker, message] of backupDispatchChecks) {
   if (!backupWorkflow.includes(marker)) fail(message);
 }
 if (backupDispatchChecks.every(([marker]) => backupWorkflow.includes(marker)))
-  ok('backup changes trigger the deployment workflow');
+  ok('backup changes use protected auto-merge pull requests');
 
 const workflowFiles = fs.readdirSync('.github/workflows')
   .filter(file => file.endsWith('.yml'));

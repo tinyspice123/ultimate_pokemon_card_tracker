@@ -107,8 +107,8 @@ age and all protected checks. Major updates always require manual review.
 - The weekly production canary tests the browser app, Supabase, logos, and a
   full backup recovery drill. Failures are deduplicated into a GitHub issue and
   the issue closes after recovery.
-- Backup automation may write only backup CSVs and image manifests. Preserve its
-  rebase/retry behavior to avoid overwriting concurrent main changes.
+- Backup and changelog automation write through protected auto-merge PRs. Never
+  restore a direct-to-main push or grant a broad ruleset bypass.
 
 See `docs/` for adding sets/cards/images, editor access, backups, recovery, and
 service-console procedures.

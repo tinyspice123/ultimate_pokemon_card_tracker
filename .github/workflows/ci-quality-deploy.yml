@@ -7,14 +7,10 @@ on:
     paths-ignore:
       - README.md
       - CHANGELOG.md
-      - backups/**
       - docs/**
+  # Every PR runs the protected checks, including generated backup/changelog
+  # PRs and documentation-only changes, so required contexts never deadlock.
   pull_request:
-    paths-ignore:
-      - README.md
-      - CHANGELOG.md
-      - backups/**
-      - docs/**
   workflow_dispatch:
 
 concurrency:

@@ -19,7 +19,7 @@ jobs:
   backup:
     permissions:
       contents: write
-      actions: write
+      pull-requests: write
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -40,36 +40,26 @@ jobs:
           done
       - name: Validate collection backups and image manifests
         run: python scripts/validate_data.py
-      - name: Commit if changed
-        id: commit
+      - name: Commit and open protected update PR if changed
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git config user.name "collection-backup[bot]"
           git config user.email "actions@github.com"
-          if [[ -n "$(git status --porcelain -- backups/ public/img/*/manifest.txt)" ]]; then
-            echo "deployment_data_changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "deployment_data_changed=false" >> "$GITHUB_OUTPUT"
-          fi
           git add backups/ public/img/*/manifest.txt
           if git diff --cached --quiet; then
             echo "No changes since last backup"
           else
-            git commit -m "Daily collection backup [skip ci]"
-            for attempt in 1 2 3; do
-              git pull --rebase origin main
-              if git push origin HEAD:main; then
-                break
-              fi
-              if [[ "$attempt" -eq 3 ]]; then
-                echo "Could not push the backup after 3 attempts" >&2
-                exit 1
-              fi
-              sleep $((attempt * 2))
-            done
+            git commit -m "chore(data): refresh collection backups"
+            branch="automation/collection-backup"
+            git fetch origin "refs/heads/$branch:refs/remotes/origin/$branch" || true
+            git push origin "HEAD:refs/heads/$branch" --force-with-lease
+            pr_url="$(gh pr list --state open --head "$branch" --json url --jq '.[0].url')"
+            if [[ -z "$pr_url" ]]; then
+              pr_url="$(gh pr create --base main --head "$branch" \
+                --title "chore(data): refresh collection backups" \
+                --body "Automated recovery snapshots and synchronized image manifests.")"
+            fi
+            gh pr merge "$pr_url" --auto --squash
           fi
-      - name: Deploy synchronized backups and public manifests
-        if: steps.commit.outputs.deployment_data_changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run ci-quality-deploy.yml --ref main
