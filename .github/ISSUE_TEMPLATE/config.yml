@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/tinyspice123/ultimate_pokemon_card_tracker/security/advisories/new
+    about: Send exploitable details privately instead of opening a public issue.
+

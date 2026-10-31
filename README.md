@@ -43,6 +43,12 @@ connection.
 
 Routine maintenance is documented separately:
 
+- [Architecture](docs/ARCHITECTURE.md)
+- [Data model](docs/DATA_MODEL.md)
+- [Testing strategy](docs/TESTING.md)
+- [Architecture decisions](docs/decisions/README.md)
+- [Security policy](SECURITY.md)
+
 - [Add or edit cards](docs/ADDING_CARDS.md)
 - [Add a new set](docs/ADDING_SETS.md)
 - [Delete or archive a set](docs/DELETING_SETS.md)

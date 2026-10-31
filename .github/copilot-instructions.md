@@ -1,6 +1,10 @@
 # Copilot instructions
 
 Follow the canonical contributor guidance in `/AGENTS.md` for every change.
+Also follow the closest scoped `AGENTS.md` under `public/`, `scripts/`,
+`.github/`, `tests/`, or `supabase/`. Use `docs/ARCHITECTURE.md`,
+`docs/DATA_MODEL.md`, `docs/TESTING.md`, and `docs/decisions/` for the durable
+system contracts behind those instructions.
 
 Key constraints:
 

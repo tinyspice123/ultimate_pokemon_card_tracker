@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a user, maintenance, or automation improvement
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What is difficult today, and who benefits?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe behavior and acceptance criteria, not only implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and tradeoffs
+      description: Include effects on offline use, security, data, or maintenance.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, examples, related issues, or migration considerations.
+

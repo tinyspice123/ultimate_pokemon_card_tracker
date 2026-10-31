@@ -4,6 +4,12 @@ This file is the canonical operating guide for coding agents working in this
 repository. Keep it synchronized with workflow, architecture, and operational
 changes.
 
+More specific instructions live in `public/AGENTS.md`, `scripts/AGENTS.md`,
+`.github/AGENTS.md`, `tests/AGENTS.md`, and `supabase/AGENTS.md`. Agents must read
+the closest applicable file as well as this root guide. Architecture, data, and
+testing contracts are documented in `docs/ARCHITECTURE.md`,
+`docs/DATA_MODEL.md`, `docs/TESTING.md`, and `docs/decisions/`.
+
 ## Project shape
 
 - `public/` is a zero-build static Progressive Web App deployed to GitHub Pages.
