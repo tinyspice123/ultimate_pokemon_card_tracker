@@ -124,10 +124,11 @@ age and all protected checks. Major updates always require manual review.
   existing PR after retries or overlapping scheduled runs. Deployment and
   canary incidents must use `scripts/report_incident.sh` so notification
   behavior and repository selection stay consistent.
-- Pull requests merge through GitHub's merge queue. Required workflows must
-  retain their `merge_group` triggers. `scripts/generated_pr_status.sh` keeps a
-  single status comment on automation PRs, including their checks, queue state,
-  and whether auto-merge is enabled.
+- This personal-account repository cannot use GitHub Merge Queue. Required
+  workflows retain `merge_group` compatibility for a future organization
+  transfer. For now, `scripts/generated_pr_status.sh` automatically updates
+  behind automation branches and keeps one status comment with checks, merge
+  state, and whether auto-merge is enabled.
 - Changelog-only changes still run the inexpensive required contract and Python
   jobs, but browser, SonarQube, and preview work uses the change classifier and
   must remain a successful no-op to preserve required check names.
