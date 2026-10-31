@@ -12,6 +12,20 @@ on:
   # PRs and documentation-only changes, so required contexts never deadlock.
   pull_request:
   workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: Optional PR number for a generated automation branch
+        required: false
+        type: string
+      head_ref:
+        description: Optional PR head ref for SonarQube metadata
+        required: false
+        type: string
+      base_ref:
+        description: Optional PR base ref for SonarQube metadata
+        required: false
+        default: main
+        type: string
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -184,6 +198,7 @@ jobs:
         -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
         -Dsonar.qualitygate.wait=true
         -Dsonar.qualitygate.timeout=300
+      SONAR_PULL_REQUEST_ARGS: ${{ inputs.pull_request_number && format('-Dsonar.pullrequest.key={0} -Dsonar.pullrequest.branch={1} -Dsonar.pullrequest.base={2}', inputs.pull_request_number, inputs.head_ref, inputs.base_ref) || '' }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -214,7 +229,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          args: ${{ env.SONAR_SCANNER_ARGS }}
+          args: ${{ env.SONAR_SCANNER_ARGS }} ${{ env.SONAR_PULL_REQUEST_ARGS }}
 
       - name: Retry only an analysis still processing after timeout
         id: sonar-retry
@@ -250,7 +265,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          args: ${{ env.SONAR_SCANNER_ARGS }}
+          args: ${{ env.SONAR_SCANNER_ARGS }} ${{ env.SONAR_PULL_REQUEST_ARGS }}
 
       - name: Fail completed SonarQube Quality Gate
         if: steps.sonar-attempt-1.outcome == 'failure' && steps.sonar-retry.outputs.should_retry != 'true'
@@ -259,7 +274,7 @@ jobs:
   pr-preview:
     name: Package PR preview
     needs: [browser-tests, sonar]
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || inputs.pull_request_number != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -282,13 +297,13 @@ jobs:
       - name: Upload downloadable preview
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: pr-preview-${{ github.event.pull_request.number }}
+          name: pr-preview-${{ github.event.pull_request.number || inputs.pull_request_number }}
           path: public
           if-no-files-found: error
           retention-days: 7
       - name: Publish preview instructions
         env:
-          PREVIEW_NAME: pr-preview-${{ github.event.pull_request.number }}
+          PREVIEW_NAME: pr-preview-${{ github.event.pull_request.number || inputs.pull_request_number }}
         run: |
           {
             echo "## Pull request preview"
@@ -300,7 +315,7 @@ jobs:
   package-pages:
     name: Package Pages artifact
     needs: [browser-tests, sonar]
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -357,7 +372,7 @@ jobs:
       group: pages
       cancel-in-progress: false
 
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
 
     permissions:
       contents: read

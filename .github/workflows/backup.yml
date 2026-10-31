@@ -19,6 +19,7 @@ jobs:
   backup:
     permissions:
       contents: write
+      actions: write
       pull-requests: write
     runs-on: ubuntu-24.04
     steps:
@@ -61,5 +62,10 @@ jobs:
                 --title "chore(data): refresh collection backups" \
                 --body "Automated recovery snapshots and synchronized image manifests.")"
             fi
+            pr_number="$(gh pr view "$pr_url" --json number --jq '.number')"
+            gh workflow run ci-quality-deploy.yml --ref "$branch" \
+              -f pull_request_number="$pr_number" -f head_ref="$branch" -f base_ref=main
+            gh workflow run security.yml --ref "$branch" \
+              -f head_ref="$branch" -f base_ref=main
             gh pr merge "$pr_url" --auto --squash
           fi

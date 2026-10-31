@@ -108,7 +108,9 @@ age and all protected checks. Major updates always require manual review.
   full backup recovery drill. Failures are deduplicated into a GitHub issue and
   the issue closes after recovery.
 - Backup and changelog automation write through protected auto-merge PRs. Never
-  restore a direct-to-main push or grant a broad ruleset bypass.
+  restore a direct-to-main push or grant a broad ruleset bypass. Because PRs
+  created by `GITHUB_TOKEN` do not emit normal PR workflow events, those jobs
+  explicitly dispatch CI/security with PR metadata on the generated branch.
 
 See `docs/` for adding sets/cards/images, editor access, backups, recovery, and
 service-console procedures.
