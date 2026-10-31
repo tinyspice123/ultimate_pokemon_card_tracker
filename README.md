@@ -15,8 +15,8 @@ into a generated `public/backups/` directory.
 
 Requirements:
 
-- Node.js 24 for checks and browser tests
-- Python 3.14 for maintenance scripts and their tests
+- Node.js 26 for checks and browser tests
+- Python 3.15 for maintenance scripts and their tests
 
 Install the development dependencies:
 
@@ -51,6 +51,7 @@ Routine maintenance is documented separately:
 - [Backups and restore](docs/BACKUPS.md)
 - [Repository recovery](docs/RECOVERY.md)
 - [Service consoles and routine checks](docs/SERVICES.md)
+- [CI, generated PRs, and releases](docs/CI_RELEASES.md)
 
 ## Tracker controls
 
@@ -216,10 +217,11 @@ Run this manually to export every configured set from Supabase into `backups/`:
 python scripts/backup_supabase.py
 ```
 
-The scheduled backup workflow runs the same command daily and commits only
-when database data changed. It also synchronizes image manifests; when that changes
-anything under `public/`, the workflow explicitly dispatches the normal test and
-deployment pipeline so production never waits for an unrelated push.
+The scheduled backup workflow runs the same command daily and proposes changes
+through a reusable protected auto-merge PR only when database data changed. It
+also synchronizes image manifests, explicitly dispatches the required CI and
+security workflows for the generated branch, and merges only after every
+protected check passes.
 Temporary timeouts, rate limits, and server errors receive three attempts with
 exponential backoff.
 
@@ -256,9 +258,11 @@ npm run test:python
   service-worker version injection, and PWA precaching.
 - `tests/unit/` exercises shared JavaScript and service-worker behavior.
 - `tests/python/` tests the maintenance scripts without real network calls.
+- `tests/shell/` exercises generated-PR recovery with mocked GitHub CLI calls.
 - `tests/e2e/` runs the tracker in desktop and mobile Chrome with deterministic
   mocked database/snapshot data, plus a service-worker-enabled offline reload integration
   test.
+- `tests/production/` smoke-tests the deployed site from the scheduled canary.
 
 JavaScript coverage is written to `coverage/`; Playwright failures are written
 to `test-results/`. Both are generated and ignored by Git.
@@ -267,11 +271,14 @@ to `test-results/`. Both are generated and ignored by Git.
 
 On pushes to `main` and pull requests, GitHub Actions runs:
 
-1. Site checks and JavaScript unit coverage.
-2. Python unit coverage.
-3. `actionlint` workflow validation with `shellcheck` applied to embedded Bash.
-4. Desktop and mobile Playwright tests and SonarQube Quality Gate validation
-   in parallel.
+1. A change classifier identifies documentation-only updates.
+2. Site checks, JavaScript unit coverage, Python coverage, workflow contract
+   tests, `actionlint`, and `shellcheck` for embedded and shared Bash.
+3. CodeQL scans JavaScript/TypeScript and Python; pull requests also receive a
+   dependency review.
+4. Desktop/mobile Playwright and SonarQube run in parallel for application
+   changes. Documentation-only updates keep the required check names but use
+   successful no-op jobs to avoid unnecessary browser, Sonar, and preview work.
 5. A packaging job, gated on both browser and SonarQube success, injects a
    commit-derived service-worker shell cache version, copies `backups/*.csv`
    into generated `public/backups/`, and uploads `public/`.
@@ -279,16 +286,23 @@ On pushes to `main` and pull requests, GitHub Actions runs:
 7. Post-deployment smoke checks for the home page, tracker, manifest, and
    service worker.
 
-The weekly **Production dependency canary** checks that the live Supabase
-catalogue API returns configured card data. This monitors the primary data
-source even when no deployment occurs.
+Generated backup and changelog updates reuse protected automation PRs. A
+scheduled status workflow maintains one explanatory comment, updates a behind
+automation branch, and preserves auto-merge. See
+[CI, generated PRs, and releases](docs/CI_RELEASES.md) for the complete flow.
+
+The weekly **Production dependency canary** checks the deployed browser app,
+the live Supabase catalogue, every configured set logo, and restoration of all
+CSV snapshots into an isolated database. Failures open or update one incident
+issue, which closes automatically after recovery.
 
 ### Maintenance mode
 
 To replace the site temporarily with its maintenance page, open **Actions →
 Toggle maintenance mode → Run workflow**, choose `enable`, and run it. Choose
-`disable` to redeploy the current site from `public/`. A later successful normal
-deployment also replaces maintenance mode with the live site.
+`disable` to dispatch the complete test, package, deployment, and smoke-test
+pipeline. Maintenance mode remains visible until that validated deployment
+finishes. A later successful normal deployment also replaces maintenance mode.
 
 For rollback, database restoration, outage and image-repair procedures, see the
 [recovery runbook](docs/RECOVERY.md).
@@ -319,6 +333,8 @@ token.
 │   ├── site/               # Static repository/site checks
 │   ├── unit/               # JavaScript unit tests
 │   ├── python/             # Python script tests
+│   ├── shell/              # Mocked automation helper tests
+│   ├── production/         # Deployed-site canary smoke tests
 │   └── e2e/                # Playwright tests and local static server
 ├── docs/template.csv       # Example sheet tab to import
 ├── backups/                # Versioned collection snapshots
