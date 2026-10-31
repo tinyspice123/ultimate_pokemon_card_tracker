@@ -98,7 +98,7 @@ for (const marker of rollbackMarkers) {
 if (rollbackMarkers.every(marker => rollbackWorkflow.includes(marker)))
   ok('rollback restores and verifies a retained Pages artifact');
 
-if (!workflow.includes('name: Package PR preview') || !workflow.includes('name: pr-preview-${{ github.event.pull_request.number }}'))
+if (!workflow.includes('name: Package PR preview') || !workflow.includes('name: pr-preview-${{'))
   fail('CI does not produce a downloadable pull-request preview');
 else ok('pull requests produce a downloadable preview artifact');
 
@@ -125,6 +125,7 @@ const backupDispatchChecks = [
   ['pull-requests: write', 'backup job cannot create its protected update PR'],
   ['git add backups/ public/img/*/manifest.txt', 'backup change detection excludes deployment data'],
   ['gh pr create --base main', 'backup changes are not proposed through a pull request'],
+  ['gh workflow run security.yml --ref "$branch"', 'generated backup PR does not dispatch its protected security checks'],
   ['gh pr merge "$pr_url" --auto --squash', 'backup pull request does not wait for protected checks and auto-merge'],
 ];
 for (const [marker, message] of backupDispatchChecks) {

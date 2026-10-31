@@ -7,6 +7,16 @@ on:
   schedule:
     - cron: "15 8 * * 1"
   workflow_dispatch:
+    inputs:
+      head_ref:
+        description: Optional generated PR head ref
+        required: false
+        type: string
+      base_ref:
+        description: Optional generated PR base ref
+        required: false
+        default: main
+        type: string
 
 permissions:
   contents: read
@@ -38,7 +48,7 @@ jobs:
 
   dependency-review:
     name: Dependency review
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || inputs.head_ref != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -49,3 +59,5 @@ jobs:
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: moderate
+          base-ref: ${{ github.event.pull_request.base.sha || inputs.base_ref }}
+          head-ref: ${{ github.event.pull_request.head.sha || inputs.head_ref }}
