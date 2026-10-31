@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. New entries are generated from Conventional Commits when a release is published.
 
+## [v3.4.1] - 2026-10-31
+
+### Fixes
+- fix(ci): repair canary incident reporting (#29) (541120c)
+
 ## [v3.4.0] - 2026-10-31
 
 ### Features
