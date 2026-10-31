@@ -41,6 +41,15 @@ jobs:
         id: semver
         run: node scripts/release.mjs
 
+      - name: Prepare changelog entry
+        if: steps.semver.outputs.release == 'true'
+        env:
+          NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
+          NOTES: ${{ steps.semver.outputs.notes }}
+        run: |
+          node scripts/changelog.mjs
+          cp CHANGELOG.md /tmp/release-CHANGELOG.md
+
       - name: Download deployed Pages artifact
         if: steps.semver.outputs.release == 'true' && github.event_name == 'workflow_run'
         env:
@@ -97,3 +106,29 @@ jobs:
           gh release upload "$NEXT_TAG" \
             'release-artifact/artifact.tar#deployed-pages.tar' \
             'release-artifact/artifact.tar.sha256#deployed-pages.tar.sha256'
+
+      - name: Publish generated changelog
+        if: steps.publish.outputs.created == 'true'
+        env:
+          NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B changelog-main origin/main
+          cp /tmp/release-CHANGELOG.md CHANGELOG.md
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "release[bot]"
+          git config user.email "actions@github.com"
+          git commit -m "docs: update changelog for $NEXT_TAG [skip ci]"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          echo "Could not publish the changelog after 3 attempts" >&2
+          exit 1

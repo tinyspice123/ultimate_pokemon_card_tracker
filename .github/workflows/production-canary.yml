@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
 
       - name: Install browser test tools
@@ -86,3 +86,58 @@ jobs:
 
       - name: Check every set's logo resolves
         run: python scripts/check_logos.py
+
+  backup-recovery:
+    name: Backup recovery drill
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /backups/
+            /scripts/recovery_drill.py
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.15"
+      - name: Restore every backup into an isolated database
+        run: python scripts/recovery_drill.py backups
+
+  notify:
+    name: Report canary status
+    if: always()
+    needs: [deployed-site, supabase-api, check-logos, backup-recovery]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TITLE: "Production canary failure"
+      NEEDS_JSON: ${{ toJSON(needs) }}
+    steps:
+      - name: Open, update, or resolve the canary incident
+        run: |
+          set -euo pipefail
+          issue_number="$(gh issue list --state open --limit 100 --json number,title \
+            --jq '.[] | select(.title == env.TITLE) | .number' | head -n 1)"
+          failed_jobs="$(jq -r 'to_entries[] | select(.value.result != "success") | "- \(.key): \(.value.result)"' <<< "$NEEDS_JSON")"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [[ -n "$failed_jobs" ]]; then
+            {
+              echo "The scheduled production canary detected a failure."
+              echo
+              echo "$failed_jobs"
+              echo
+              echo "Run: $run_url"
+            } > /tmp/canary-issue.md
+            if [[ -n "$issue_number" ]]; then
+              gh issue comment "$issue_number" --body-file /tmp/canary-issue.md
+            else
+              gh issue create --title "$TITLE" --body-file /tmp/canary-issue.md
+            fi
+          elif [[ -n "$issue_number" ]]; then
+            gh issue close "$issue_number" --comment "Production canary recovered: $run_url"
+          fi

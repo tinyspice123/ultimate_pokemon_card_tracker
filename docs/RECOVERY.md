@@ -34,6 +34,9 @@ revert and the normal deployment pipeline.
 
 Supabase is the live source. Versioned CSV recovery snapshots are stored under
 `backups/<set-id>.csv` by the daily **Backup Supabase collection** workflow.
+The weekly production canary also restores every snapshot into an isolated
+SQLite database and verifies row counts, quantities, uniqueness, and database
+integrity.
 
 1. Identify the last good CSV with Git history and download that revision.
 2. Restore its rows into Supabase's `public.pokemon_card_main` table with the Table

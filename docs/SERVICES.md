@@ -14,4 +14,15 @@ service.
 
 After a collection change, run **Backup Supabase collection** from GitHub
 Actions and confirm that **Tests / Security / Deploy** succeeds. Review
-Renovate pull requests individually; they are not deployed until merged.
+Renovate major-update pull requests individually. Patch, pin, and digest
+updates wait for the protected checks and then merge automatically after a
+three-day minimum release age.
+
+Pull requests produce a `pr-preview-<number>` artifact after browser and
+quality checks pass. Download it from the workflow run and serve the extracted
+directory with a local static HTTP server for visual review.
+
+The weekly **Production dependency canary** checks the deployed browser app,
+Supabase, set logos, and a full backup recovery into an isolated database. A
+failure opens or updates one `Production canary failure` issue; the next fully
+successful run closes it automatically.

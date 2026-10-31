@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import { analyzeRelease } from './release-lib.mjs';
 
 const outputPath = process.env.GITHUB_OUTPUT;
 const summaryPath = process.env.GITHUB_STEP_SUMMARY;
@@ -36,19 +37,6 @@ function latestTag() {
   }
 }
 
-function parseVersion(tag) {
-  const match = /^v(\d+)\.(\d+)\.(\d+)$/.exec(tag);
-  if (!match) return [0, 0, 0];
-  return match.slice(1).map(Number);
-}
-
-function bumpVersion(version, bump) {
-  const [major, minor, patch] = version;
-  if (bump === 'major') return [major + 1, 0, 0];
-  if (bump === 'minor') return [major, minor + 1, 0];
-  return [major, minor, patch + 1];
-}
-
 function commitRange(tag) {
   return tag ? `${tag}..HEAD` : 'HEAD';
 }
@@ -65,63 +53,22 @@ function commitsSince(tag) {
     });
 }
 
-function classify(commit) {
-  const text = `${commit.subject}\n${commit.body}`;
-  if (/BREAKING CHANGE:|^[a-z]+(?:\([^)]+\))?!:/i.test(text)) return 'major';
-  if (/^feat(?:\([^)]+\))?:/i.test(commit.subject)) return 'minor';
-  if (/^(fix|perf)(?:\([^)]+\))?:/i.test(commit.subject)) return 'patch';
-  return '';
-}
-
-function stronger(a, b) {
-  const rank = { '': 0, patch: 1, minor: 2, major: 3 };
-  return rank[b] > rank[a] ? b : a;
-}
-
-function releaseNotes(commits) {
-  const groups = [
-    ['Features', commit => /^feat(?:\([^)]+\))?!?:/i.test(commit.subject)],
-    ['Fixes', commit => /^(fix|perf)(?:\([^)]+\))?!?:/i.test(commit.subject)],
-    ['Other changes', commit => !/^(feat|fix|perf)(?:\([^)]+\))?!?:/i.test(commit.subject)],
-  ];
-  const lines = [];
-  for (const [title, predicate] of groups) {
-    const matches = commits.filter(predicate);
-    if (!matches.length) continue;
-    lines.push(`### ${title}`);
-    for (const commit of matches) {
-      const shortSha = commit.sha.slice(0, 7);
-      lines.push(`- ${commit.subject} (${shortSha})`);
-    }
-    lines.push('');
-  }
-  return lines.join('\n').trim() || '- Maintenance release';
-}
-
 const currentTag = latestTag();
 const commits = commitsSince(currentTag);
-let bump = '';
-for (const commit of commits) bump = stronger(bump, classify(commit));
+const result = analyzeRelease(currentTag, commits);
 
-if (!commits.length || !bump) {
-  const reason = !commits.length
-    ? `No commits were found after ${currentTag || 'the beginning of history'}.`
-    : 'No commit used `feat:`, `fix:`, `perf:`, `type!:`, or `BREAKING CHANGE:`.';
-  writeOutput({ release: 'false', latest_tag: currentTag, commits_inspected: commits.length, reason });
-  writeSummary(`## Release skipped\n\n- Previous tag: ${currentTag || 'none'}\n- Commits inspected: ${commits.length}\n- Reason: ${reason}\n`);
-  console.log(`Release skipped: ${reason} Commits inspected: ${commits.length}.`);
+if (!result.release) {
+  writeOutput({ release: 'false', latest_tag: result.latestTag, commits_inspected: result.commitsInspected, reason: result.reason });
+  writeSummary(`## Release skipped\n\n- Previous tag: ${result.latestTag || 'none'}\n- Commits inspected: ${result.commitsInspected}\n- Reason: ${result.reason}\n`);
+  console.log(`Release skipped: ${result.reason} Commits inspected: ${result.commitsInspected}.`);
   process.exit(0);
 }
 
-const nextVersion = bumpVersion(parseVersion(currentTag), bump).join('.');
-const nextTag = `v${nextVersion}`;
-const notes = releaseNotes(commits);
-
 writeOutput({
   release: 'true',
-  bump,
-  latest_tag: currentTag,
-  next_tag: nextTag,
-  notes,
+  bump: result.bump,
+  latest_tag: result.latestTag,
+  next_tag: result.nextTag,
+  notes: result.notes,
 });
-writeSummary(`## Release\n\n- Previous tag: ${currentTag || 'none'}\n- Next tag: ${nextTag}\n- Bump: ${bump}\n\n${notes}\n`);
+writeSummary(`## Release\n\n- Previous tag: ${result.latestTag || 'none'}\n- Next tag: ${result.nextTag}\n- Bump: ${result.bump}\n\n${result.notes}\n`);

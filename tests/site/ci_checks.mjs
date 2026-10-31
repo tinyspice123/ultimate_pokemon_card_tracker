@@ -98,6 +98,28 @@ for (const marker of rollbackMarkers) {
 if (rollbackMarkers.every(marker => rollbackWorkflow.includes(marker)))
   ok('rollback restores and verifies a retained Pages artifact');
 
+if (!workflow.includes('name: Package PR preview') || !workflow.includes('name: pr-preview-${{ github.event.pull_request.number }}'))
+  fail('CI does not produce a downloadable pull-request preview');
+else ok('pull requests produce a downloadable preview artifact');
+
+const securityWorkflow = fs.readFileSync('.github/workflows/security.yml', 'utf8');
+for (const marker of ['github/codeql-action/init@', 'github/codeql-action/analyze@', 'actions/dependency-review-action@']) {
+  if (!securityWorkflow.includes(marker)) fail(`security workflow missing ${marker}`);
+}
+if (['github/codeql-action/init@', 'github/codeql-action/analyze@', 'actions/dependency-review-action@']
+  .every(marker => securityWorkflow.includes(marker))) ok('CodeQL and dependency review are configured');
+
+const canaryWorkflow = fs.readFileSync('.github/workflows/production-canary.yml', 'utf8');
+if (!canaryWorkflow.includes('name: Backup recovery drill'))
+  fail('production canary does not test backup recovery');
+else if (!canaryWorkflow.includes('issues: write') || !canaryWorkflow.includes('gh issue create'))
+  fail('production canary failures do not create a GitHub issue');
+else ok('canary drills backup recovery and reports incidents');
+
+if (!releaseWorkflow.includes('node scripts/changelog.mjs') || !releaseWorkflow.includes('Publish generated changelog'))
+  fail('release workflow does not maintain the changelog');
+else ok('release workflow maintains CHANGELOG.md');
+
 const backupWorkflow = fs.readFileSync('.github/workflows/backup.yml', 'utf8');
 const backupDispatchChecks = [
   ['actions: write', 'backup job lacks permission to dispatch deployment'],
@@ -126,6 +148,11 @@ const renovate = JSON.parse(fs.readFileSync('.github/renovate.json', 'utf8'));
 if (!(renovate.extends || []).includes('helpers:pinGitHubActionDigests'))
   fail('Renovate is not configured to maintain pinned GitHub Action digests');
 else ok('Renovate tracks pinned GitHub Actions');
+const autoMergeRule = renovate.packageRules?.find(rule => rule.description?.includes('Automerge low-risk'));
+if (!autoMergeRule?.automerge || autoMergeRule.automergeType !== 'pr' ||
+    !['patch', 'pin', 'pinDigest', 'digest'].every(type => autoMergeRule.matchUpdateTypes?.includes(type)))
+  fail('Renovate low-risk automerge policy is missing or too narrow');
+else ok('Renovate automerges only low-risk updates behind protected checks');
 
 // ---------- HTML pages ----------
 for (const file of ['index.html', 'tracker.html', '404.html']) {

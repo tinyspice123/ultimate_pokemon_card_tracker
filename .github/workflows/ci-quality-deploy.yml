@@ -6,11 +6,13 @@ on:
     branches: ["main"]
     paths-ignore:
       - README.md
+      - CHANGELOG.md
       - backups/**
       - docs/**
   pull_request:
     paths-ignore:
       - README.md
+      - CHANGELOG.md
       - backups/**
       - docs/**
   workflow_dispatch:
@@ -35,6 +37,7 @@ jobs:
           sparse-checkout: |
             /.github/
             /public/
+            /scripts/release-lib.mjs
             /tests/
             /eslint.config.mjs
             /package-lock.json
@@ -256,6 +259,47 @@ jobs:
       - name: Fail completed SonarQube Quality Gate
         if: steps.sonar-attempt-1.outcome == 'failure' && steps.sonar-retry.outputs.should_retry != 'true'
         run: exit 1
+
+  pr-preview:
+    name: Package PR preview
+    needs: [browser-tests, sonar]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /backups/
+            /public/
+      - name: Build preview directory
+        run: |
+          set -euo pipefail
+          build_version="preview-${GITHUB_SHA::8}"
+          sed -i "s/shell-__BUILD_VERSION__/$build_version/" public/sw.js
+          mkdir -p public/backups
+          cp backups/*.csv public/backups/
+          grep -Fq "const VERSION = '$build_version'" public/sw.js
+      - name: Upload downloadable preview
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: pr-preview-${{ github.event.pull_request.number }}
+          path: public
+          if-no-files-found: error
+          retention-days: 7
+      - name: Publish preview instructions
+        env:
+          PREVIEW_NAME: pr-preview-${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo "## Pull request preview"
+            echo
+            echo "Download the **${PREVIEW_NAME}** artifact from this run and serve it with any static HTTP server."
+            echo "For example: \`python -m http.server 4173 --directory public\`."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   package-pages:
     name: Package Pages artifact

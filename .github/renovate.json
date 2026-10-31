@@ -21,6 +21,26 @@
         "github-runner"
       ],
       "enabled": false
+    },
+    {
+      "description": "Automerge low-risk updates after protected checks pass",
+      "matchUpdateTypes": [
+        "patch",
+        "pin",
+        "pinDigest",
+        "digest"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Keep major updates under manual review",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
     }
   ]
 }
