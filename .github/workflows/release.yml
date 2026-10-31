@@ -6,10 +6,16 @@ on:
     workflows: ["Tests / Security / Deploy"]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful main Tests / Security / Deploy run ID to release
+        required: true
+        type: string
 
 permissions:
   actions: write
   attestations: write
+  checks: read
   contents: write
   id-token: write
   pull-requests: write
@@ -26,25 +32,70 @@ jobs:
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
+    outputs:
+      created: ${{ steps.publish.outputs.created }}
+      next_tag: ${{ steps.semver.outputs.next_tag }}
+      target_sha: ${{ steps.publish.outputs.target_sha }}
+      changelog_pr: ${{ steps.changelog.outputs.pr_url }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          # Calculate the version from the exact commit that passed and was
-          # deployed, even if main advances before this workflow starts.
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: main
           fetch-depth: 0
+
+      - name: Resolve the successful deployed run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id || inputs.source_run_id }}
+        run: |
+          set -euo pipefail
+          run="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}")"
+          [[ "$(jq -r .name <<< "$run")" == "Tests / Security / Deploy" ]]
+          [[ "$(jq -r .conclusion <<< "$run")" == success ]]
+          [[ "$(jq -r .head_branch <<< "$run")" == main ]]
+          target_sha="$(jq -r .head_sha <<< "$run")"
+          git checkout --detach "$target_sha"
+          printf 'run_id=%s\ntarget_sha=%s\n' "$SOURCE_RUN_ID" "$target_sha" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 26
 
+      - name: Wait for post-merge security scanning
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ steps.source.outputs.target_sha }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..40}; do
+            checks="$(gh api \
+              -H 'Accept: application/vnd.github+json' \
+              "/repos/${GITHUB_REPOSITORY}/commits/${TARGET_SHA}/check-runs?per_page=100")"
+            js="$(jq -r '.check_runs[] | select(.name == "CodeQL (javascript-typescript)") | .conclusion // empty' <<< "$checks" | tail -n1)"
+            py="$(jq -r '.check_runs[] | select(.name == "CodeQL (python)") | .conclusion // empty' <<< "$checks" | tail -n1)"
+            if [[ "$js" == success && "$py" == success ]]; then
+              break
+            fi
+            if [[ "$js" =~ ^(failure|cancelled|timed_out|action_required)$ ||
+                  "$py" =~ ^(failure|cancelled|timed_out|action_required)$ ]]; then
+              echo "Post-merge security scanning failed: javascript=$js python=$py" >&2
+              exit 1
+            fi
+            if (( attempt == 40 )); then
+              echo "Timed out waiting for post-merge security scanning" >&2
+              exit 1
+            fi
+            sleep 15
+          done
+
       - name: Calculate SemVer release
         id: semver
         run: node scripts/release.mjs
 
-      - name: Prepare changelog entry
+      - name: Rebuild changelog from release tags
         if: steps.semver.outputs.release == 'true'
         env:
           NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
@@ -58,10 +109,10 @@ jobs:
         run: mkdir -p release-artifact
 
       - name: Download deployed Pages artifact
-        if: steps.semver.outputs.release == 'true' && github.event_name == 'workflow_run'
+        if: steps.semver.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
         run: |
           gh run download "$SOURCE_RUN_ID" --name github-pages --dir release-artifact
           sha256sum release-artifact/artifact.tar > release-artifact/artifact.tar.sha256
@@ -77,7 +128,7 @@ jobs:
           upload-release-assets: false
 
       - name: Attest deployed Pages artifact
-        if: steps.semver.outputs.release == 'true' && github.event_name == 'workflow_run'
+        if: steps.semver.outputs.release == 'true'
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
         with:
           subject-path: release-artifact/artifact.tar
@@ -89,14 +140,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
           NOTES: ${{ steps.semver.outputs.notes }}
-          TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
-          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          TARGET_SHA: ${{ steps.source.outputs.target_sha }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
           SITE_URL: https://tinyspice123.github.io/ultimate_pokemon_card_tracker/
         run: |
           set -euo pipefail
           if gh release view "$NEXT_TAG" >/dev/null 2>&1; then
             echo "Release $NEXT_TAG already exists; skipping."
             echo "created=false" >> "$GITHUB_OUTPUT"
+            echo "target_sha=$TARGET_SHA" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           {
@@ -118,9 +170,10 @@ jobs:
             --notes-file release-notes.md \
             --target "$TARGET_SHA"
           echo "created=true" >> "$GITHUB_OUTPUT"
+          echo "target_sha=$TARGET_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Attach deployed artifact to release
-        if: steps.publish.outputs.created == 'true' && github.event_name == 'workflow_run'
+        if: steps.publish.outputs.created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
@@ -131,15 +184,18 @@ jobs:
             'release-artifact/sbom.spdx.json#sbom.spdx.json'
 
       - name: Publish generated changelog
+        id: changelog
         if: steps.publish.outputs.created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
+          NOTES: ${{ steps.semver.outputs.notes }}
         run: |
           set -euo pipefail
-          git fetch origin main
+          git fetch origin main --tags
           git checkout -B changelog-update origin/main
-          cp /tmp/release-CHANGELOG.md CHANGELOG.md
+          node scripts/changelog.mjs
           git add CHANGELOG.md
           if git diff --cached --quiet; then
             exit 0
@@ -147,14 +203,46 @@ jobs:
           git config user.name "release[bot]"
           git config user.email "actions@github.com"
           git commit -m "docs: update changelog for $NEXT_TAG"
-          branch="automation/changelog-${NEXT_TAG}"
-          git push origin "HEAD:refs/heads/$branch"
-          pr_url="$(gh pr create --base main --head "$branch" \
-            --title "docs: update changelog for $NEXT_TAG" \
-            --body "Generated from the Conventional Commits included in $NEXT_TAG.")"
-          pr_number="$(gh pr view "$pr_url" --json number --jq '.number')"
-          gh workflow run ci-quality-deploy.yml --ref "$branch" \
-            -f pull_request_number="$pr_number" -f head_ref="$branch" -f base_ref=main
-          gh workflow run security.yml --ref "$branch" \
-            -f head_ref="$branch" -f base_ref=main
-          gh pr merge "$pr_url" --auto --squash
+          AUTOMATION_BRANCH=automation/release-changelog \
+          PR_TITLE="docs: update changelog through $NEXT_TAG" \
+          PR_BODY="Rebuilt from all SemVer tags through $NEXT_TAG." \
+            bash scripts/upsert_generated_pr.sh
+
+  verify-release:
+    name: Verify published release
+    needs: release
+    if: needs.release.outputs.created == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      attestations: read
+      contents: read
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.release.outputs.next_tag }}
+      TARGET_SHA: ${{ needs.release.outputs.target_sha }}
+      CHANGELOG_PR: ${{ needs.release.outputs.changelog_pr }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.release.outputs.target_sha }}
+      - name: Verify tag, assets, checksum, attestation, and changelog PR
+        run: |
+          set -euo pipefail
+          git fetch origin "refs/tags/$TAG:refs/tags/$TAG"
+          [[ "$(git rev-list -n1 "$TAG")" == "$TARGET_SHA" ]]
+          mkdir release-verification
+          gh release download "$TAG" --dir release-verification
+          for asset in deployed-pages.tar deployed-pages.tar.sha256 sbom.spdx.json; do
+            [[ -s "release-verification/$asset" ]]
+          done
+          (
+            cd release-verification
+            sed -i 's#release-artifact/artifact.tar#deployed-pages.tar#' deployed-pages.tar.sha256
+            sha256sum --check deployed-pages.tar.sha256
+          )
+          gh attestation verify release-verification/deployed-pages.tar --repo "$GITHUB_REPOSITORY"
+          [[ -n "$CHANGELOG_PR" ]]
+          [[ "$(gh pr view "$CHANGELOG_PR" --json headRefName --jq .headRefName)" == automation/release-changelog ]]

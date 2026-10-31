@@ -77,11 +77,28 @@ if (!packageJob.includes('retention-days: 30'))
 else ok('Pages artifact is retained for release provenance and rollback');
 
 const releaseWorkflow = fs.readFileSync('.github/workflows/release.yml', 'utf8');
-if (!releaseWorkflow.includes("ref: ${{ github.event.workflow_run.head_sha || github.sha }}"))
-  fail('release calculation is not pinned to the deployed commit');
+if (!releaseWorkflow.includes('name: Resolve the successful deployed run') ||
+    !releaseWorkflow.includes('git checkout --detach "$target_sha"'))
+  fail('release calculation is not pinned to the deployed run commit');
 else if (!releaseWorkflow.includes('gh run download "$SOURCE_RUN_ID" --name github-pages'))
   fail('release does not preserve the deployed Pages artifact');
 else ok('releases use the deployed commit and artifact');
+for (const marker of [
+  'source_run_id:',
+  'checks: read',
+  'name: Wait for post-merge security scanning',
+  'CodeQL (javascript-typescript)',
+  'CodeQL (python)',
+  'name: Verify published release',
+  'gh attestation verify',
+  'automation/release-changelog',
+  'scripts/upsert_generated_pr.sh',
+]) {
+  if (!releaseWorkflow.includes(marker)) fail(`release workflow contract missing ${marker}`);
+}
+if (releaseWorkflow.includes('automation/changelog-${NEXT_TAG}'))
+  fail('release workflow still creates one changelog branch per release');
+else ok('release waits for security and verifies a race-safe published release');
 
 const maintenanceWorkflow = fs.readFileSync('.github/workflows/maintenance.yml', 'utf8');
 if (!maintenanceWorkflow.includes('gh workflow run ci-quality-deploy.yml --ref main'))
@@ -108,11 +125,16 @@ for (const marker of ['github/codeql-action/init@', 'github/codeql-action/analyz
 }
 if (['github/codeql-action/init@', 'github/codeql-action/analyze@', 'actions/dependency-review-action@']
   .every(marker => securityWorkflow.includes(marker))) ok('CodeQL and dependency review are configured');
+if (!securityWorkflow.includes('group: security-${{ github.event.pull_request.number || github.ref }}') ||
+    !securityWorkflow.includes("cancel-in-progress: ${{ github.event_name == 'pull_request' }}"))
+  fail('security workflow does not cancel stale pull-request scans');
+else ok('security workflow cancels stale pull-request scans');
 
 const canaryWorkflow = fs.readFileSync('.github/workflows/production-canary.yml', 'utf8');
 if (!canaryWorkflow.includes('name: Backup recovery drill'))
   fail('production canary does not test backup recovery');
-else if (!canaryWorkflow.includes('issues: write') || !canaryWorkflow.includes('gh issue create'))
+else if (!canaryWorkflow.includes('issues: write') ||
+         !canaryWorkflow.includes('bash scripts/report_incident.sh'))
   fail('production canary failures do not create a GitHub issue');
 else ok('canary drills backup recovery and reports incidents');
 
@@ -126,7 +148,8 @@ if (!releaseWorkflow.includes('actions/attest-build-provenance@') ||
 else ok('releases publish build provenance and an SPDX SBOM');
 
 if (!workflow.includes('name: Report deployment status') ||
-    !workflow.includes('TITLE: "Production deployment failure"'))
+    !workflow.includes('INCIDENT_TITLE: Production deployment failure') ||
+    !workflow.includes('bash scripts/report_incident.sh'))
   fail('production deployment failures do not maintain an incident issue');
 else ok('production deployment failures maintain a deduplicated incident');
 
@@ -134,15 +157,21 @@ const backupWorkflow = fs.readFileSync('.github/workflows/backup.yml', 'utf8');
 const backupDispatchChecks = [
   ['pull-requests: write', 'backup job cannot create its protected update PR'],
   ['git add backups/ public/img/*/manifest.txt', 'backup change detection excludes deployment data'],
-  ['gh pr create --base main', 'backup changes are not proposed through a pull request'],
-  ['gh workflow run security.yml --ref "$branch"', 'generated backup PR does not dispatch its protected security checks'],
-  ['gh pr merge "$pr_url" --auto --squash', 'backup pull request does not wait for protected checks and auto-merge'],
+  ['scripts/upsert_generated_pr.sh', 'backup changes do not reuse the generated-PR helper'],
+  ['AUTOMATION_BRANCH=automation/collection-backup', 'backup automation does not reuse its persistent branch'],
 ];
 for (const [marker, message] of backupDispatchChecks) {
   if (!backupWorkflow.includes(marker)) fail(message);
 }
 if (backupDispatchChecks.every(([marker]) => backupWorkflow.includes(marker)))
   ok('backup changes use protected auto-merge pull requests');
+
+for (const script of ['scripts/report_incident.sh', 'scripts/upsert_generated_pr.sh']) {
+  if (!fs.existsSync(script)) fail(`missing shared automation helper ${script}`);
+}
+if (!workflow.includes('shellcheck scripts/*.sh'))
+  fail('shared workflow shell scripts are not checked by shellcheck');
+else ok('shared automation helpers are present and shellchecked');
 
 const workflowFiles = fs.readdirSync('.github/workflows')
   .filter(file => file.endsWith('.yml'));

@@ -47,7 +47,7 @@ jobs:
           sparse-checkout: |
             /.github/
             /public/
-            /scripts/release-lib.mjs
+            /scripts/
             /tests/
             /eslint.config.mjs
             /package-lock.json
@@ -65,6 +65,7 @@ jobs:
           command -v shellcheck
           go run "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}" \
             -shellcheck=shellcheck
+          shellcheck scripts/*.sh
 
       - name: Install development tools
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -454,28 +455,18 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      TITLE: "Production deployment failure"
-      DEPLOY_RESULT: ${{ needs.deploy.result }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: /scripts/report_incident.sh
       - name: Open, update, or resolve the deployment incident
+        env:
+          INCIDENT_TITLE: Production deployment failure
+          INCIDENT_FAILED: ${{ needs.deploy.result != 'success' }}
+          INCIDENT_HEADING: The production deployment pipeline did not complete successfully.
+          INCIDENT_DETAILS: "- Deploy job: ${{ needs.deploy.result }}\n- Commit: `${{ github.sha }}`"
+          INCIDENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          INCIDENT_RECOVERY_MESSAGE: Production deployment recovered
         run: |
-          set -euo pipefail
-          issue_number="$(gh issue list --state open --limit 100 --json number,title \
-            --jq '.[] | select(.title == env.TITLE) | .number' | head -n 1)"
-          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          if [[ "$DEPLOY_RESULT" != "success" ]]; then
-            {
-              echo "The production deployment pipeline did not complete successfully."
-              echo
-              echo "- Deploy job: $DEPLOY_RESULT"
-              echo "- Commit: \`$GITHUB_SHA\`"
-              echo "- Run: $run_url"
-            } > /tmp/deployment-issue.md
-            if [[ -n "$issue_number" ]]; then
-              gh issue comment "$issue_number" --body-file /tmp/deployment-issue.md
-            else
-              gh issue create --title "$TITLE" --body-file /tmp/deployment-issue.md
-            fi
-          elif [[ -n "$issue_number" ]]; then
-            gh issue close "$issue_number" --comment "Production deployment recovered: $run_url"
-          fi
+          bash scripts/report_incident.sh
