@@ -91,7 +91,8 @@ The release workflow runs only after the production pipeline succeeds. It uses
 the exact deployed SHA, attaches the retained Pages artifact and checksum,
 publishes a GitHub build-provenance attestation and SPDX SBOM, and updates
 `CHANGELOG.md`. It also waits for post-merge CodeQL and verifies the tag,
-assets, checksum, attestation, and changelog PR. The changelog is rebuilt from
+assets, checksum, attestations, and changelog PR before publishing a draft
+release. Both the deployed Pages archive and SBOM receive provenance. The changelog is rebuilt from
 all SemVer tags on one persistent automation branch, so overlapping releases
 cannot drop history. Do not hand-edit a generated release section unless
 correcting release history.
@@ -123,6 +124,13 @@ age and all protected checks. Major updates always require manual review.
   existing PR after retries or overlapping scheduled runs. Deployment and
   canary incidents must use `scripts/report_incident.sh` so notification
   behavior and repository selection stay consistent.
+- Pull requests merge through GitHub's merge queue. Required workflows must
+  retain their `merge_group` triggers. `scripts/generated_pr_status.sh` keeps a
+  single status comment on automation PRs, including their checks, queue state,
+  and whether auto-merge is enabled.
+- Changelog-only changes still run the inexpensive required contract and Python
+  jobs, but browser, SonarQube, and preview work uses the change classifier and
+  must remain a successful no-op to preserve required check names.
 - Keep the repository's **Allow GitHub Actions to create and approve pull
   requests** setting enabled for that automation. The default workflow token
   permission remains read-only; each job must declare its minimal writes.

@@ -89,14 +89,19 @@ for (const marker of [
   'name: Wait for post-merge security scanning',
   'CodeQL (javascript-typescript)',
   'CodeQL (python)',
-  'name: Verify published release',
+  'name: Verify and publish release',
   'release-artifact/deployed-pages.tar',
+  'gh release create "$NEXT_TAG" --draft',
+  'gh release edit "$TAG" --draft=false',
+  'name: Report release status',
   'gh attestation verify',
   'automation/release-changelog',
   'scripts/upsert_generated_pr.sh',
 ]) {
   if (!releaseWorkflow.includes(marker)) fail(`release workflow contract missing ${marker}`);
 }
+if ((releaseWorkflow.match(/actions\/attest-build-provenance@/g) || []).length < 2)
+  fail('release workflow does not attest both the Pages artifact and SBOM');
 if (releaseWorkflow.includes('automation/changelog-${NEXT_TAG}'))
   fail('release workflow still creates one changelog branch per release');
 else ok('release waits for security and verifies a race-safe published release');
@@ -127,9 +132,12 @@ for (const marker of ['github/codeql-action/init@', 'github/codeql-action/analyz
 if (['github/codeql-action/init@', 'github/codeql-action/analyze@', 'actions/dependency-review-action@']
   .every(marker => securityWorkflow.includes(marker))) ok('CodeQL and dependency review are configured');
 if (!securityWorkflow.includes('group: security-${{ github.event.pull_request.number || github.ref }}') ||
-    !securityWorkflow.includes("cancel-in-progress: ${{ github.event_name == 'pull_request' }}"))
+    !securityWorkflow.includes("cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}"))
   fail('security workflow does not cancel stale pull-request scans');
 else ok('security workflow cancels stale pull-request scans');
+if (!workflow.includes('merge_group:') || !securityWorkflow.includes('merge_group:'))
+  fail('required workflows do not support merge queue merge groups');
+else ok('required workflows support merge queue merge groups');
 
 const canaryWorkflow = fs.readFileSync('.github/workflows/production-canary.yml', 'utf8');
 if (!canaryWorkflow.includes('name: Backup recovery drill'))
@@ -173,6 +181,17 @@ for (const script of ['scripts/report_incident.sh', 'scripts/upsert_generated_pr
 if (!workflow.includes('shellcheck scripts/*.sh'))
   fail('shared workflow shell scripts are not checked by shellcheck');
 else ok('shared automation helpers are present and shellchecked');
+if (!workflow.includes('name: Classify workflow changes') ||
+    !workflow.includes('Skip browser tests for documentation-only changes') ||
+    !workflow.includes('Skip SonarQube for documentation-only changes'))
+  fail('documentation-only changes do not bypass expensive browser and Sonar work');
+else ok('documentation-only changes avoid expensive browser and Sonar work');
+
+const generatedStatusWorkflow = fs.readFileSync('.github/workflows/generated-pr-status.yml', 'utf8');
+if (!generatedStatusWorkflow.includes('scripts/generated_pr_status.sh') ||
+    !fs.existsSync('scripts/generated_pr_status.sh'))
+  fail('generated pull requests do not receive automated status summaries');
+else ok('generated pull requests receive automated status summaries');
 
 const workflowFiles = fs.readdirSync('.github/workflows')
   .filter(file => file.endsWith('.yml'));

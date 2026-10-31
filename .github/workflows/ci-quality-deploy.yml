@@ -11,6 +11,7 @@ on:
   # Every PR runs the protected checks, including generated backup/changelog
   # PRs and documentation-only changes, so required contexts never deadlock.
   pull_request:
+  merge_group:
   workflow_dispatch:
     inputs:
       pull_request_number:
@@ -29,9 +30,43 @@ on:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
 
 jobs:
+
+  classify-changes:
+    name: Classify workflow changes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      application: ${{ steps.diff.outputs.application }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Detect application changes
+        id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGE_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          DISPATCH_BASE: ${{ inputs.base_ref }}
+        run: |
+          set -euo pipefail
+          base_sha="$PR_BASE_SHA"
+          [[ -n "$base_sha" ]] || base_sha="$MERGE_BASE_SHA"
+          if [[ -z "$base_sha" ]]; then
+            git fetch origin "${DISPATCH_BASE:-main}"
+            base_sha="$(git merge-base "origin/${DISPATCH_BASE:-main}" HEAD)"
+          fi
+          files="$(git diff --name-only "$base_sha" HEAD)"
+          application=true
+          if [[ -n "$files" ]] && ! grep -Ev '^(CHANGELOG\.md|README\.md|docs/)' <<< "$files" | grep -q .; then
+            application=false
+          fi
+          echo "application=$application" >> "$GITHUB_OUTPUT"
+          printf 'Application changes: %s\n%s\n' "$application" "$files"
 
   site-checks:
     name: Site checks + JavaScript unit tests
@@ -66,6 +101,8 @@ jobs:
           go run "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}" \
             -shellcheck=shellcheck
           shellcheck scripts/*.sh
+          shellcheck tests/shell/*.sh
+          bash tests/shell/test_upsert_generated_pr.sh
 
       - name: Install development tools
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -142,7 +179,7 @@ jobs:
 
   browser-tests:
     name: Browser tests
-    needs: [site-checks, python-tests]
+    needs: [classify-changes, site-checks, python-tests]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -150,6 +187,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.classify-changes.outputs.application == 'true'
         with:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
@@ -160,28 +198,34 @@ jobs:
             /playwright.config.mjs
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        if: needs.classify-changes.outputs.application == 'true'
         with:
           node-version: 26
           cache: npm
 
       - name: Install dependencies
+        if: needs.classify-changes.outputs.application == 'true'
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Run browser tests
+        if: needs.classify-changes.outputs.application == 'true'
         run: npm run test:e2e
 
       - name: Upload Playwright failure details
-        if: failure()
+        if: failure() && needs.classify-changes.outputs.application == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-failure
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
+      - name: Skip browser tests for documentation-only changes
+        if: needs.classify-changes.outputs.application != 'true'
+        run: echo "No application files changed; browser testing is not required."
 
   sonar:
     name: SonarQube
-    needs: [site-checks, python-tests]
+    needs: [classify-changes, site-checks, python-tests]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -203,16 +247,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.classify-changes.outputs.application == 'true'
         with:
           fetch-depth: 0
 
       - name: Download JavaScript coverage
+        if: needs.classify-changes.outputs.application == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: javascript-coverage
           path: coverage
 
       - name: Download Python coverage
+        if: needs.classify-changes.outputs.application == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: python-coverage
@@ -222,6 +269,7 @@ jobs:
         id: sonar-attempt-1
         # A quality-gate failure must block CI immediately. The retry below is
         # reserved for an analysis still processing after the scanner timeout.
+        if: needs.classify-changes.outputs.application == 'true'
         continue-on-error: true
         # v8.2.1, pinned to prevent a mutable tag from changing CI code.
         uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
@@ -234,7 +282,7 @@ jobs:
 
       - name: Retry only an analysis still processing after timeout
         id: sonar-retry
-        if: steps.sonar-attempt-1.outcome == 'failure'
+        if: needs.classify-changes.outputs.application == 'true' && steps.sonar-attempt-1.outcome == 'failure'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
@@ -271,11 +319,16 @@ jobs:
       - name: Fail completed SonarQube Quality Gate
         if: steps.sonar-attempt-1.outcome == 'failure' && steps.sonar-retry.outputs.should_retry != 'true'
         run: exit 1
+      - name: Skip SonarQube for documentation-only changes
+        if: needs.classify-changes.outputs.application != 'true'
+        run: echo "No application files changed; SonarQube analysis is not required."
 
   pr-preview:
     name: Package PR preview
-    needs: [browser-tests, sonar]
-    if: github.event_name == 'pull_request' || inputs.pull_request_number != ''
+    needs: [classify-changes, browser-tests, sonar]
+    if: >-
+      needs.classify-changes.outputs.application == 'true' &&
+      (github.event_name == 'pull_request' || inputs.pull_request_number != '')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

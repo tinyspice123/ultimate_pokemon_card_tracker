@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
   schedule:
     - cron: "15 8 * * 1"
   workflow_dispatch:
@@ -23,7 +24,7 @@ permissions:
 
 concurrency:
   group: security-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
 
 jobs:
   codeql:
