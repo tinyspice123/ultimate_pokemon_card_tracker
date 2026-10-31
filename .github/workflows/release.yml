@@ -178,10 +178,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
         run: |
+          mv release-artifact/artifact.tar release-artifact/deployed-pages.tar
+          (cd release-artifact && sha256sum deployed-pages.tar > deployed-pages.tar.sha256)
+          rm release-artifact/artifact.tar.sha256
           gh release upload "$NEXT_TAG" \
-            'release-artifact/artifact.tar#deployed-pages.tar' \
-            'release-artifact/artifact.tar.sha256#deployed-pages.tar.sha256' \
-            'release-artifact/sbom.spdx.json#sbom.spdx.json'
+            release-artifact/deployed-pages.tar \
+            release-artifact/deployed-pages.tar.sha256 \
+            release-artifact/sbom.spdx.json
 
       - name: Publish generated changelog
         id: changelog
