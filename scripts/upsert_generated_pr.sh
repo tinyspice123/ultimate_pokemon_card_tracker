@@ -11,9 +11,9 @@ git push origin "HEAD:refs/heads/$AUTOMATION_BRANCH" --force-with-lease
 
 pr_url="$(gh pr list --repo "$GH_REPO" --state open --head "$AUTOMATION_BRANCH" \
   --json url --jq '.[0].url')"
-if [[ -z "$pr_url" ]]; then
-  if ! pr_url="$(gh pr create --repo "$GH_REPO" --base main --head "$AUTOMATION_BRANCH" \
-    --title "$PR_TITLE" --body "$PR_BODY")"; then
+if [[ -z "$pr_url" ]] &&
+   ! pr_url="$(gh pr create --repo "$GH_REPO" --base main --head "$AUTOMATION_BRANCH" \
+     --title "$PR_TITLE" --body "$PR_BODY")"; then
     pr_url="$(gh pr list --repo "$GH_REPO" --state open --head "$AUTOMATION_BRANCH" \
       --json url --jq '.[0].url')"
     if [[ -z "$pr_url" ]]; then
@@ -23,7 +23,6 @@ if [[ -z "$pr_url" ]]; then
       gh api --method PATCH "/repos/$GH_REPO/pulls/$pr_number" -f state=open >/dev/null
       pr_url="$(gh pr view "$pr_number" --repo "$GH_REPO" --json url --jq .url)"
     fi
-  fi
 fi
 
 pr_number="$(gh pr view "$pr_url" --repo "$GH_REPO" --json number --jq '.number')"
