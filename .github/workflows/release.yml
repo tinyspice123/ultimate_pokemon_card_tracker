@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: write
 
 concurrency:
@@ -27,6 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          # Calculate the version from the exact commit that passed and was
+          # deployed, even if main advances before this workflow starts.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -37,22 +41,59 @@ jobs:
         id: semver
         run: node scripts/release.mjs
 
+      - name: Download deployed Pages artifact
+        if: steps.semver.outputs.release == 'true' && github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          mkdir -p release-artifact
+          gh run download "$SOURCE_RUN_ID" --name github-pages --dir release-artifact
+          sha256sum release-artifact/artifact.tar > release-artifact/artifact.tar.sha256
+
       - name: Create tag and GitHub Release
+        id: publish
         if: steps.semver.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
           NOTES: ${{ steps.semver.outputs.notes }}
           TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          SITE_URL: https://tinyspice123.github.io/ultimate_pokemon_card_tracker/
         run: |
           set -euo pipefail
-          if git rev-parse "$NEXT_TAG" >/dev/null 2>&1; then
-            echo "Tag $NEXT_TAG already exists; skipping."
+          if gh release view "$NEXT_TAG" >/dev/null 2>&1; then
+            echo "Release $NEXT_TAG already exists; skipping."
+            echo "created=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git tag "$NEXT_TAG" "$TARGET_SHA"
-          git push origin "$NEXT_TAG"
+          {
+            printf '%s\n\n' "$NOTES"
+            echo "### Deployment provenance"
+            echo
+            echo "- Deployed commit: \`$TARGET_SHA\`"
+            echo "- Production: $SITE_URL"
+            if [[ -n "$SOURCE_RUN_ID" ]]; then
+              echo "- Validated pipeline: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}"
+            fi
+            echo "- Quality gates: site, unit, Python, browser, and SonarQube checks passed"
+            if [[ -f release-artifact/artifact.tar.sha256 ]]; then
+              echo "- Artifact checksum: \`$(cut -d' ' -f1 release-artifact/artifact.tar.sha256)\` (SHA-256)"
+            fi
+          } > release-notes.md
           gh release create "$NEXT_TAG" \
             --title "$NEXT_TAG" \
-            --notes "$NOTES" \
+            --notes-file release-notes.md \
             --target "$TARGET_SHA"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: Attach deployed artifact to release
+        if: steps.publish.outputs.created == 'true' && github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
+        run: |
+          gh release upload "$NEXT_TAG" \
+            'release-artifact/artifact.tar#deployed-pages.tar' \
+            'release-artifact/artifact.tar.sha256#deployed-pages.tar.sha256'

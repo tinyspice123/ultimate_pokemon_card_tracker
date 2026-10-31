@@ -9,17 +9,26 @@ access and permission to run GitHub Actions deployments.
 2. Select `enable` and run it from `main`.
 3. Verify the Pages URL and a direct tracker URL show the maintenance screen.
 
-Run the same workflow with `disable` to restore the site. A successful normal
-deployment also replaces maintenance mode.
+Run the same workflow with `disable` to start the complete normal test and
+deployment pipeline. Maintenance mode remains visible until that validated
+deployment finishes; it is never replaced with an untested working-tree copy.
 
 ## Roll back a bad release
 
-1. Find the last known-good commit in **Actions → Tests / Security / Deploy**.
-2. Revert the bad commit with a new commit; do not rewrite or force-push `main`.
-3. Push the revert and wait for site, browser, and SonarQube checks to pass.
-4. Confirm the deployment smoke test, home page, and one tracker page.
+1. Find the last successful, non-PR run on `main` under
+   **Actions → Tests / Security / Deploy** and copy its numeric run ID from
+   the URL.
+2. Open **Actions → Roll back Pages deployment → Run workflow**, enter that
+   run ID, and start the rollback.
+3. The workflow validates the source run, restores its exact retained Pages
+   artifact, and smoke-tests the restored site.
+4. Revert the bad source commit with a new commit; do not rewrite or force-push
+   `main`. The next normal successful deployment becomes the new production
+   version.
 
-If the normal pipeline cannot run, enable maintenance mode while diagnosing it.
+Pages artifacts are retained for 30 days. If the desired run is older or its
+artifact is unavailable, enable maintenance mode and restore through a reviewed
+revert and the normal deployment pipeline.
 
 ## Restore collection data
 

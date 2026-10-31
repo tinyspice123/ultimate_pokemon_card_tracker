@@ -104,8 +104,12 @@ let bump = '';
 for (const commit of commits) bump = stronger(bump, classify(commit));
 
 if (!commits.length || !bump) {
-  writeOutput({ release: 'false', latest_tag: currentTag });
-  writeSummary('## Release\n\nNo SemVer release needed for the commits in this run.\n');
+  const reason = !commits.length
+    ? `No commits were found after ${currentTag || 'the beginning of history'}.`
+    : 'No commit used `feat:`, `fix:`, `perf:`, `type!:`, or `BREAKING CHANGE:`.';
+  writeOutput({ release: 'false', latest_tag: currentTag, commits_inspected: commits.length, reason });
+  writeSummary(`## Release skipped\n\n- Previous tag: ${currentTag || 'none'}\n- Commits inspected: ${commits.length}\n- Reason: ${reason}\n`);
+  console.log(`Release skipped: ${reason} Commits inspected: ${commits.length}.`);
   process.exit(0);
 }
 

@@ -72,6 +72,32 @@ else if (/sonarqube-scan-action|upload-pages-artifact/.test(browserJob))
   fail('browser-tests still contains SonarQube analysis or Pages packaging');
 else ok('browser, SonarQube, packaging, and deployment jobs are separated');
 
+if (!packageJob.includes('retention-days: 30'))
+  fail('Pages deployment artifact is not retained for releases and rollback');
+else ok('Pages artifact is retained for release provenance and rollback');
+
+const releaseWorkflow = fs.readFileSync('.github/workflows/release.yml', 'utf8');
+if (!releaseWorkflow.includes("ref: ${{ github.event.workflow_run.head_sha || github.sha }}"))
+  fail('release calculation is not pinned to the deployed commit');
+else if (!releaseWorkflow.includes('gh run download "$SOURCE_RUN_ID" --name github-pages'))
+  fail('release does not preserve the deployed Pages artifact');
+else ok('releases use the deployed commit and artifact');
+
+const maintenanceWorkflow = fs.readFileSync('.github/workflows/maintenance.yml', 'utf8');
+if (!maintenanceWorkflow.includes('gh workflow run ci-quality-deploy.yml --ref main'))
+  fail('disabling maintenance mode bypasses the validated deployment pipeline');
+else if (maintenanceWorkflow.includes('path: public'))
+  fail('maintenance workflow can deploy an unpackaged public directory');
+else ok('maintenance restoration uses the validated deployment pipeline');
+
+const rollbackWorkflow = fs.readFileSync('.github/workflows/rollback.yml', 'utf8');
+const rollbackMarkers = ['run-id: ${{ inputs.run_id }}', 'name: github-pages', 'Smoke test restored site'];
+for (const marker of rollbackMarkers) {
+  if (!rollbackWorkflow.includes(marker)) fail(`rollback workflow missing ${marker}`);
+}
+if (rollbackMarkers.every(marker => rollbackWorkflow.includes(marker)))
+  ok('rollback restores and verifies a retained Pages artifact');
+
 const backupWorkflow = fs.readFileSync('.github/workflows/backup.yml', 'utf8');
 const backupDispatchChecks = [
   ['actions: write', 'backup job lacks permission to dispatch deployment'],

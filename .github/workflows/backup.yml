@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: backup-main
+  cancel-in-progress: false
+
 jobs:
   backup:
     permissions:
@@ -39,6 +43,7 @@ jobs:
       - name: Commit if changed
         id: commit
         run: |
+          set -euo pipefail
           git config user.name "collection-backup[bot]"
           git config user.email "actions@github.com"
           if [[ -n "$(git status --porcelain -- backups/ public/img/*/manifest.txt)" ]]; then
@@ -51,7 +56,17 @@ jobs:
             echo "No changes since last backup"
           else
             git commit -m "Daily collection backup [skip ci]"
-            git push
+            for attempt in 1 2 3; do
+              git pull --rebase origin main
+              if git push origin HEAD:main; then
+                break
+              fi
+              if [[ "$attempt" -eq 3 ]]; then
+                echo "Could not push the backup after 3 attempts" >&2
+                exit 1
+              fi
+              sleep $((attempt * 2))
+            done
           fi
       - name: Deploy synchronized backups and public manifests
         if: steps.commit.outputs.deployment_data_changed == 'true'

@@ -16,43 +16,48 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: ${{ inputs.mode == 'enable' && 'Enable' || 'Disable' }} maintenance mode
+  enable:
+    if: inputs.mode == 'enable'
+    name: Enable maintenance mode
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-
     permissions:
       contents: read
       pages: write
       id-token: write
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /maintenance/
-            /public/
-
-      - name: Setup Pages
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
-
-      - name: Upload maintenance site
-        if: inputs.mode == 'enable'
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+          sparse-checkout: /maintenance/
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: maintenance
-
-      - name: Upload live site
-        if: inputs.mode == 'disable'
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        with:
-          path: public
-
-      - name: Publish selected site
+      - name: Publish maintenance site
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+  disable:
+    if: inputs.mode == 'disable'
+    name: Restore validated live site
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Start the normal tested deployment pipeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run ci-quality-deploy.yml --ref main
+          {
+            echo "## Maintenance mode disable requested"
+            echo
+            echo "The normal test, package, deploy and smoke-test pipeline was started."
+            echo "Maintenance mode remains visible until that validated deployment completes."
+          } >> "$GITHUB_STEP_SUMMARY"

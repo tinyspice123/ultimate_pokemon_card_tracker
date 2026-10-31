@@ -1,0 +1,101 @@
+name: Roll back Pages deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Tests / Security / Deploy run ID whose artifact should be restored
+        required: true
+        type: string
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Restore tested Pages artifact
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Validate source deployment run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          set -euo pipefail
+          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}")"
+          name="$(jq -r '.name' <<< "$run")"
+          conclusion="$(jq -r '.conclusion' <<< "$run")"
+          branch="$(jq -r '.head_branch' <<< "$run")"
+          event="$(jq -r '.event' <<< "$run")"
+          if [[ "$name" != "Tests / Security / Deploy" || "$conclusion" != "success" || "$branch" != "main" || "$event" == "pull_request" ]]; then
+            echo "Run must be a successful, non-PR Tests / Security / Deploy run on main." >&2
+            exit 1
+          fi
+          echo "Restoring artifact from run ${SOURCE_RUN_ID} (${event}, ${branch}, ${conclusion})."
+
+      - name: Download immutable Pages artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: github-pages
+          path: pages-artifact
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+
+      - name: Verify artifact structure
+        run: test -s pages-artifact/artifact.tar
+
+      - name: Re-upload selected artifact for Pages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: github-pages
+          path: pages-artifact/artifact.tar
+          if-no-files-found: error
+          retention-days: 1
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+
+      - name: Deploy selected artifact
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+      - name: Smoke test restored site
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          site_root="${SITE_URL%/}"
+          for attempt in 1 2 3 4 5; do
+            if curl --fail --silent --show-error --location --max-time 20 \
+              "$site_root/index.html" --output /tmp/index.html && \
+              curl --fail --silent --show-error --location --max-time 20 \
+              "$site_root/sw.js" --output /tmp/sw.js && \
+              grep -q 'id="sets"' /tmp/index.html && \
+              ! grep -q 'shell-__BUILD_VERSION__' /tmp/sw.js; then
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          echo "The restored deployment did not pass its smoke test." >&2
+          exit 1
+
+      - name: Publish rollback summary
+        env:
+          SOURCE_RUN_ID: ${{ inputs.run_id }}
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          {
+            echo "## Production rollback complete"
+            echo
+            echo "- Source run: ${SOURCE_RUN_ID}"
+            echo "- Site: ${SITE_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
