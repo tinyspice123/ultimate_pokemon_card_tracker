@@ -453,6 +453,7 @@ jobs:
       issues: write
     env:
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
       TITLE: "Production deployment failure"
       DEPLOY_RESULT: ${{ needs.deploy.result }}
     steps:
