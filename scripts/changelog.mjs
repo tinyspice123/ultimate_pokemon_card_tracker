@@ -9,8 +9,8 @@ const date = process.env.RELEASE_DATE || new Date().toISOString().slice(0, 10);
 if (!tag || !notes) throw new Error('NEXT_TAG and NOTES are required');
 const path = process.env.CHANGELOG_PATH || 'CHANGELOG.md';
 
-// Git is the trusted, runner-provided executable; arguments are fixed internally. NOSONAR
-const git = args => execFileSync('git', args, { encoding: 'utf8' }).trim();
+// Git is the trusted, runner-provided executable; arguments are fixed internally.
+const git = args => execFileSync('git', args, { encoding: 'utf8' }).trim(); // NOSONAR
 const parseCommits = range => {
   const raw = git(['log', range, '--format=%H%x1f%s%x1f%b%x1e']);
   return raw.split('\x1e').map(entry => entry.trim()).filter(Boolean).map(entry => {
