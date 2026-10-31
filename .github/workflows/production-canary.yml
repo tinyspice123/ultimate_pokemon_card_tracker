@@ -116,29 +116,20 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      TITLE: "Production canary failure"
       NEEDS_JSON: ${{ toJSON(needs) }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: /scripts/report_incident.sh
       - name: Open, update, or resolve the canary incident
+        env:
+          INCIDENT_TITLE: Production canary failure
+          INCIDENT_HEADING: The scheduled production canary detected a failure.
+          INCIDENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          INCIDENT_RECOVERY_MESSAGE: Production canary recovered
         run: |
-          set -euo pipefail
-          issue_number="$(gh issue list --state open --limit 100 --json number,title \
-            --jq '.[] | select(.title == env.TITLE) | .number' | head -n 1)"
           failed_jobs="$(jq -r 'to_entries[] | select(.value.result != "success") | "- \(.key): \(.value.result)"' <<< "$NEEDS_JSON")"
-          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          if [[ -n "$failed_jobs" ]]; then
-            {
-              echo "The scheduled production canary detected a failure."
-              echo
-              echo "$failed_jobs"
-              echo
-              echo "Run: $run_url"
-            } > /tmp/canary-issue.md
-            if [[ -n "$issue_number" ]]; then
-              gh issue comment "$issue_number" --body-file /tmp/canary-issue.md
-            else
-              gh issue create --title "$TITLE" --body-file /tmp/canary-issue.md
-            fi
-          elif [[ -n "$issue_number" ]]; then
-            gh issue close "$issue_number" --comment "Production canary recovered: $run_url"
-          fi
+          failed=false
+          [[ -z "$failed_jobs" ]] || failed=true
+          INCIDENT_FAILED="$failed" INCIDENT_DETAILS="$failed_jobs" bash scripts/report_incident.sh

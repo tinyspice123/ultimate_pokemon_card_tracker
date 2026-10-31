@@ -90,8 +90,13 @@ Use Conventional Commits because `scripts/release.mjs` calculates SemVer:
 The release workflow runs only after the production pipeline succeeds. It uses
 the exact deployed SHA, attaches the retained Pages artifact and checksum,
 publishes a GitHub build-provenance attestation and SPDX SBOM, and updates
-`CHANGELOG.md`. Do not hand-edit a generated release section unless correcting
-release history.
+`CHANGELOG.md`. It also waits for post-merge CodeQL and verifies the tag,
+assets, checksum, attestation, and changelog PR. The changelog is rebuilt from
+all SemVer tags on one persistent automation branch, so overlapping releases
+cannot drop history. Do not hand-edit a generated release section unless
+correcting release history.
+Manual release dispatches require a successful main deployment run ID; never
+substitute an arbitrary commit or a pull-request run.
 
 Renovate may automerge patch, pin, and digest updates after a three-day release
 age and all protected checks. Major updates always require manual review.
@@ -114,6 +119,10 @@ age and all protected checks. Major updates always require manual review.
   restore a direct-to-main push or grant a broad ruleset bypass. Because PRs
   created by `GITHUB_TOKEN` do not emit normal PR workflow events, those jobs
   explicitly dispatch CI/security with PR metadata on the generated branch.
+- Generated PRs must use `scripts/upsert_generated_pr.sh`; it safely reuses an
+  existing PR after retries or overlapping scheduled runs. Deployment and
+  canary incidents must use `scripts/report_incident.sh` so notification
+  behavior and repository selection stay consistent.
 - Keep the repository's **Allow GitHub Actions to create and approve pull
   requests** setting enabled for that automation. The default workflow token
   permission remains read-only; each job must declare its minimal writes.

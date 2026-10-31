@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { analyzeRelease, classify, releaseNotes, updateChangelog } from '../../scripts/release-lib.mjs';
+import { analyzeRelease, classify, releaseNotes, renderChangelog, updateChangelog } from '../../scripts/release-lib.mjs';
 
 const commit = (subject, body = '', sha = '1234567890abcdef') => ({ subject, body, sha });
 
@@ -39,4 +39,14 @@ test('changelog prepends a release once', () => {
   assert.equal(second, first);
   assert.match(first, /^# Changelog[\s\S]*## \[v4\.0\.0\] - 2026-10-31/);
   assert.ok(first.indexOf('All notable changes') < first.indexOf('## [v4.0.0]'));
+});
+
+test('race-safe changelog rendering replaces history from ordered tags', () => {
+  const output = renderChangelog([
+    { tag: 'v3.4.1', date: '2026-10-31', notes: '### Fixes\n- Latest fix' },
+    { tag: 'v3.4.0', date: '2026-10-30', notes: '### Features\n- Prior feature' },
+  ]);
+  assert.ok(output.indexOf('## [v3.4.1]') < output.indexOf('## [v3.4.0]'));
+  assert.equal((output.match(/## \[v3\.4\.1\]/g) || []).length, 1);
+  assert.match(output, /New entries are generated from Conventional Commits/);
 });

@@ -34,4 +34,10 @@ successful run closes it automatically.
 
 Production pipeline failures similarly maintain one `Production deployment
 failure` issue. Release assets include the deployed Pages tarball, its SHA-256
-checksum, an SPDX JSON SBOM, and GitHub-hosted build provenance.
+checksum, an SPDX JSON SBOM, and GitHub-hosted build provenance. A release waits
+for the post-merge CodeQL checks, then verifies its tag target, assets,
+checksum, attestation, and protected changelog PR. The complete changelog is
+rebuilt from SemVer tags through one reusable automation PR.
+Manual release runs require the numeric ID of a successful main
+**Tests / Security / Deploy** run, preventing an unvalidated commit or a release
+without its deployed artifact from being published.

@@ -65,3 +65,10 @@ export function updateChangelog(existing, tag, date, notes) {
   }
   return `${header}\n${section}\n${base}\n`;
 }
+
+export function renderChangelog(releases) {
+  const header = '# Changelog\n\nAll notable changes to this project are documented here. New entries are generated from Conventional Commits when a release is published.\n';
+  const sections = releases.map(({ tag, date, notes }) =>
+    `## [${tag}] - ${date}\n\n${notes.trim()}`);
+  return `${header}\n${sections.join('\n\n')}\n`;
+}

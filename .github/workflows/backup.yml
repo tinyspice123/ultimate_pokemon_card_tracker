@@ -44,6 +44,7 @@ jobs:
       - name: Commit and open protected update PR if changed
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           git config user.name "collection-backup[bot]"
@@ -53,19 +54,8 @@ jobs:
             echo "No changes since last backup"
           else
             git commit -m "chore(data): refresh collection backups"
-            branch="automation/collection-backup"
-            git fetch origin "refs/heads/$branch:refs/remotes/origin/$branch" || true
-            git push origin "HEAD:refs/heads/$branch" --force-with-lease
-            pr_url="$(gh pr list --state open --head "$branch" --json url --jq '.[0].url')"
-            if [[ -z "$pr_url" ]]; then
-              pr_url="$(gh pr create --base main --head "$branch" \
-                --title "chore(data): refresh collection backups" \
-                --body "Automated recovery snapshots and synchronized image manifests.")"
-            fi
-            pr_number="$(gh pr view "$pr_url" --json number --jq '.number')"
-            gh workflow run ci-quality-deploy.yml --ref "$branch" \
-              -f pull_request_number="$pr_number" -f head_ref="$branch" -f base_ref=main
-            gh workflow run security.yml --ref "$branch" \
-              -f head_ref="$branch" -f base_ref=main
-            gh pr merge "$pr_url" --auto --squash
+            AUTOMATION_BRANCH=automation/collection-backup \
+            PR_TITLE="chore(data): refresh collection backups" \
+            PR_BODY="Automated recovery snapshots and synchronized image manifests." \
+              bash scripts/upsert_generated_pr.sh
           fi
