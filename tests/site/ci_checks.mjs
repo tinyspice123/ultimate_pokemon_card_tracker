@@ -90,6 +90,7 @@ for (const marker of [
   'CodeQL (javascript-typescript)',
   'CodeQL (python)',
   'name: Verify published release',
+  'release-artifact/deployed-pages.tar',
   'gh attestation verify',
   'automation/release-changelog',
   'scripts/upsert_generated_pr.sh',
