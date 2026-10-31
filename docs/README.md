@@ -1,5 +1,13 @@
 # Operations guides
 
+Architecture and contributor references:
+
+- [Architecture](ARCHITECTURE.md)
+- [Data model](DATA_MODEL.md)
+- [Testing strategy](TESTING.md)
+- [Architecture decisions](decisions/README.md)
+- [Security policy](../SECURITY.md)
+
 Use these guides for routine collection maintenance:
 
 - [Add or edit cards](ADDING_CARDS.md)
