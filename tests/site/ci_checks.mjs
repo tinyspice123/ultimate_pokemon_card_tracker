@@ -119,6 +119,16 @@ else ok('canary drills backup recovery and reports incidents');
 if (!releaseWorkflow.includes('node scripts/changelog.mjs') || !releaseWorkflow.includes('Publish generated changelog'))
   fail('release workflow does not maintain the changelog');
 else ok('release workflow maintains CHANGELOG.md');
+if (!releaseWorkflow.includes('actions/attest-build-provenance@') ||
+    !releaseWorkflow.includes('anchore/sbom-action@') ||
+    !releaseWorkflow.includes('sbom.spdx.json'))
+  fail('release workflow does not publish provenance and an SPDX SBOM');
+else ok('releases publish build provenance and an SPDX SBOM');
+
+if (!workflow.includes('name: Report deployment status') ||
+    !workflow.includes('TITLE: "Production deployment failure"'))
+  fail('production deployment failures do not maintain an incident issue');
+else ok('production deployment failures maintain a deduplicated incident');
 
 const backupWorkflow = fs.readFileSync('.github/workflows/backup.yml', 'utf8');
 const backupDispatchChecks = [

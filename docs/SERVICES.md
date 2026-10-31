@@ -26,3 +26,7 @@ The weekly **Production dependency canary** checks the deployed browser app,
 Supabase, set logos, and a full backup recovery into an isolated database. A
 failure opens or updates one `Production canary failure` issue; the next fully
 successful run closes it automatically.
+
+Production pipeline failures similarly maintain one `Production deployment
+failure` issue. Release assets include the deployed Pages tarball, its SHA-256
+checksum, an SPDX JSON SBOM, and GitHub-hosted build provenance.

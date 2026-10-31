@@ -89,8 +89,9 @@ Use Conventional Commits because `scripts/release.mjs` calculates SemVer:
 
 The release workflow runs only after the production pipeline succeeds. It uses
 the exact deployed SHA, attaches the retained Pages artifact and checksum,
-publishes provenance, and updates `CHANGELOG.md`. Do not hand-edit a generated
-release section unless correcting release history.
+publishes a GitHub build-provenance attestation and SPDX SBOM, and updates
+`CHANGELOG.md`. Do not hand-edit a generated release section unless correcting
+release history.
 
 Renovate may automerge patch, pin, and digest updates after a three-day release
 age and all protected checks. Major updates always require manual review.
@@ -107,6 +108,8 @@ age and all protected checks. Major updates always require manual review.
 - The weekly production canary tests the browser app, Supabase, logos, and a
   full backup recovery drill. Failures are deduplicated into a GitHub issue and
   the issue closes after recovery.
+- Main deployment failures use the same deduplicated issue pattern and close
+  automatically after the next successful deployment.
 - Backup and changelog automation write through protected auto-merge PRs. Never
   restore a direct-to-main push or grant a broad ruleset bypass. Because PRs
   created by `GITHUB_TOKEN` do not emit normal PR workflow events, those jobs
