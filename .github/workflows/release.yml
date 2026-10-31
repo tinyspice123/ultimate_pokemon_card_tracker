@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
-      created: ${{ steps.publish.outputs.created }}
+      prepared: ${{ steps.publish.outputs.prepared }}
       next_tag: ${{ steps.semver.outputs.next_tag }}
       target_sha: ${{ steps.publish.outputs.target_sha }}
       changelog_pr: ${{ steps.changelog.outputs.pr_url }}
@@ -133,7 +133,13 @@ jobs:
         with:
           subject-path: release-artifact/artifact.tar
 
-      - name: Create tag and GitHub Release
+      - name: Attest SPDX software bill of materials
+        if: steps.semver.outputs.release == 'true'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: release-artifact/sbom.spdx.json
+
+      - name: Prepare draft GitHub Release
         id: publish
         if: steps.semver.outputs.release == 'true'
         env:
@@ -145,10 +151,10 @@ jobs:
           SITE_URL: https://tinyspice123.github.io/ultimate_pokemon_card_tracker/
         run: |
           set -euo pipefail
-          if gh release view "$NEXT_TAG" >/dev/null 2>&1; then
-            echo "Release $NEXT_TAG already exists; skipping."
-            echo "created=false" >> "$GITHUB_OUTPUT"
-            echo "target_sha=$TARGET_SHA" >> "$GITHUB_OUTPUT"
+          existing_draft="$(gh release view "$NEXT_TAG" --json isDraft --jq .isDraft 2>/dev/null || true)"
+          if [[ "$existing_draft" == false ]]; then
+            echo "Published release $NEXT_TAG already exists; skipping."
+            printf 'prepared=false\ntarget_sha=%s\n' "$TARGET_SHA" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           {
@@ -165,15 +171,18 @@ jobs:
               echo "- Artifact checksum: \`$(cut -d' ' -f1 release-artifact/artifact.tar.sha256)\` (SHA-256)"
             fi
           } > release-notes.md
-          gh release create "$NEXT_TAG" \
-            --title "$NEXT_TAG" \
-            --notes-file release-notes.md \
-            --target "$TARGET_SHA"
-          echo "created=true" >> "$GITHUB_OUTPUT"
-          echo "target_sha=$TARGET_SHA" >> "$GITHUB_OUTPUT"
+          if [[ "$existing_draft" == true ]]; then
+            gh release edit "$NEXT_TAG" --draft --title "$NEXT_TAG" --notes-file release-notes.md
+          else
+            gh release create "$NEXT_TAG" --draft \
+              --title "$NEXT_TAG" \
+              --notes-file release-notes.md \
+              --target "$TARGET_SHA"
+          fi
+          printf 'prepared=true\ntarget_sha=%s\n' "$TARGET_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Attach deployed artifact to release
-        if: steps.publish.outputs.created == 'true'
+        if: steps.publish.outputs.prepared == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           NEXT_TAG: ${{ steps.semver.outputs.next_tag }}
@@ -184,11 +193,12 @@ jobs:
           gh release upload "$NEXT_TAG" \
             release-artifact/deployed-pages.tar \
             release-artifact/deployed-pages.tar.sha256 \
-            release-artifact/sbom.spdx.json
+            release-artifact/sbom.spdx.json \
+            --clobber
 
       - name: Publish generated changelog
         id: changelog
-        if: steps.publish.outputs.created == 'true'
+        if: steps.publish.outputs.prepared == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -211,15 +221,15 @@ jobs:
           PR_BODY="Rebuilt from all SemVer tags through $NEXT_TAG." \
             bash scripts/upsert_generated_pr.sh
 
-  verify-release:
-    name: Verify published release
+  verify_release:
+    name: Verify and publish release
     needs: release
-    if: needs.release.outputs.created == 'true'
+    if: needs.release.outputs.prepared == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       attestations: read
-      contents: read
+      contents: write
       pull-requests: read
     env:
       GH_TOKEN: ${{ github.token }}
@@ -234,8 +244,7 @@ jobs:
       - name: Verify tag, assets, checksum, attestation, and changelog PR
         run: |
           set -euo pipefail
-          git fetch origin "refs/tags/$TAG:refs/tags/$TAG"
-          [[ "$(git rev-list -n1 "$TAG")" == "$TARGET_SHA" ]]
+          [[ "$(gh release view "$TAG" --json targetCommitish --jq .targetCommitish)" == "$TARGET_SHA" ]]
           mkdir release-verification
           gh release download "$TAG" --dir release-verification
           for asset in deployed-pages.tar deployed-pages.tar.sha256 sbom.spdx.json; do
@@ -247,5 +256,37 @@ jobs:
             sha256sum --check deployed-pages.tar.sha256
           )
           gh attestation verify release-verification/deployed-pages.tar --repo "$GITHUB_REPOSITORY"
+          gh attestation verify release-verification/sbom.spdx.json --repo "$GITHUB_REPOSITORY"
           [[ -n "$CHANGELOG_PR" ]]
           [[ "$(gh pr view "$CHANGELOG_PR" --json headRefName --jq .headRefName)" == automation/release-changelog ]]
+      - name: Publish verified draft
+        run: gh release edit "$TAG" --draft=false
+      - name: Verify published tag target
+        run: |
+          git fetch origin "refs/tags/$TAG:refs/tags/$TAG"
+          [[ "$(git rev-list -n1 "$TAG")" == "$TARGET_SHA" ]]
+
+  notify-release:
+    name: Report release status
+    if: always() && (needs.release.result != 'skipped' || needs.verify_release.result != 'skipped')
+    needs: [release, verify_release]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      INCIDENT_TITLE: Production release failure
+      INCIDENT_FAILED: ${{ needs.release.result == 'failure' || needs.verify_release.result == 'failure' }}
+      INCIDENT_HEADING: The release pipeline did not complete successfully.
+      INCIDENT_DETAILS: "- Prepare release: ${{ needs.release.result }}\n- Verify and publish: ${{ needs.verify_release.result }}"
+      INCIDENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      INCIDENT_RECOVERY_MESSAGE: Production release pipeline recovered
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: /scripts/report_incident.sh
+      - run: bash scripts/report_incident.sh

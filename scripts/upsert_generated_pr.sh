@@ -33,6 +33,9 @@ gh workflow run ci-quality-deploy.yml --repo "$GH_REPO" --ref "$AUTOMATION_BRANC
 gh workflow run security.yml --repo "$GH_REPO" --ref "$AUTOMATION_BRANCH" \
   -f head_ref="$AUTOMATION_BRANCH" -f base_ref=main
 gh pr merge "$pr_url" --repo "$GH_REPO" --auto --squash
+if [[ "${SKIP_STATUS_REPORT:-false}" != true ]]; then
+  STATUS_PR_NUMBER="$pr_number" bash scripts/generated_pr_status.sh
+fi
 
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
   printf 'pr_url=%s\npr_number=%s\n' "$pr_url" "$pr_number" >> "$GITHUB_OUTPUT"
