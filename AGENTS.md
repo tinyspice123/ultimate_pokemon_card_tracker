@@ -114,6 +114,9 @@ age and all protected checks. Major updates always require manual review.
   restore a direct-to-main push or grant a broad ruleset bypass. Because PRs
   created by `GITHUB_TOKEN` do not emit normal PR workflow events, those jobs
   explicitly dispatch CI/security with PR metadata on the generated branch.
+- Keep the repository's **Allow GitHub Actions to create and approve pull
+  requests** setting enabled for that automation. The default workflow token
+  permission remains read-only; each job must declare its minimal writes.
 
 See `docs/` for adding sets/cards/images, editor access, backups, recovery, and
 service-console procedures.

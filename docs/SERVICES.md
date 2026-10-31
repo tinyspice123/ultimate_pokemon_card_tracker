@@ -18,6 +18,11 @@ Renovate major-update pull requests individually. Patch, pin, and digest
 updates wait for the protected checks and then merge automatically after a
 three-day minimum release age.
 
+In **Settings → Actions → General**, keep **Workflow permissions** read-only and
+enable **Allow GitHub Actions to create and approve pull requests**. Generated
+backup and changelog branches rely on that setting, while their workflows grant
+only the job-level write permissions they need.
+
 Pull requests produce a `pr-preview-<number>` artifact after browser and
 quality checks pass. Download it from the workflow run and serve the extracted
 directory with a local static HTTP server for visual review.
