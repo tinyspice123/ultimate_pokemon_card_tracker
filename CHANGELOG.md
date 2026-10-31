@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. New entries are generated from Conventional Commits when a release is published.
 
+## [v3.6.1] - 2026-10-31
+
+### Fixes
+- fix(ci): auto-update behind generated PRs (#36) (9e02338)
+
+## [v3.6.0] - 2026-10-31
+
+### Features
+- feat(ci): add merge queue and transactional releases (#34) (26c392e)
+
+### Other changes
+- docs: update changelog for v3.5.1 (#32) (9eea890)
+
 ## [v3.5.1] - 2026-10-31
 
 ### Fixes
