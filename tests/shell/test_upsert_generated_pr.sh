@@ -50,7 +50,10 @@ run_case() {
   grep -q 'git fetch origin refs/heads/automation/test' "$log"
   grep -q 'git push origin HEAD:refs/heads/automation/test --force-with-lease' "$log"
   if [[ "$scenario" == new ]]; then grep -q 'gh pr create' "$log"; fi
-  if [[ "$scenario" == existing ]]; then ! grep -q 'gh pr create' "$log"; fi
+  if [[ "$scenario" == existing ]] && grep -q 'gh pr create' "$log"; then
+    echo 'existing PR scenario unexpectedly created a new PR' >&2
+    return 1
+  fi
   if [[ "$scenario" == closed_recovery ]]; then grep -q 'state=open' "$log"; fi
   if [[ "$scenario" == branch_refresh ]]; then grep -q 'gh workflow run security.yml' "$log"; fi
 }
