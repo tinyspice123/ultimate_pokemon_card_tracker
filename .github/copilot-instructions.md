@@ -15,3 +15,6 @@ Key constraints:
   the source-of-truth rules documented in `AGENTS.md`.
 - Do not bypass the validated deployment, maintenance restoration, or rollback
   workflows.
+- Generated backup/changelog PRs must use the shared upsert/status helpers;
+  releases remain drafts until artifact, checksum, attestation, and changelog
+  verification succeeds.

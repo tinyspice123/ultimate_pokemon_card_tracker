@@ -11,8 +11,12 @@ The **Backup Supabase collection** workflow runs daily. It:
 2. Writes `backups/<set-id>.csv` in stable set order.
 3. Synchronizes local image manifests.
 4. Validates every snapshot and manifest.
-5. Commits only changed files.
-6. Dispatches deployment when fallback data changed.
+5. Commits only changed files to the reusable
+   `automation/collection-backup` branch.
+6. Creates or updates one protected PR, dispatches its required CI and security
+   checks, enables auto-merge, and updates the branch if `main` advances.
+7. Deploys the merged fallback data through the normal validated `main`
+   pipeline.
 
 The export uses the public read policy and does not require a secret.
 
@@ -24,7 +28,8 @@ python scripts/validate_data.py
 ```
 
 The exporter fails if a configured set is empty or unavailable. A failed
-GitHub Action does not commit partial output.
+GitHub Action does not merge partial output. Generated PRs require no approving
+review under the current ruleset, but every protected status check must pass.
 
 ## Website outage behavior
 

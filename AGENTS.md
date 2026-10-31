@@ -90,9 +90,10 @@ Use Conventional Commits because `scripts/release.mjs` calculates SemVer:
 The release workflow runs only after the production pipeline succeeds. It uses
 the exact deployed SHA, attaches the retained Pages artifact and checksum,
 publishes a GitHub build-provenance attestation and SPDX SBOM, and updates
-`CHANGELOG.md`. It also waits for post-merge CodeQL and verifies the tag,
-assets, checksum, attestations, and changelog PR before publishing a draft
-release. Both the deployed Pages archive and SBOM receive provenance. The changelog is rebuilt from
+`CHANGELOG.md`. It also waits for post-merge CodeQL, prepares a draft, and
+verifies the release target, assets, checksum, attestations, and changelog PR
+before publishing that draft. Both the deployed Pages archive and SBOM receive
+provenance. The changelog is rebuilt from
 all SemVer tags on one persistent automation branch, so overlapping releases
 cannot drop history. Do not hand-edit a generated release section unless
 correcting release history.
