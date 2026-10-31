@@ -441,3 +441,40 @@ jobs:
             echo "- **Deployment:** ${DEPLOY_OUTCOME}"
             echo "- **Smoke tests:** ${SMOKE_OUTCOME}"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  notify-deployment:
+    name: Report deployment status
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TITLE: "Production deployment failure"
+      DEPLOY_RESULT: ${{ needs.deploy.result }}
+    steps:
+      - name: Open, update, or resolve the deployment incident
+        run: |
+          set -euo pipefail
+          issue_number="$(gh issue list --state open --limit 100 --json number,title \
+            --jq '.[] | select(.title == env.TITLE) | .number' | head -n 1)"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [[ "$DEPLOY_RESULT" != "success" ]]; then
+            {
+              echo "The production deployment pipeline did not complete successfully."
+              echo
+              echo "- Deploy job: $DEPLOY_RESULT"
+              echo "- Commit: \`$GITHUB_SHA\`"
+              echo "- Run: $run_url"
+            } > /tmp/deployment-issue.md
+            if [[ -n "$issue_number" ]]; then
+              gh issue comment "$issue_number" --body-file /tmp/deployment-issue.md
+            else
+              gh issue create --title "$TITLE" --body-file /tmp/deployment-issue.md
+            fi
+          elif [[ -n "$issue_number" ]]; then
+            gh issue close "$issue_number" --comment "Production deployment recovered: $run_url"
+          fi
