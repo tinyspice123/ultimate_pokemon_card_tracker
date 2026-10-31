@@ -13,6 +13,8 @@ fi
 
 while IFS= read -r number; do
   [[ -n "$number" ]] || continue
+  # GraphQL variable references must remain literal for GitHub's parser.
+  # shellcheck disable=SC2016
   state="$(gh api graphql -f owner="${GH_REPO%%/*}" -f name="${GH_REPO##*/}" -F number="$number" \
     -f query='query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){mergeStateStatus reviewDecision autoMergeRequest{enabledAt} commits(last:1){nodes{commit{statusCheckRollup{state}}}}}}}' \
     --jq '.data.repository.pullRequest')"
@@ -29,7 +31,7 @@ $marker
 - Auto-merge: **$auto_merge**
 - Review decision: **$review**
 
-This comment is maintained automatically. Approval is not required when the ruleset requires zero reviews; a `BEHIND` or `BLOCKED` merge state indicates a branch/ruleset condition instead.
+This comment is maintained automatically. Approval is not required when the ruleset requires zero reviews; a \`BEHIND\` or \`BLOCKED\` merge state indicates a branch/ruleset condition instead.
 EOF
 )"
   comment_id="$(gh api --paginate "/repos/$GH_REPO/issues/$number/comments" \
