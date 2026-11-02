@@ -104,10 +104,32 @@ jobs:
       - name: Restore every backup into an isolated database
         run: python scripts/recovery_drill.py backups
 
+  migration-drift:
+    name: Supabase migration drift
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: supabase-production
+    permissions:
+      contents: read
+    concurrency:
+      group: supabase-production
+      cancel-in-progress: false
+    env:
+      SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/check_supabase_migration_drift.sh
+            /supabase/migrations/
+      - name: Compare repository and production migration history
+        run: bash scripts/check_supabase_migration_drift.sh
+
   notify:
     name: Report canary status
     if: always()
-    needs: [deployed-site, supabase-api, check-logos, backup-recovery]
+    needs: [deployed-site, supabase-api, check-logos, backup-recovery, migration-drift]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:

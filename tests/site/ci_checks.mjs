@@ -49,11 +49,14 @@ for (const [id, cfg] of Object.entries(SETS)) {
 // Keep deployment blocked until SonarCloud has computed and passed the gate.
 const workflow = fs.readFileSync('.github/workflows/ci-quality-deploy.yml', 'utf8');
 const agentGuide = fs.readFileSync('AGENTS.md', 'utf8');
+const siteChecksJob = workflow.match(/\r?\n  site-checks:\r?\n([\s\S]*?)(?=\r?\n  python-tests:\r?\n)/)?.[1] || '';
 if (!agentGuide.includes('Treat SonarQube new-code coverage as a pre-push requirement') ||
     !agentGuide.includes('coverage/lcov.info'))
   fail('agent guidance does not require pre-push SonarQube new-code coverage');
-else if (!workflow.includes('/AGENTS.md'))
+else if (!siteChecksJob.includes('/AGENTS.md'))
   fail('site-check sparse checkout does not include the agent coverage guidance');
+else if (!siteChecksJob.includes('/supabase/migrations/'))
+  fail('site-check sparse checkout does not include migration fixtures for shell tests');
 else ok('agent guidance requires LCOV-visible new-code coverage before push');
 if (!workflow.includes('-Dsonar.qualitygate.wait=true'))
   fail('SonarQube analysis does not wait for the Quality Gate');
@@ -149,6 +152,9 @@ else ok('required workflows support merge queue merge groups');
 const canaryWorkflow = fs.readFileSync('.github/workflows/production-canary.yml', 'utf8');
 if (!canaryWorkflow.includes('name: Backup recovery drill'))
   fail('production canary does not test backup recovery');
+else if (!canaryWorkflow.includes('name: Supabase migration drift') ||
+         !canaryWorkflow.includes('scripts/check_supabase_migration_drift.sh'))
+  fail('production canary does not detect Supabase migration drift');
 else if (!canaryWorkflow.includes('issues: write') ||
          !canaryWorkflow.includes('bash scripts/report_incident.sh'))
   fail('production canary failures do not create a GitHub issue');
@@ -163,6 +169,9 @@ if (!workflow.includes('name: Deploy Supabase migrations') ||
     !workflow.includes('supabase db push --yes --remote="$SUPABASE_DATABASE_URL"') ||
     !workflow.includes('environment: supabase-production'))
   fail('production deployment is not gated on protected Supabase migrations');
+else if (!workflow.includes("needs.classify-changes.outputs.database == 'true'") ||
+         !workflow.includes("needs.database-migrations.result == 'skipped'"))
+  fail('production migrations are not limited to database changes with a safe deployment no-op');
 else ok('production deployment is gated on protected Supabase migrations');
 
 const reconciliationWorkflow = fs.readFileSync('.github/workflows/reconcile-supabase.yml', 'utf8');
