@@ -84,6 +84,7 @@ jobs:
             /public/
             /scripts/
             /tests/
+            /AGENTS.md
             /eslint.config.mjs
             /package-lock.json
             /package.json

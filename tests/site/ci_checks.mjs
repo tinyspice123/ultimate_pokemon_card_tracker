@@ -52,6 +52,8 @@ const agentGuide = fs.readFileSync('AGENTS.md', 'utf8');
 if (!agentGuide.includes('Treat SonarQube new-code coverage as a pre-push requirement') ||
     !agentGuide.includes('coverage/lcov.info'))
   fail('agent guidance does not require pre-push SonarQube new-code coverage');
+else if (!workflow.includes('/AGENTS.md'))
+  fail('site-check sparse checkout does not include the agent coverage guidance');
 else ok('agent guidance requires LCOV-visible new-code coverage before push');
 if (!workflow.includes('-Dsonar.qualitygate.wait=true'))
   fail('SonarQube analysis does not wait for the Quality Gate');
