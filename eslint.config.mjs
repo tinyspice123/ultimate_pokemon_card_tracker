@@ -12,7 +12,7 @@ const browserGlobals={
   setSafeImageSource:'readonly', imgCandidatesPure:'readonly', manifestKey:'readonly',
   sortItems:'readonly', marketplaceSearchUrls:'readonly', priceMid:'readonly',
   matchesQuery:'readonly', exportText:'readonly', exportCsv:'readonly', csvEscape:'readonly',
-  parseHaveQty:'readonly',
+  parseHaveQty:'readonly', planQuantityImport:'readonly', collectionQuality:'readonly',
   SUPABASE_CONFIG:'readonly', PokemonDb:'readonly',
 };
 

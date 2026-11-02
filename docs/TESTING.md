@@ -18,6 +18,12 @@ python scripts/recovery_drill.py backups
 Workflow edits additionally require actionlint with ShellCheck integration, and
 shell helpers require both ShellCheck and `tests/shell/` coverage.
 
+CI also starts an isolated PostgreSQL service, applies every migration in order,
+and runs `tests/sql/security.sql`. That contract proves editor-only quantity
+updates, column-level catalogue protection, complete audit recording, and audit
+retention after card deletion. `scripts/check_asset_budgets.py` prevents growth
+beyond the checked static-site, individual-asset, and exact-duplicate budgets.
+
 ## Choosing coverage
 
 | Change | Minimum useful coverage |

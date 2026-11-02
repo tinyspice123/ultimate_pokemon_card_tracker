@@ -59,7 +59,9 @@ handoff. Workflow edits must also pass actionlint with shellcheck integration.
   permissions beyond the job that needs them.
 - Do not edit generated `public/backups/`; edit the live database or root backup
   fixture as appropriate.
-- Add a new migration instead of rewriting an applied migration.
+- Add a new migration instead of rewriting an applied migration. Browser
+  editors have column-level permission to update only quantity, and audit rows
+  must retain their complete identity after catalogue deletion.
 
 ## Tests and required checks
 
@@ -81,6 +83,8 @@ When adding logic:
 - Put pure browser/release helpers under unit test.
 - Add Playwright coverage for visible behavior and critical failure paths.
 - Add Python unittest coverage for maintenance scripts.
+- Apply the migration chain and exercise grants, RLS, and triggers in the
+  PostgreSQL security-contract test when changing the database.
 - Extend `tests/site/ci_checks.mjs` when introducing a CI/CD invariant that
   future edits must preserve.
 

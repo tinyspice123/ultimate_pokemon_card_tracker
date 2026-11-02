@@ -32,8 +32,9 @@ flowchart LR
 
 The tracker requests `pokemon_card_main` ordered by `sort_order`. On a request
 failure it loads the packaged CSV snapshot and disables editing. An authenticated
-editor can update only quantity; a database trigger records the before/after
-values in `pokemon_card_quantity_history`.
+editor has column-level permission to update only quantity; a database trigger
+records the before/after values and complete card identity in
+`pokemon_card_quantity_history`. History survives catalogue deletion.
 
 Images resolve in this order: exact local manifest mapping, database
 `image_url`, configured Pokemon API fallbacks. Local lookup normalizes cosmetic

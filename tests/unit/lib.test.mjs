@@ -11,7 +11,30 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const {csvToRows, priceMid, matchesQuery, parseHaveQty, detectColumns, rowsToItems, imgCandidatesPure,
        esc, safeImageUrl, setSafeImageSource, sortItems, exportText, exportCsv,
-       csvEscape, marketplaceSearchUrls, manifestKey} = require('../../public/lib.js');
+       csvEscape, marketplaceSearchUrls, manifestKey, planQuantityImport,
+       collectionQuality} = require('../../public/lib.js');
+
+test('planQuantityImport previews exact changes and rejects unknown cards', () => {
+  const items=[{id:'pika',card:'Pikachu',num:'025',variant:'Reverse',qty:1}];
+  const plan=planQuantityImport(items,[
+    ['ID','Card','Number','Variant / Stamp','Have'],
+    ['pika','Pikachu','025','Reverse','3'],
+    ['','Missing','999','Regular','1'],
+  ]);
+  assert.equal(plan.changes.length,1);
+  assert.equal(plan.changes[0].next,3);
+  assert.match(plan.errors[0],/not found/);
+});
+
+test('collectionQuality reports incomplete and duplicate catalogue data', () => {
+  const items=[
+    {card:'Mew',num:'1',variant:'Regular',price:'',status:'verify',img:''},
+    {card:'Mew',num:'1',variant:'Regular',price:'£2',status:'',img:'https://example.test/mew.jpg'},
+  ];
+  assert.deepEqual(collectionQuality(items,new Map()),{
+    missingPrice:1,needsVerification:1,missingImage:1,duplicates:1,
+  });
+});
 
 test('csvToRows: simple rows', () => {
   assert.deepStrictEqual(csvToRows('a,b\n1,2'), [['a','b'],['1','2']]);

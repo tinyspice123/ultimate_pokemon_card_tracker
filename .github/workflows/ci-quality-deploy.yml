@@ -128,6 +128,19 @@ jobs:
     permissions:
       contents: read
 
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -135,10 +148,10 @@ jobs:
           sparse-checkout: |
             /scripts/
             /tests/
+             /supabase/migrations/
             /backups/
             /requirements-dev.txt
-            /public/sets.js
-            /public/img/
+             /public/
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -158,10 +171,23 @@ jobs:
           scripts/check_logos.py \
           scripts/sets_js.py \
           scripts/validate_data.py \
-          scripts/sync_manifest.py
+          scripts/sync_manifest.py \
+          scripts/check_asset_budgets.py
 
       - name: Validate collection backups and image manifests
-        run: python scripts/validate_data.py
+        run: |
+          python scripts/validate_data.py
+          python scripts/check_asset_budgets.py
+
+      - name: Apply migrations and verify database security contracts
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f tests/sql/bootstrap.sql
+          for migration in supabase/migrations/*.sql; do
+            psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f tests/sql/security.sql
 
       - name: Unit tests with coverage
         run: |

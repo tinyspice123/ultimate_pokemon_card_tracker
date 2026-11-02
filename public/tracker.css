@@ -185,6 +185,14 @@
   .exportbtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);
     border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
   .exportbtn:hover{border-color:var(--tera2)}
+  .importbtn{display:inline-flex;align-items:center}
+  .importbtn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .historyactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .import-preview,.quality{max-width:1180px;margin:12px auto;padding:16px 20px;
+    border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+  .import-preview h2{font:600 14px "Unbounded",sans-serif;margin:0 0 8px}
+  .import-preview ul,.quality ul{margin:8px 0;padding-left:20px;color:var(--dim);font-size:12px}
+  .import-preview button,.historyactions button{margin-right:6px}
   .grouphead .chev{display:inline-block;width:18px;color:var(--tera2)}
   .grouphead.folded{opacity:.75}
   .grouphead:hover h2{color:var(--tera2)}
@@ -208,7 +216,7 @@
   @media (max-width: 520px){
     header{padding:20px 14px 6px}
     .notice,.stats,.controls,main,footer{padding-left:14px;padding-right:14px}
-    .account,.history,.data-banner{margin-left:14px;margin-right:14px}
+    .account,.history,.data-banner,.import-preview,.quality{margin-left:14px;margin-right:14px}
     .setlogo{max-width:min(300px,86vw)}
     .stats{grid-template-columns:1fr;gap:14px}
     .ring{margin:0 auto}

@@ -11,7 +11,9 @@ This file applies to `supabase/` and supplements `../AGENTS.md`.
 - Use explicit grants and Row Level Security together. New tables start with RLS
   enabled and no privileges until the intended policy is defined.
 - Quantity history is immutable to browser clients and readable only by an
-  editor. Preserve trigger-based recording of card identity and actor UUID.
+  editor. Preserve trigger-based recording of complete card identity and actor
+  UUID, retain audit rows after catalogue deletion, and grant browser editors
+  update permission on the `quantity` column only.
 - Use schema-qualified objects and a safe `search_path` in security-definer
   functions. Make migrations idempotent where practical.
 - Schema or policy changes require matching browser/client, backup/import,

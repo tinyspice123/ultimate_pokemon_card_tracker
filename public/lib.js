@@ -219,6 +219,57 @@ function exportCsv(kind, list){
   return rows.map(r=>r.map(csvEscape).join(",")).join("\n");
 }
 
+// Match an imported quantity CSV to live cards without silently guessing.
+// ID wins when present; otherwise the exact card/number/variant identity is used.
+function planQuantityImport(items,rows){
+  const header=(rows[0]||[]).map(value=>String(value).trim().toLowerCase());
+  const column=(...names)=>header.findIndex(value=>names.some(name=>value===name));
+  const indexes={id:column('id'),card:column('card'),number:column('number'),
+    variant:column('variant','variant / stamp'),have:column('have','quantity','qty')};
+  if(indexes.have<0 || (indexes.id<0 && indexes.card<0))
+    return {changes:[],errors:['CSV needs Have plus either ID or Card columns.']};
+  const byId=new Map(items.filter(item=>item.id).map(item=>[item.id,item]));
+  const byIdentity=new Map();
+  items.forEach(item=>{
+    const key=manifestKey(item.card,item.num,item.variant);
+    const matches=byIdentity.get(key)||[]; matches.push(item); byIdentity.set(key,matches);
+  });
+  const changes=[], errors=[], seen=new Set();
+  for(let rowIndex=1;rowIndex<rows.length;rowIndex++){
+    const row=rows[rowIndex], value=String(row[indexes.have]||'').trim();
+    if(!value && !String(row[indexes.card]||row[indexes.id]||'').trim()) continue;
+    if(!/^\d+$/.test(value)){ errors.push(`Row ${rowIndex+1}: Have must be a non-negative integer.`); continue; }
+    const id=indexes.id>=0?String(row[indexes.id]||'').trim():'';
+    let item=id?byId.get(id):null;
+    if(!item && indexes.card>=0){
+      const key=manifestKey(row[indexes.card],indexes.number>=0?row[indexes.number]:'',indexes.variant>=0?row[indexes.variant]:'');
+      const matches=byIdentity.get(key)||[];
+      if(matches.length===1) item=matches[0];
+      else if(matches.length>1){ errors.push(`Row ${rowIndex+1}: card identity is ambiguous.`); continue; }
+    }
+    if(!item){ errors.push(`Row ${rowIndex+1}: card was not found in this set.`); continue; }
+    if(seen.has(item)){ errors.push(`Row ${rowIndex+1}: card appears more than once.`); continue; }
+    seen.add(item);
+    const next=Number(value);
+    if(next!==item.qty) changes.push({item,previous:item.qty,next});
+  }
+  return {changes,errors};
+}
+
+function collectionQuality(items,imageMap){
+  const identities=new Set();
+  let duplicates=0, missingPrice=0, needsVerification=0, missingImage=0;
+  items.forEach(item=>{
+    const key=manifestKey(item.card,item.num,item.variant);
+    if(identities.has(key)) duplicates++;
+    identities.add(key);
+    if(priceMid(item.price)==null) missingPrice++;
+    if(/verify/i.test(item.status)) needsVerification++;
+    if(!item.img && !(imageMap&&imageMap.has(key))) missingImage++;
+  });
+  return {missingPrice,needsVerification,missingImage,duplicates};
+}
+
 // Marketplace search URLs stay useful when listings change, unlike links to
 // individual offers. eBay uses only Card and Number so extra sheet metadata
 // does not make its search results unnecessarily narrow.
@@ -246,6 +297,6 @@ if(typeof module!=="undefined" && module.exports){
     csvToRows,priceMid,matchesQuery,parseHaveQty,detectColumns,rowsToItems,imgCandidatesPure,
     canonicalManifestText,manifestKey,
     esc,safeImageUrl,setSafeImageSource,sortItems,exportText,exportCsv,csvEscape,
-    marketplaceSearchUrls
+    marketplaceSearchUrls,planQuantityImport,collectionQuality
   };
 }

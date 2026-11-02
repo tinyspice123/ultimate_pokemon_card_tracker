@@ -52,10 +52,10 @@ test('authorized Google account can update a database quantity', async ({ page }
   await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/rpc/is_collection_editor', route => route.fulfill({
     status:200,contentType:'application/json',body:'true',
   }));
-  let savedQuantity=null;
+  const savedQuantities=[];
   await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_card_main**', async route => {
     if(route.request().method()==='PATCH'){
-      savedQuantity=route.request().postDataJSON().quantity;
+      savedQuantities.push(route.request().postDataJSON().quantity);
       await route.fulfill({status:204,body:''});
       return;
     }
@@ -71,7 +71,21 @@ test('authorized Google account can update a database quantity', async ({ page }
   await expect(page.locator('.qtyedit')).toHaveCount(2);
   await page.locator('.qtyedit button[data-delta="1"]').first().click();
   await expect(page.locator('.qtyedit output').first()).toHaveText('2');
-  expect(savedQuantity).toBe(2);
+  expect(savedQuantities).toEqual([2]);
+
+  await page.getByRole('button',{name:/Undo Pikachu/}).click();
+  await expect(page.locator('.qtyedit output').first()).toHaveText('1');
+  expect(savedQuantities).toEqual([2,1]);
+
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#quantityImport').setInputFiles({
+    name:'quantities.csv',mimeType:'text/csv',
+    buffer:Buffer.from('ID,Card,Number,Variant / Stamp,Have\npikachu,Pikachu,1/100,Standard,4\n'),
+  });
+  await expect(page.locator('#importSummary')).toContainText('1 quantity change');
+  await page.getByRole('button',{name:'Apply changes'}).click();
+  await expect(page.locator('.qtyedit output').first()).toHaveText('4');
+  expect(savedQuantities).toEqual([2,1,4]);
 });
 
 test('uses the repository snapshot and displays a warning when Supabase is unavailable', async ({ page }) => {

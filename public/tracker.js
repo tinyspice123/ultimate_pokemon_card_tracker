@@ -42,6 +42,12 @@ let canEdit=false;
 const pendingCards=new Set();
 let bulkMode=false;
 const bulkSelections=new Set();
+let lastQuantityChange=null;
+let pendingImport=null;
+let historyEntries=[];
+let historyOffset=0;
+const HISTORY_PAGE_SIZE=100;
+let backupLastModified='';
 
 // ---- "synced Xs ago" ------------------------------------------------
 let lastSyncedAt=null;
@@ -92,22 +98,29 @@ async function initAuth(){
   document.getElementById('viewerOnly').style.display=authUser&&!canEdit?'inline':'none';
   document.getElementById('liveCsv').style.display=canEdit?'inline-block':'none';
   document.getElementById('bulkStart').style.display=canEdit?'inline-block':'none';
+  document.getElementById('undoQuantity').style.display=canEdit?'inline-block':'none';
+  document.getElementById('importWrap').style.display=canEdit?'inline-flex':'none';
   if(canEdit) loadQuantityHistory();
 }
 
-async function loadQuantityHistory(){
+async function loadQuantityHistory(append=false){
   const section=document.getElementById('history'), list=document.getElementById('historyList');
   try{
+    if(!append){ historyOffset=0; historyEntries=[]; }
     const entries=await PokemonDb.quantityHistory(authSession,SET_ID,
-      document.getElementById('historyFrom').value,document.getElementById('historyTo').value);
-    const rows=entries.length?entries.map(entry=>{
+      document.getElementById('historyFrom').value,document.getElementById('historyTo').value,
+      historyOffset,HISTORY_PAGE_SIZE);
+    historyEntries.push(...entries); historyOffset+=entries.length;
+    const rows=historyEntries.length?historyEntries.map(entry=>{
       const item=document.createElement('li'), time=document.createElement('time');
       const when=new Date(entry.changed_at);
       time.dateTime=when.toISOString(); time.textContent=when.toLocaleString();
-      item.append(time,`${entry.card_name} · ${entry.collector_number||'no number'} · ${entry.set_id}: ${entry.previous_quantity} → ${entry.new_quantity}`);
+      item.append(time,`${entry.card_name} · ${entry.collector_number||'no number'}${entry.variant?` · ${entry.variant}`:''} · ${entry.set_id}: ${entry.previous_quantity} → ${entry.new_quantity}`);
       return item;
     }):[Object.assign(document.createElement('li'),{textContent:'No changes in this date range.'})];
     list.replaceChildren(...rows);
+    document.getElementById('historyMore').style.display=entries.length===HISTORY_PAGE_SIZE?'inline-block':'none';
+    document.getElementById('historyCsv').disabled=!historyEntries.length;
     section.style.display='block';
   }catch{ /* History is optional until its migration has been applied. */ }
 }
@@ -123,6 +136,14 @@ document.getElementById('historyApply').addEventListener('click',()=>{
   if(!from||!to||from>to){ toast('Choose a valid history date range.'); return; }
   loadQuantityHistory();
 });
+document.getElementById('historyMore').addEventListener('click',()=>loadQuantityHistory(true));
+document.getElementById('historyCsv').addEventListener('click',()=>{
+  const header=['Changed at','Card','Number','Variant','Previous quantity','New quantity'];
+  const rows=historyEntries.map(entry=>[entry.changed_at,entry.card_name,entry.collector_number,
+    entry.variant,entry.previous_quantity,entry.new_quantity]);
+  downloadCsv(`${SET_ID}-history-${new Date().toISOString().slice(0,10)}.csv`,
+    [header,...rows].map(row=>row.map(csvEscape).join(',')).join('\n')+'\n');
+});
 
 document.getElementById('googleSignIn').addEventListener('click',()=>PokemonDb.signInWithGoogle());
 document.getElementById('signOut').addEventListener('click',async ()=>{
@@ -132,6 +153,7 @@ document.getElementById('signOut').addEventListener('click',async ()=>{
 
 function finishLoad(){
   buildGroupSel(); applyFilterParams(); render();
+  renderQuality();
   document.getElementById('stats').style.display='grid';
   document.getElementById('controls').style.display='flex';
   document.getElementById('foot').style.display='block';
@@ -139,6 +161,7 @@ function finishLoad(){
 async function fetchCsvRows(url){
   const res=await fetchCsvResponse(url);
   ensureCsvResponse(res);
+  backupLastModified=res.headers.get('last-modified')||'';
   const text=await res.text();
   ensureCsvText(text);
   const rows=csvToRows(text);
@@ -172,7 +195,8 @@ function ensureCsvColumns(rows){
 
 function showDatabaseFallback(error){
   const banner=document.getElementById('dataBanner');
-  banner.textContent='Database unavailable — showing the latest read-only repository snapshot.';
+  const freshness=backupLastModified?` Served snapshot: ${new Date(backupLastModified).toLocaleString()}.`:'';
+  banner.textContent='Database unavailable — showing the latest read-only repository snapshot.'+freshness;
   banner.title=String(error.message||error);
   banner.classList.add('show');
 }
@@ -413,6 +437,10 @@ async function updateQuantity(it,delta){
   it.qty=next; pendingCards.add(it.id); render();
   try{
     await PokemonDb.setQuantity(authSession,it.id,next);
+    lastQuantityChange={item:it,previous,next};
+    const undo=document.getElementById('undoQuantity');
+    undo.disabled=false;
+    undo.textContent=`Undo ${it.card}: ${previous} → ${next}`;
     markSynced();
     toast(`${it.card}: ${previous} → ${next}`);
     loadQuantityHistory();
@@ -423,6 +451,26 @@ async function updateQuantity(it,delta){
     pendingCards.delete(it.id); render();
   }
 }
+
+document.getElementById('undoQuantity').addEventListener('click',async ()=>{
+  const change=lastQuantityChange;
+  if(!change||pendingCards.has(change.item.id)) return;
+  const button=document.getElementById('undoQuantity'); button.disabled=true;
+  pendingCards.add(change.item.id);
+  try{
+    await PokemonDb.setQuantity(authSession,change.item.id,change.previous);
+    change.item.qty=change.previous;
+    lastQuantityChange=null;
+    button.textContent='Undo last change';
+    markSynced(); loadQuantityHistory();
+    toast(`${change.item.card} restored to ${change.previous}`);
+  }catch(error){
+    button.disabled=false;
+    toast(`Could not undo: ${String(error.message||error)}`);
+  }finally{
+    pendingCards.delete(change.item.id); render();
+  }
+});
 
 function updateBulkControls(){
   const confirm=document.getElementById('bulkConfirm');
@@ -606,6 +654,50 @@ function stats(){
   document.getElementById('sValOwn').parentElement.style.display=anyPrice?'':'none';
   document.getElementById('sValMiss').parentElement.style.display=anyPrice?'':'none';
 }
+
+function renderQuality(){
+  const quality=collectionQuality(items,imgMap);
+  const values=[
+    `${quality.missingImage} card${quality.missingImage===1?'':'s'} without a local or explicit image`,
+    `${quality.missingPrice} card${quality.missingPrice===1?'':'s'} without a parseable price`,
+    `${quality.needsVerification} card${quality.needsVerification===1?'':'s'} marked for verification`,
+    `${quality.duplicates} duplicate exact card ${quality.duplicates===1?'identity':'identities'}`,
+  ];
+  document.getElementById('qualityList').replaceChildren(...values.map(value=>
+    Object.assign(document.createElement('li'),{textContent:value})));
+}
+
+function closeImportPreview(){
+  pendingImport=null;
+  document.getElementById('importPreview').style.display='none';
+  document.getElementById('quantityImport').value='';
+}
+document.getElementById('quantityImport').addEventListener('change',async event=>{
+  const file=event.target.files[0];
+  if(!file) return;
+  pendingImport=planQuantityImport(items,csvToRows(await file.text()));
+  document.getElementById('importSummary').textContent=
+    `${pendingImport.changes.length} quantity change${pendingImport.changes.length===1?'':'s'} ready to apply.`;
+  document.getElementById('importErrors').replaceChildren(...pendingImport.errors.map(error=>
+    Object.assign(document.createElement('li'),{textContent:error})));
+  document.getElementById('importApply').disabled=!pendingImport.changes.length||pendingImport.errors.length>0;
+  document.getElementById('importPreview').style.display='block';
+});
+document.getElementById('importCancel').addEventListener('click',closeImportPreview);
+document.getElementById('importApply').addEventListener('click',async ()=>{
+  if(!pendingImport||pendingImport.errors.length) return;
+  const changes=pendingImport.changes;
+  if(!window.confirm(`Apply ${changes.length} reviewed quantity change${changes.length===1?'':'s'}?`)) return;
+  const results=await Promise.allSettled(changes.map(change=>
+    PokemonDb.setQuantity(authSession,change.item.id,change.next)));
+  let failures=0;
+  results.forEach((result,index)=>{
+    if(result.status==='fulfilled') changes[index].item.qty=changes[index].next;
+    else failures++;
+  });
+  closeImportPreview(); render(); markSynced(); loadQuantityHistory();
+  toast(failures?`${failures} imported change${failures===1?'':'s'} failed.`:`Applied ${changes.length} imported changes.`);
+});
 
 let searchTimer=null;
 document.getElementById('q').addEventListener('input',()=>{

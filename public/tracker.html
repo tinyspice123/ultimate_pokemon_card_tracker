@@ -51,6 +51,10 @@
     <button type="button" id="historyApply">Apply</button>
   </div>
   <ol id="historyList"></ol>
+  <div class="historyactions">
+    <button type="button" id="historyMore">Load more</button>
+    <button type="button" id="historyCsv">Download history CSV</button>
+  </div>
 </details>
 
 <section class="stats" id="stats">
@@ -92,6 +96,10 @@
   <label class="toggle"><input type="checkbox" id="missOnly"> Missing only</label>
   <button type="button" class="exportbtn initially-hidden" id="liveCsv">Download live CSV</button>
   <button type="button" class="exportbtn initially-hidden" id="bulkStart">Select cards to add</button>
+  <button type="button" class="exportbtn initially-hidden" id="undoQuantity" disabled>Undo last change</button>
+  <label class="exportbtn importbtn initially-hidden" id="importWrap">Import quantities
+    <input type="file" id="quantityImport" accept=".csv,text/csv">
+  </label>
   <span class="bulkactions initially-hidden" id="bulkActions">
     <button type="button" class="exportbtn" id="bulkConfirm" disabled>Confirm 0 additions</button>
     <button type="button" class="exportbtn" id="bulkCancel">Cancel</button>
@@ -118,6 +126,19 @@
     </div>
   </span>
 </div>
+
+<section class="import-preview initially-hidden" id="importPreview" aria-live="polite">
+  <h2>Import preview</h2>
+  <p id="importSummary"></p>
+  <ul id="importErrors"></ul>
+  <button type="button" id="importApply">Apply changes</button>
+  <button type="button" id="importCancel">Cancel</button>
+</section>
+
+<details class="quality" id="quality">
+  <summary>Data quality</summary>
+  <ul id="qualityList"></ul>
+</details>
 
 <main id="main"></main>
 <div class="empty" id="empty">Nothing matches those filters.</div>

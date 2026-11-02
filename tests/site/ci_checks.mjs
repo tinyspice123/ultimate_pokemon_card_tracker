@@ -147,6 +147,16 @@ else if (!canaryWorkflow.includes('issues: write') ||
   fail('production canary failures do not create a GitHub issue');
 else ok('canary drills backup recovery and reports incidents');
 
+if (!workflow.includes('Apply migrations and verify database security contracts') ||
+    !fs.existsSync('tests/sql/security.sql'))
+  fail('CI does not apply migrations and verify database security contracts in PostgreSQL');
+else ok('PostgreSQL migration and security contracts run in CI');
+
+if (!workflow.includes('python scripts/check_asset_budgets.py') ||
+    !fs.existsSync('scripts/check_asset_budgets.py'))
+  fail('CI does not enforce static deployment asset budgets');
+else ok('CI enforces static deployment asset budgets');
+
 if (!releaseWorkflow.includes('node scripts/changelog.mjs') || !releaseWorkflow.includes('Publish generated changelog'))
   fail('release workflow does not maintain the changelog');
 else ok('release workflow maintains CHANGELOG.md');
@@ -248,7 +258,7 @@ for (const file of ['index.html', 'tracker.html', '404.html']) {
   const requiredIds = file === 'index.html'
     ? ['sets', 'setSearch', 'noResults']
     : file === 'tracker.html'
-      ? ['setLogo', 'eyebrowText', 'titleFallback', 'groupSel', 'missOnly', 'sortSel', 'viewSel', 'lightbox', 'notice', 'dataBanner', 'exportMissing', 'exportOwned', 'exportSpares']
+      ? ['setLogo', 'eyebrowText', 'titleFallback', 'groupSel', 'missOnly', 'sortSel', 'viewSel', 'lightbox', 'notice', 'dataBanner', 'exportMissing', 'exportOwned', 'exportSpares', 'undoQuantity', 'quantityImport', 'importPreview', 'quality', 'historyMore', 'historyCsv']
       : [];
   let missing = false;
   for (const id of requiredIds) {
