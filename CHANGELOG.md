@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. New entries are generated from Conventional Commits when a release is published.
 
+## [v3.7.0] - 2026-11-02
+
+### Features
+- feat: harden collection editing and add tracker tools (#39) (2c83488)
+
+### Other changes
+- docs: add agent development kit (#38) (1890900)
+- docs: synchronize automation and release guides (#37) (9f9be2e)
+- docs: update changelog for v3.6.1 (#35) (bab05eb)
+
 ## [v3.6.1] - 2026-10-31
 
 ### Fixes
