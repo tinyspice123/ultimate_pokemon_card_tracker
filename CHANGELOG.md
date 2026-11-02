@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. New entries are generated from Conventional Commits when a release is published.
 
+## [v3.9.0] - 2026-11-02
+
+### Features
+- feat(ci): run migrations only for database changes (#46) (a1c650a)
+
+### Other changes
+- docs: update changelog for v3.8.0 (#45) (fce2e15)
+
 ## [v3.8.0] - 2026-11-02
 
 ### Features
