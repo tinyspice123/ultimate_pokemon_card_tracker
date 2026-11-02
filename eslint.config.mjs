@@ -13,6 +13,7 @@ const browserGlobals={
   sortItems:'readonly', marketplaceSearchUrls:'readonly', priceMid:'readonly',
   matchesQuery:'readonly', exportText:'readonly', exportCsv:'readonly', csvEscape:'readonly',
   parseHaveQty:'readonly', planQuantityImport:'readonly', collectionQuality:'readonly',
+  quantityChangesPayload:'readonly',
   SUPABASE_CONFIG:'readonly', PokemonDb:'readonly',
 };
 

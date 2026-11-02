@@ -84,7 +84,7 @@ const PokemonDb = (()=>{
   async function setQuantities(session,changes){
     const response=await request('/rest/v1/rpc/set_collection_quantities',{
       method:'POST',headers:headers(session,{'Content-Type':'application/json'}),
-      body:JSON.stringify({changes:changes.map(change=>({id:change.id,quantity:change.quantity}))})});
+      body:JSON.stringify(quantityChangesPayload(changes))});
     return await response.json();
   }
   async function quantityHistory(session,setId,fromDate,toDate,offset=0,limit=100){

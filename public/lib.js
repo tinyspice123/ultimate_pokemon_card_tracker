@@ -303,6 +303,10 @@ function collectionQuality(items,imageMap){
   return {missingPrice,needsVerification,missingImage,duplicates};
 }
 
+function quantityChangesPayload(changes){
+  return {changes:changes.map(change=>({id:change.id,quantity:change.quantity}))};
+}
+
 // Marketplace search URLs stay useful when listings change, unlike links to
 // individual offers. eBay uses only Card and Number so extra sheet metadata
 // does not make its search results unnecessarily narrow.
@@ -330,6 +334,6 @@ if(typeof module!=="undefined" && module.exports){
     csvToRows,priceMid,matchesQuery,parseHaveQty,detectColumns,rowsToItems,imgCandidatesPure,
     canonicalManifestText,manifestKey,
     esc,safeImageUrl,setSafeImageSource,sortItems,exportText,exportCsv,csvEscape,
-    marketplaceSearchUrls,planQuantityImport,collectionQuality
+    marketplaceSearchUrls,planQuantityImport,collectionQuality,quantityChangesPayload
   };
 }

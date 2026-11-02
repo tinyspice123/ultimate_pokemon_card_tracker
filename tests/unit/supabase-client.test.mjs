@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source=`${fs.readFileSync('public/supabase-client.js','utf8')}\n`+
+const source=`${fs.readFileSync('public/lib.js','utf8')}\n`+
+  `${fs.readFileSync('public/supabase-client.js','utf8')}\n`+
   'globalThis.__PokemonDb=PokemonDb;';
 
 function clientWith(fetchImpl){
