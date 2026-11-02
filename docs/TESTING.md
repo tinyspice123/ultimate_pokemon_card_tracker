@@ -18,6 +18,13 @@ python scripts/recovery_drill.py backups
 Workflow edits additionally require actionlint with ShellCheck integration, and
 shell helpers require both ShellCheck and `tests/shell/` coverage.
 
+Before pushing executable JavaScript, inspect `coverage/lcov.info` and verify
+that the changed lines appear with nonzero `DA` counts. SonarQube enforces at
+least 80% coverage on new code from this LCOV report; Playwright scenarios do
+not contribute to that measurement. A coverage exclusion must be narrow,
+justified in `sonar-project.properties`, and reserved for code that cannot be
+meaningfully unit tested.
+
 CI also starts an isolated PostgreSQL service, applies every migration in order,
 and runs `tests/sql/security.sql`. That contract proves editor-only quantity
 updates, column-level catalogue protection, complete audit recording, and audit

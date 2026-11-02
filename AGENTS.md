@@ -84,6 +84,11 @@ opened directly from disk.
 When adding logic:
 
 - Put pure browser/release helpers under unit test.
+- Treat SonarQube new-code coverage as a pre-push requirement. Run
+  `npm run test:coverage` and confirm new executable JavaScript is present in
+  `coverage/lcov.info`; Playwright coverage does not feed the SonarQube gate.
+  Add LCOV-visible unit coverage for new code, or document and justify a narrow
+  `sonar.coverage.exclusions` entry when unit coverage is genuinely unsuitable.
 - Add Playwright coverage for visible behavior and critical failure paths.
 - Add Python unittest coverage for maintenance scripts.
 - Apply the migration chain and exercise grants, RLS, and triggers in the

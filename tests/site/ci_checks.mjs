@@ -48,6 +48,11 @@ for (const [id, cfg] of Object.entries(SETS)) {
 // A successful scan upload is not the same as a passing server-side gate.
 // Keep deployment blocked until SonarCloud has computed and passed the gate.
 const workflow = fs.readFileSync('.github/workflows/ci-quality-deploy.yml', 'utf8');
+const agentGuide = fs.readFileSync('AGENTS.md', 'utf8');
+if (!agentGuide.includes('Treat SonarQube new-code coverage as a pre-push requirement') ||
+    !agentGuide.includes('coverage/lcov.info'))
+  fail('agent guidance does not require pre-push SonarQube new-code coverage');
+else ok('agent guidance requires LCOV-visible new-code coverage before push');
 if (!workflow.includes('-Dsonar.qualitygate.wait=true'))
   fail('SonarQube analysis does not wait for the Quality Gate');
 else ok('SonarQube Quality Gate blocks the analysis job');
