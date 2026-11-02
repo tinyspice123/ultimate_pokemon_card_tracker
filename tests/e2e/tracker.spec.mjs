@@ -53,6 +53,11 @@ test('authorized Google account can update a database quantity', async ({ page }
     status:200,contentType:'application/json',body:'true',
   }));
   const savedQuantities=[];
+  let importedChanges=null;
+  await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/rpc/set_collection_quantities', async route => {
+    importedChanges=route.request().postDataJSON().changes;
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(importedChanges)});
+  });
   await page.route('https://ekyngjwtoxvkqfalxebm.supabase.co/rest/v1/pokemon_card_main**', async route => {
     if(route.request().method()==='PATCH'){
       savedQuantities.push(route.request().postDataJSON().quantity);
@@ -85,7 +90,8 @@ test('authorized Google account can update a database quantity', async ({ page }
   await expect(page.locator('#importSummary')).toContainText('1 quantity change');
   await page.getByRole('button',{name:'Apply changes'}).click();
   await expect(page.locator('.qtyedit output').first()).toHaveText('4');
-  expect(savedQuantities).toEqual([2,1,4]);
+  expect(savedQuantities).toEqual([2,1]);
+  expect(importedChanges).toEqual([{id:'pikachu',quantity:4}]);
 });
 
 test('uses the repository snapshot and displays a warning when Supabase is unavailable', async ({ page }) => {

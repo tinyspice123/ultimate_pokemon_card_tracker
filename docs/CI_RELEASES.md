@@ -13,6 +13,18 @@ limited to `README.md`, `CHANGELOG.md`, or `docs/`, browser, SonarQube, and
 preview jobs complete as successful no-ops while the workflow, unit, Python,
 and security checks continue to run.
 
+On trusted `main` deployments, the pipeline enters the protected
+`supabase-production` environment after browser and quality checks. It audits
+the remote migration ledger and applies pending migrations before packaging
+Pages, so a schema failure cannot publish a frontend that depends on it.
+Pull-request code never receives the production database URL.
+
+The manually dispatched **Reconcile Supabase migration history** workflow is a
+one-time recovery path for migrations previously applied through SQL Editor. It
+requires the exact project ref, verifies the deployed schema contract, and only
+then records missing migration versions through `202611020001`. It does not
+apply schema changes.
+
 This personal-account repository cannot enable GitHub Merge Queue. The
 workflows retain `merge_group` support for a future organization transfer.
 Until then, the scheduled **Generated PR status** workflow updates behind

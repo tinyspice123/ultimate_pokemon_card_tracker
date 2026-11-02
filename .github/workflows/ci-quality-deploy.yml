@@ -84,6 +84,7 @@ jobs:
             /public/
             /scripts/
             /tests/
+            /AGENTS.md
             /eslint.config.mjs
             /package-lock.json
             /package.json
@@ -392,9 +393,44 @@ jobs:
             echo "For example: \`python -m http.server 4173 --directory public\`."
           } >> "$GITHUB_STEP_SUMMARY"
 
+  database-migrations:
+    name: Deploy Supabase migrations
+    needs: [browser-tests, sonar]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.event_name != 'merge_group'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: supabase-production
+    permissions:
+      contents: read
+    concurrency:
+      group: supabase-production
+      cancel-in-progress: false
+    env:
+      SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+      SUPABASE_PROJECT_REF: ekyngjwtoxvkqfalxebm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/reconcile_supabase_history.sh
+            /supabase/migrations/
+            /supabase/production_schema_contract.sql
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@a9de0f0e1ffcf6ec895b135e292ddc76592d3c83 # main
+        with:
+          version: 3.0.0
+      - name: Verify and reconcile the manually applied baseline
+        run: |
+          psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 \
+            -f supabase/production_schema_contract.sql
+          bash scripts/reconcile_supabase_history.sh
+      - name: Apply pending migrations
+        run: supabase db push --yes --remote="$SUPABASE_DATABASE_URL"
+
   package-pages:
     name: Package Pages artifact
-    needs: [browser-tests, sonar]
+    needs: [browser-tests, sonar, database-migrations]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10

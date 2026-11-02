@@ -81,11 +81,17 @@ const PokemonDb = (()=>{
       'Content-Type':'application/json',Prefer:'return=minimal'}),
       body:JSON.stringify({quantity})});
   }
+  async function setQuantities(session,changes){
+    const response=await request('/rest/v1/rpc/set_collection_quantities',{
+      method:'POST',headers:headers(session,{'Content-Type':'application/json'}),
+      body:JSON.stringify(quantityChangesPayload(changes))});
+    return await response.json();
+  }
   async function quantityHistory(session,setId,fromDate,toDate,offset=0,limit=100){
     const from=new Date(`${fromDate}T00:00:00`).toISOString();
     const end=new Date(`${toDate}T00:00:00`); end.setDate(end.getDate()+1);
     const path=`/rest/v1/pokemon_card_quantity_history?set_id=eq.${encodeURIComponent(setId)}&changed_at=gte.${encodeURIComponent(from)}&changed_at=lt.${encodeURIComponent(end.toISOString())}&select=id,card_name,collector_number,variant,set_id,previous_quantity,new_quantity,changed_at&order=changed_at.desc&limit=${limit}&offset=${offset}`;
     return await (await request(path,{headers:headers(session)})).json();
   }
-  return {currentSession,currentUser,signInWithGoogle,signOut,cards,isEditor,setQuantity,quantityHistory};
+  return {currentSession,currentUser,signInWithGoogle,signOut,cards,isEditor,setQuantity,setQuantities,quantityHistory};
 })();

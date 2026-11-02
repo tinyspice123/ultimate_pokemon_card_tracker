@@ -12,7 +12,14 @@ const require = createRequire(import.meta.url);
 const {csvToRows, priceMid, matchesQuery, parseHaveQty, detectColumns, rowsToItems, imgCandidatesPure,
        esc, safeImageUrl, setSafeImageSource, sortItems, exportText, exportCsv,
        csvEscape, marketplaceSearchUrls, manifestKey, planQuantityImport,
-       collectionQuality} = require('../../public/lib.js');
+       collectionQuality, quantityChangesPayload} = require('../../public/lib.js');
+
+test('quantityChangesPayload retains only database quantity fields',()=>{
+  assert.deepEqual(quantityChangesPayload([
+    {id:'pikachu',quantity:4,item:{local:true}},
+    {id:'eevee',quantity:2,previous:0},
+  ]),{changes:[{id:'pikachu',quantity:4},{id:'eevee',quantity:2}]});
+});
 
 test('planQuantityImport previews exact changes and rejects unknown cards', () => {
   const items=[{id:'pika',card:'Pikachu',num:'025',variant:'Reverse',qty:1}];

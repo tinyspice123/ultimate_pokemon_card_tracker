@@ -1,0 +1,42 @@
+name: Reconcile Supabase migration history
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_ref:
+        description: Type the production project ref to confirm reconciliation
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: inputs.project_ref == 'ekyngjwtoxvkqfalxebm'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: supabase-production
+    env:
+      SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+      SUPABASE_PROJECT_REF: ${{ inputs.project_ref }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/reconcile_supabase_history.sh
+            /supabase/migrations/
+            /supabase/production_schema_contract.sql
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@a9de0f0e1ffcf6ec895b135e292ddc76592d3c83 # main
+        with:
+          version: 3.0.0
+      - name: Verify the deployed baseline schema
+        run: psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/production_schema_contract.sql
+      - name: Record verified dashboard-applied migrations
+        run: bash scripts/reconcile_supabase_history.sh

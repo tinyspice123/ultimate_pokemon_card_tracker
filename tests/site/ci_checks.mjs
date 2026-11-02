@@ -48,6 +48,13 @@ for (const [id, cfg] of Object.entries(SETS)) {
 // A successful scan upload is not the same as a passing server-side gate.
 // Keep deployment blocked until SonarCloud has computed and passed the gate.
 const workflow = fs.readFileSync('.github/workflows/ci-quality-deploy.yml', 'utf8');
+const agentGuide = fs.readFileSync('AGENTS.md', 'utf8');
+if (!agentGuide.includes('Treat SonarQube new-code coverage as a pre-push requirement') ||
+    !agentGuide.includes('coverage/lcov.info'))
+  fail('agent guidance does not require pre-push SonarQube new-code coverage');
+else if (!workflow.includes('/AGENTS.md'))
+  fail('site-check sparse checkout does not include the agent coverage guidance');
+else ok('agent guidance requires LCOV-visible new-code coverage before push');
 if (!workflow.includes('-Dsonar.qualitygate.wait=true'))
   fail('SonarQube analysis does not wait for the Quality Gate');
 else ok('SonarQube Quality Gate blocks the analysis job');
@@ -65,7 +72,7 @@ const deployJob = workflow.match(new RegExp(`${nl}  deploy:${nl}([\\s\\S]*)`))?.
 if (!browserJob || !sonarJob || !packageJob || !deployJob)
   fail('CI workflow is missing a browser-tests, sonar, package-pages, or deploy job');
 else if (
-  !/needs:\s*\[browser-tests,\s*sonar\]/.test(packageJob) ||
+  !/needs:\s*\[browser-tests,\s*sonar,\s*database-migrations\]/.test(packageJob) ||
   !/needs:\s*package-pages/.test(deployJob)
 ) fail('Pages packaging/deployment job dependencies are incorrect');
 else if (/sonarqube-scan-action|upload-pages-artifact/.test(browserJob))
@@ -151,6 +158,18 @@ if (!workflow.includes('Apply migrations and verify database security contracts'
     !fs.existsSync('tests/sql/security.sql'))
   fail('CI does not apply migrations and verify database security contracts in PostgreSQL');
 else ok('PostgreSQL migration and security contracts run in CI');
+
+if (!workflow.includes('name: Deploy Supabase migrations') ||
+    !workflow.includes('supabase db push --yes --remote="$SUPABASE_DATABASE_URL"') ||
+    !workflow.includes('environment: supabase-production'))
+  fail('production deployment is not gated on protected Supabase migrations');
+else ok('production deployment is gated on protected Supabase migrations');
+
+const reconciliationWorkflow = fs.readFileSync('.github/workflows/reconcile-supabase.yml', 'utf8');
+if (!reconciliationWorkflow.includes('supabase/production_schema_contract.sql') ||
+    !reconciliationWorkflow.includes('scripts/reconcile_supabase_history.sh'))
+  fail('dashboard-applied Supabase migrations cannot be safely reconciled');
+else ok('Supabase history reconciliation verifies the production schema first');
 
 if (!workflow.includes('python scripts/check_asset_budgets.py') ||
     !fs.existsSync('scripts/check_asset_budgets.py'))
