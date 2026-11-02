@@ -26,6 +26,26 @@ test('planQuantityImport previews exact changes and rejects unknown cards', () =
   assert.match(plan.errors[0],/not found/);
 });
 
+test('planQuantityImport validates headers, values, identities and duplicates', () => {
+  const card={id:'pika',card:'Pikachu',num:'025',variant:'Reverse',qty:1};
+  assert.match(planQuantityImport([card],[['Card'],['Pikachu']]).errors[0],/needs Have/);
+
+  const identityPlan=planQuantityImport([card],[
+    ['Card','Number','Variant','Quantity'],
+    ['Pikachu','025','Reverse','2'],
+    ['Pikachu','025','Reverse','3'],
+    ['Pikachu','025','Reverse','many'],
+  ]);
+  assert.equal(identityPlan.changes[0].next,2);
+  assert.match(identityPlan.errors[0],/more than once/);
+  assert.match(identityPlan.errors[1],/non-negative integer/);
+
+  const ambiguous=planQuantityImport([card,{...card,id:'pika-2'}],[
+    ['Card','Number','Variant','Have'],['Pikachu','025','Reverse','2'],
+  ]);
+  assert.match(ambiguous.errors[0],/ambiguous/);
+});
+
 test('collectionQuality reports incomplete and duplicate catalogue data', () => {
   const items=[
     {card:'Mew',num:'1',variant:'Regular',price:'',status:'verify',img:''},

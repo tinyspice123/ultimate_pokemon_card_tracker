@@ -100,7 +100,7 @@ async function initAuth(){
   document.getElementById('bulkStart').style.display=canEdit?'inline-block':'none';
   document.getElementById('undoQuantity').style.display=canEdit?'inline-block':'none';
   document.getElementById('importWrap').style.display=canEdit?'inline-flex':'none';
-  if(canEdit) loadQuantityHistory();
+  if(canEdit) await loadQuantityHistory();
 }
 
 async function loadQuantityHistory(append=false){
@@ -115,7 +115,8 @@ async function loadQuantityHistory(append=false){
       const item=document.createElement('li'), time=document.createElement('time');
       const when=new Date(entry.changed_at);
       time.dateTime=when.toISOString(); time.textContent=when.toLocaleString();
-      item.append(time,`${entry.card_name} · ${entry.collector_number||'no number'}${entry.variant?` · ${entry.variant}`:''} · ${entry.set_id}: ${entry.previous_quantity} → ${entry.new_quantity}`);
+      const variant=entry.variant?' · '+entry.variant:'';
+      item.append(time,`${entry.card_name} · ${entry.collector_number||'no number'}${variant} · ${entry.set_id}: ${entry.previous_quantity} → ${entry.new_quantity}`);
       return item;
     }):[Object.assign(document.createElement('li'),{textContent:'No changes in this date range.'})];
     list.replaceChildren(...rows);
@@ -134,15 +135,15 @@ document.getElementById('historyTo').value=localDate();
 document.getElementById('historyApply').addEventListener('click',()=>{
   const from=document.getElementById('historyFrom').value, to=document.getElementById('historyTo').value;
   if(!from||!to||from>to){ toast('Choose a valid history date range.'); return; }
-  loadQuantityHistory();
+  void loadQuantityHistory();
 });
-document.getElementById('historyMore').addEventListener('click',()=>loadQuantityHistory(true));
+document.getElementById('historyMore').addEventListener('click',()=>{ void loadQuantityHistory(true); });
 document.getElementById('historyCsv').addEventListener('click',()=>{
   const header=['Changed at','Card','Number','Variant','Previous quantity','New quantity'];
   const rows=historyEntries.map(entry=>[entry.changed_at,entry.card_name,entry.collector_number,
     entry.variant,entry.previous_quantity,entry.new_quantity]);
   downloadCsv(`${SET_ID}-history-${new Date().toISOString().slice(0,10)}.csv`,
-    [header,...rows].map(row=>row.map(csvEscape).join(',')).join('\n')+'\n');
+    [header,...rows].map(row=>row.map(value=>csvEscape(value)).join(',')).join('\n')+'\n');
 });
 
 document.getElementById('googleSignIn').addEventListener('click',()=>PokemonDb.signInWithGoogle());
@@ -443,7 +444,7 @@ async function updateQuantity(it,delta){
     undo.textContent=`Undo ${it.card}: ${previous} → ${next}`;
     markSynced();
     toast(`${it.card}: ${previous} → ${next}`);
-    loadQuantityHistory();
+    await loadQuantityHistory();
   }catch(error){
     it.qty=previous;
     toast(`Could not save quantity: ${String(error.message||error)}`);
@@ -462,7 +463,7 @@ document.getElementById('undoQuantity').addEventListener('click',async ()=>{
     change.item.qty=change.previous;
     lastQuantityChange=null;
     button.textContent='Undo last change';
-    markSynced(); loadQuantityHistory();
+    markSynced(); void loadQuantityHistory();
     toast(`${change.item.card} restored to ${change.previous}`);
   }catch(error){
     button.disabled=false;
@@ -498,7 +499,7 @@ document.getElementById('bulkConfirm').addEventListener('click',async ()=>{
     if(result.status==='rejected'){ item.qty-=1; failures+=1; }
   });
   if(failures) toast(`${failures} addition${failures===1?'':'s'} could not be saved.`);
-  else { markSynced(); toast(`${selected.length} addition${selected.length===1?'':'s'} saved.`); loadQuantityHistory(); }
+  else { markSynced(); toast(`${selected.length} addition${selected.length===1?'':'s'} saved.`); await loadQuantityHistory(); }
   setBulkMode(false);
 });
 
@@ -695,8 +696,13 @@ document.getElementById('importApply').addEventListener('click',async ()=>{
     if(result.status==='fulfilled') changes[index].item.qty=changes[index].next;
     else failures++;
   });
-  closeImportPreview(); render(); markSynced(); loadQuantityHistory();
-  toast(failures?`${failures} imported change${failures===1?'':'s'} failed.`:`Applied ${changes.length} imported changes.`);
+  closeImportPreview(); render(); markSynced(); void loadQuantityHistory();
+  let message=`Applied ${changes.length} imported changes.`;
+  if(failures){
+    const suffix=failures===1?'':'s';
+    message=`${failures} imported change${suffix} failed.`;
+  }
+  toast(message);
 });
 
 let searchTimer=null;

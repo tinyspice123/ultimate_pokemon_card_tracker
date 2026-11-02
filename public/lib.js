@@ -221,37 +221,70 @@ function exportCsv(kind, list){
 
 // Match an imported quantity CSV to live cards without silently guessing.
 // ID wins when present; otherwise the exact card/number/variant identity is used.
-function planQuantityImport(items,rows){
+function importColumn(header,...names){
+  return header.findIndex(value=>names.includes(value));
+}
+
+function importIndexes(rows){
   const header=(rows[0]||[]).map(value=>String(value).trim().toLowerCase());
-  const column=(...names)=>header.findIndex(value=>names.some(name=>value===name));
-  const indexes={id:column('id'),card:column('card'),number:column('number'),
-    variant:column('variant','variant / stamp'),have:column('have','quantity','qty')};
-  if(indexes.have<0 || (indexes.id<0 && indexes.card<0))
-    return {changes:[],errors:['CSV needs Have plus either ID or Card columns.']};
+  return {id:importColumn(header,'id'),card:importColumn(header,'card'),
+    number:importColumn(header,'number'),variant:importColumn(header,'variant','variant / stamp'),
+    have:importColumn(header,'have','quantity','qty')};
+}
+
+function importCell(row,index){
+  return index<0?'':String(row[index]||'').trim();
+}
+
+function indexImportItems(items){
   const byId=new Map(items.filter(item=>item.id).map(item=>[item.id,item]));
   const byIdentity=new Map();
   items.forEach(item=>{
     const key=manifestKey(item.card,item.num,item.variant);
-    const matches=byIdentity.get(key)||[]; matches.push(item); byIdentity.set(key,matches);
+    const matches=byIdentity.get(key)||[];
+    matches.push(item);
+    byIdentity.set(key,matches);
   });
+  return {byId,byIdentity};
+}
+
+function matchImportedItem(row,indexes,indexed){
+  const id=importCell(row,indexes.id);
+  const byId=id?indexed.byId.get(id):null;
+  if(byId) return {item:byId};
+  if(indexes.card<0) return {};
+  const key=manifestKey(importCell(row,indexes.card),importCell(row,indexes.number),
+    importCell(row,indexes.variant));
+  const matches=indexed.byIdentity.get(key)||[];
+  if(matches.length>1) return {error:'card identity is ambiguous.'};
+  return {item:matches[0]};
+}
+
+function planImportRow(row,rowNumber,indexes,indexed){
+  const value=importCell(row,indexes.have);
+  const identifyingValue=importCell(row,indexes.card)||importCell(row,indexes.id);
+  if(!value&&!identifyingValue) return null;
+  if(!/^\d+$/.test(value)) return {error:`Row ${rowNumber}: Have must be a non-negative integer.`};
+  const matched=matchImportedItem(row,indexes,indexed);
+  if(matched.error) return {error:`Row ${rowNumber}: ${matched.error}`};
+  if(!matched.item) return {error:`Row ${rowNumber}: card was not found in this set.`};
+  return {item:matched.item,next:Number(value)};
+}
+
+function planQuantityImport(items,rows){
+  const indexes=importIndexes(rows);
+  if(indexes.have<0 || (indexes.id<0 && indexes.card<0))
+    return {changes:[],errors:['CSV needs Have plus either ID or Card columns.']};
+  const indexed=indexImportItems(items);
   const changes=[], errors=[], seen=new Set();
   for(let rowIndex=1;rowIndex<rows.length;rowIndex++){
-    const row=rows[rowIndex], value=String(row[indexes.have]||'').trim();
-    if(!value && !String(row[indexes.card]||row[indexes.id]||'').trim()) continue;
-    if(!/^\d+$/.test(value)){ errors.push(`Row ${rowIndex+1}: Have must be a non-negative integer.`); continue; }
-    const id=indexes.id>=0?String(row[indexes.id]||'').trim():'';
-    let item=id?byId.get(id):null;
-    if(!item && indexes.card>=0){
-      const key=manifestKey(row[indexes.card],indexes.number>=0?row[indexes.number]:'',indexes.variant>=0?row[indexes.variant]:'');
-      const matches=byIdentity.get(key)||[];
-      if(matches.length===1) item=matches[0];
-      else if(matches.length>1){ errors.push(`Row ${rowIndex+1}: card identity is ambiguous.`); continue; }
-    }
-    if(!item){ errors.push(`Row ${rowIndex+1}: card was not found in this set.`); continue; }
-    if(seen.has(item)){ errors.push(`Row ${rowIndex+1}: card appears more than once.`); continue; }
-    seen.add(item);
-    const next=Number(value);
-    if(next!==item.qty) changes.push({item,previous:item.qty,next});
+    const planned=planImportRow(rows[rowIndex],rowIndex+1,indexes,indexed);
+    if(!planned) continue;
+    if(planned.error){ errors.push(planned.error); continue; }
+    if(seen.has(planned.item)){ errors.push(`Row ${rowIndex+1}: card appears more than once.`); continue; }
+    seen.add(planned.item);
+    if(planned.next!==planned.item.qty)
+      changes.push({item:planned.item,previous:planned.item.qty,next:planned.next});
   }
   return {changes,errors};
 }
@@ -265,7 +298,7 @@ function collectionQuality(items,imageMap){
     identities.add(key);
     if(priceMid(item.price)==null) missingPrice++;
     if(/verify/i.test(item.status)) needsVerification++;
-    if(!item.img && !(imageMap&&imageMap.has(key))) missingImage++;
+    if(!item.img && !imageMap?.has(key)) missingImage++;
   });
   return {missingPrice,needsVerification,missingImage,duplicates};
 }
