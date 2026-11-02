@@ -219,6 +219,90 @@ function exportCsv(kind, list){
   return rows.map(r=>r.map(csvEscape).join(",")).join("\n");
 }
 
+// Match an imported quantity CSV to live cards without silently guessing.
+// ID wins when present; otherwise the exact card/number/variant identity is used.
+function importColumn(header,...names){
+  return header.findIndex(value=>names.includes(value));
+}
+
+function importIndexes(rows){
+  const header=(rows[0]||[]).map(value=>String(value).trim().toLowerCase());
+  return {id:importColumn(header,'id'),card:importColumn(header,'card'),
+    number:importColumn(header,'number'),variant:importColumn(header,'variant','variant / stamp'),
+    have:importColumn(header,'have','quantity','qty')};
+}
+
+function importCell(row,index){
+  return index<0?'':String(row[index]||'').trim();
+}
+
+function indexImportItems(items){
+  const byId=new Map(items.filter(item=>item.id).map(item=>[item.id,item]));
+  const byIdentity=new Map();
+  items.forEach(item=>{
+    const key=manifestKey(item.card,item.num,item.variant);
+    const matches=byIdentity.get(key)||[];
+    matches.push(item);
+    byIdentity.set(key,matches);
+  });
+  return {byId,byIdentity};
+}
+
+function matchImportedItem(row,indexes,indexed){
+  const id=importCell(row,indexes.id);
+  const byId=id?indexed.byId.get(id):null;
+  if(byId) return {item:byId};
+  if(indexes.card<0) return {};
+  const key=manifestKey(importCell(row,indexes.card),importCell(row,indexes.number),
+    importCell(row,indexes.variant));
+  const matches=indexed.byIdentity.get(key)||[];
+  if(matches.length>1) return {error:'card identity is ambiguous.'};
+  return {item:matches[0]};
+}
+
+function planImportRow(row,rowNumber,indexes,indexed){
+  const value=importCell(row,indexes.have);
+  const identifyingValue=importCell(row,indexes.card)||importCell(row,indexes.id);
+  if(!value&&!identifyingValue) return null;
+  if(!/^\d+$/.test(value)) return {error:`Row ${rowNumber}: Have must be a non-negative integer.`};
+  const matched=matchImportedItem(row,indexes,indexed);
+  if(matched.error) return {error:`Row ${rowNumber}: ${matched.error}`};
+  if(!matched.item) return {error:`Row ${rowNumber}: card was not found in this set.`};
+  return {item:matched.item,next:Number(value)};
+}
+
+function planQuantityImport(items,rows){
+  const indexes=importIndexes(rows);
+  if(indexes.have<0 || (indexes.id<0 && indexes.card<0))
+    return {changes:[],errors:['CSV needs Have plus either ID or Card columns.']};
+  const indexed=indexImportItems(items);
+  const changes=[], errors=[], seen=new Set();
+  for(let rowIndex=1;rowIndex<rows.length;rowIndex++){
+    const planned=planImportRow(rows[rowIndex],rowIndex+1,indexes,indexed);
+    if(!planned) continue;
+    if(planned.error){ errors.push(planned.error); continue; }
+    if(seen.has(planned.item)){ errors.push(`Row ${rowIndex+1}: card appears more than once.`); continue; }
+    seen.add(planned.item);
+    if(planned.next!==planned.item.qty)
+      changes.push({item:planned.item,previous:planned.item.qty,next:planned.next});
+  }
+  return {changes,errors};
+}
+
+function collectionQuality(items,imageMap){
+  const identities=new Set();
+  let duplicates=0, missingPrice=0, needsVerification=0, missingImage=0;
+  items.forEach(item=>{
+    const key=manifestKey(item.card,item.num,item.variant);
+    if(identities.has(key)) duplicates++;
+    identities.add(key);
+    if(priceMid(item.price)==null) missingPrice++;
+    if(/verify/i.test(item.status)) needsVerification++;
+    if(!item.img && !imageMap?.has(key)) missingImage++;
+  });
+  return {missingPrice,needsVerification,missingImage,duplicates};
+}
+
 // Marketplace search URLs stay useful when listings change, unlike links to
 // individual offers. eBay uses only Card and Number so extra sheet metadata
 // does not make its search results unnecessarily narrow.
@@ -246,6 +330,6 @@ if(typeof module!=="undefined" && module.exports){
     csvToRows,priceMid,matchesQuery,parseHaveQty,detectColumns,rowsToItems,imgCandidatesPure,
     canonicalManifestText,manifestKey,
     esc,safeImageUrl,setSafeImageSource,sortItems,exportText,exportCsv,csvEscape,
-    marketplaceSearchUrls
+    marketplaceSearchUrls,planQuantityImport,collectionQuality
   };
 }

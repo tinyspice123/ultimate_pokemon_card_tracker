@@ -25,9 +25,11 @@ cross-system operation, not merely a UI change.
 | `quantity` | Non-negative owned count; the only browser-edited card field. |
 
 `public.pokemon_card_quantity_history` is an append-only audit trail containing
-card ID, set, name, collector number, previous/new quantity, authenticated actor
-UUID, and timestamp. A trigger writes it after quantity changes. Editors may
-read it; browser clients cannot mutate it.
+the optional live card ID, set, name, collector number, variant, previous/new
+quantity, authenticated actor UUID, and timestamp. A trigger writes it after
+quantity changes. Editors may read it; browser clients cannot mutate it. Card
+deletion sets the live reference to null while retaining the identity snapshot
+and audit row.
 
 `private.collection_editors` stores authorized `auth.users.id` UUIDs. Clients
 cannot read this table; `public.is_collection_editor()` exposes only membership.
@@ -54,6 +56,9 @@ paths, and entries without a corresponding snapshot row.
   change the importer-derived ID, so use the manifest sync tool and plan live
   data migration before renaming identity fields.
 - Quantities are never negative. Each set's sort order is unique.
+- Authenticated editors receive column-level permission to update only
+  `quantity`; catalogue metadata remains maintenance-only even when RLS admits
+  the editor's row update.
 - Every configured set has a valid snapshot; each snapshot identity is unique.
 - Database schema changes use a new migration and update client selection,
   importer/exporter, validation, recovery drill, fixtures, and this document.
