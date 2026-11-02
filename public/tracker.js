@@ -689,20 +689,19 @@ document.getElementById('importApply').addEventListener('click',async ()=>{
   if(!pendingImport||pendingImport.errors.length) return;
   const changes=pendingImport.changes;
   if(!window.confirm(`Apply ${changes.length} reviewed quantity change${changes.length===1?'':'s'}?`)) return;
-  const results=await Promise.allSettled(changes.map(change=>
-    PokemonDb.setQuantity(authSession,change.item.id,change.next)));
-  let failures=0;
-  results.forEach((result,index)=>{
-    if(result.status==='fulfilled') changes[index].item.qty=changes[index].next;
-    else failures++;
-  });
-  closeImportPreview(); render(); markSynced(); void loadQuantityHistory();
-  let message=`Applied ${changes.length} imported changes.`;
-  if(failures){
-    const suffix=failures===1?'':'s';
-    message=`${failures} imported change${suffix} failed.`;
+  const button=document.getElementById('importApply');
+  button.disabled=true;
+  try{
+    await PokemonDb.setQuantities(authSession,changes.map(change=>({
+      id:change.item.id,quantity:change.next,
+    })));
+    changes.forEach(change=>{ change.item.qty=change.next; });
+    closeImportPreview(); render(); markSynced(); void loadQuantityHistory();
+    toast(`Applied ${changes.length} imported changes.`);
+  }catch(error){
+    button.disabled=false;
+    toast(`Import was not applied: ${String(error.message||error)}`);
   }
-  toast(message);
 });
 
 let searchTimer=null;

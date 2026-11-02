@@ -34,6 +34,11 @@ and audit row.
 `private.collection_editors` stores authorized `auth.users.id` UUIDs. Clients
 cannot read this table; `public.is_collection_editor()` exposes only membership.
 
+`public.set_collection_quantities(jsonb)` applies up to 500 reviewed quantity
+changes in one transaction. It is security-invoker, validates all card IDs and
+quantities before updating, and therefore retains the column grant, RLS, and
+per-card history-trigger boundaries. Any invalid entry rolls back the batch.
+
 ## Snapshot mapping
 
 The CSV contract maps `Group`, `Card`, `Number`, `Variant / Stamp`, `Source`,

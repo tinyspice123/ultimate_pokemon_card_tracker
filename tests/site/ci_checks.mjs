@@ -65,7 +65,7 @@ const deployJob = workflow.match(new RegExp(`${nl}  deploy:${nl}([\\s\\S]*)`))?.
 if (!browserJob || !sonarJob || !packageJob || !deployJob)
   fail('CI workflow is missing a browser-tests, sonar, package-pages, or deploy job');
 else if (
-  !/needs:\s*\[browser-tests,\s*sonar\]/.test(packageJob) ||
+  !/needs:\s*\[browser-tests,\s*sonar,\s*database-migrations\]/.test(packageJob) ||
   !/needs:\s*package-pages/.test(deployJob)
 ) fail('Pages packaging/deployment job dependencies are incorrect');
 else if (/sonarqube-scan-action|upload-pages-artifact/.test(browserJob))
@@ -151,6 +151,18 @@ if (!workflow.includes('Apply migrations and verify database security contracts'
     !fs.existsSync('tests/sql/security.sql'))
   fail('CI does not apply migrations and verify database security contracts in PostgreSQL');
 else ok('PostgreSQL migration and security contracts run in CI');
+
+if (!workflow.includes('name: Deploy Supabase migrations') ||
+    !workflow.includes('supabase db push --yes --remote="$SUPABASE_DATABASE_URL"') ||
+    !workflow.includes('environment: supabase-production'))
+  fail('production deployment is not gated on protected Supabase migrations');
+else ok('production deployment is gated on protected Supabase migrations');
+
+const reconciliationWorkflow = fs.readFileSync('.github/workflows/reconcile-supabase.yml', 'utf8');
+if (!reconciliationWorkflow.includes('supabase/production_schema_contract.sql') ||
+    !reconciliationWorkflow.includes('scripts/reconcile_supabase_history.sh'))
+  fail('dashboard-applied Supabase migrations cannot be safely reconciled');
+else ok('Supabase history reconciliation verifies the production schema first');
 
 if (!workflow.includes('python scripts/check_asset_budgets.py') ||
     !fs.existsSync('scripts/check_asset_budgets.py'))

@@ -51,3 +51,17 @@ organization transfer. Meanwhile, the generated-PR status workflow updates
 behind automation branches so protected checks rerun against current `main`.
 Automation PRs contain one maintained comment distinguishing reviews, checks,
 and merge state.
+
+## Supabase migration automation
+
+Create a GitHub environment named `supabase-production`, optionally require a
+manual approver, and add one environment secret named `SUPABASE_DATABASE_URL`.
+Use the URI from Supabase **Connect → Session pooler**, include
+`sslmode=require`, and percent-encode reserved password characters. Environment
+secrets keep the credential unavailable to pull-request jobs.
+
+After first configuring the environment, run **Reconcile Supabase migration
+history** with project ref `ekyngjwtoxvkqfalxebm`. Once it succeeds, future
+`main` pipelines use the same environment to run `supabase db push` before the
+Pages artifact is built. Remove direct SQL Editor schema changes from routine
+operations.
