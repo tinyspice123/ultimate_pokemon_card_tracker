@@ -92,6 +92,7 @@ jobs:
             /.github/
             /public/
             /scripts/
+            /supabase/migrations/
             /tests/
             /AGENTS.md
             /eslint.config.mjs

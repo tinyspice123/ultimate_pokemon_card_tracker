@@ -49,11 +49,14 @@ for (const [id, cfg] of Object.entries(SETS)) {
 // Keep deployment blocked until SonarCloud has computed and passed the gate.
 const workflow = fs.readFileSync('.github/workflows/ci-quality-deploy.yml', 'utf8');
 const agentGuide = fs.readFileSync('AGENTS.md', 'utf8');
+const siteChecksJob = workflow.match(/\r?\n  site-checks:\r?\n([\s\S]*?)(?=\r?\n  python-tests:\r?\n)/)?.[1] || '';
 if (!agentGuide.includes('Treat SonarQube new-code coverage as a pre-push requirement') ||
     !agentGuide.includes('coverage/lcov.info'))
   fail('agent guidance does not require pre-push SonarQube new-code coverage');
-else if (!workflow.includes('/AGENTS.md'))
+else if (!siteChecksJob.includes('/AGENTS.md'))
   fail('site-check sparse checkout does not include the agent coverage guidance');
+else if (!siteChecksJob.includes('/supabase/migrations/'))
+  fail('site-check sparse checkout does not include migration fixtures for shell tests');
 else ok('agent guidance requires LCOV-visible new-code coverage before push');
 if (!workflow.includes('-Dsonar.qualitygate.wait=true'))
   fail('SonarQube analysis does not wait for the Quality Gate');
