@@ -12,7 +12,7 @@ baseline="202611020001"
 for migration in supabase/migrations/*.sql; do
   version="$(basename "$migration")"
   version="${version%%_*}"
-  [[ "$version" > "$baseline" ]] && continue
+  (( 10#$version > 10#$baseline )) && continue
   applied="$(psql "$SUPABASE_DATABASE_URL" -XAt -v ON_ERROR_STOP=1 -v version="$version" \
     -c "select exists(select 1 from supabase_migrations.schema_migrations where version = :'version')")"
   if [[ "$applied" == "t" ]]; then
