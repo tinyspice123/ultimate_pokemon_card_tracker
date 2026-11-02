@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. New entries are generated from Conventional Commits when a release is published.
 
+## [v3.8.0] - 2026-11-02
+
+### Features
+- feat(db): automate transactional Supabase migrations (#41) (4169fb9)
+
+### Fixes
+- fix(db): repair migration history query (#44) (358bfdb)
+
+### Other changes
+- chore(deps): update dependency minimatch to v11.0.3 (#42) (2e357d8)
+- docs: update changelog for v3.7.0 (#40) (701698f)
+
 ## [v3.7.0] - 2026-11-02
 
 ### Features
