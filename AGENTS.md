@@ -63,8 +63,10 @@ handoff. Workflow edits must also pass actionlint with shellcheck integration.
   editors have column-level permission to update only quantity, and audit rows
   must retain their complete identity after catalogue deletion.
 - Production migrations deploy through the protected `supabase-production`
-  environment before Pages packaging. Do not restore routine SQL Editor schema
-  changes or expose its database URL to pull-request jobs.
+  environment before Pages packaging only for database-related changes. The
+  weekly canary detects migration-ledger drift. Preserve both the classifier
+  and drift check; do not restore routine SQL Editor schema changes or expose
+  the database URL to pull-request jobs.
 
 ## Tests and required checks
 

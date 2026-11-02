@@ -149,6 +149,9 @@ else ok('required workflows support merge queue merge groups');
 const canaryWorkflow = fs.readFileSync('.github/workflows/production-canary.yml', 'utf8');
 if (!canaryWorkflow.includes('name: Backup recovery drill'))
   fail('production canary does not test backup recovery');
+else if (!canaryWorkflow.includes('name: Supabase migration drift') ||
+         !canaryWorkflow.includes('scripts/check_supabase_migration_drift.sh'))
+  fail('production canary does not detect Supabase migration drift');
 else if (!canaryWorkflow.includes('issues: write') ||
          !canaryWorkflow.includes('bash scripts/report_incident.sh'))
   fail('production canary failures do not create a GitHub issue');
@@ -163,6 +166,9 @@ if (!workflow.includes('name: Deploy Supabase migrations') ||
     !workflow.includes('supabase db push --yes --remote="$SUPABASE_DATABASE_URL"') ||
     !workflow.includes('environment: supabase-production'))
   fail('production deployment is not gated on protected Supabase migrations');
+else if (!workflow.includes("needs.classify-changes.outputs.database == 'true'") ||
+         !workflow.includes("needs.database-migrations.result == 'skipped'"))
+  fail('production migrations are not limited to database changes with a safe deployment no-op');
 else ok('production deployment is gated on protected Supabase migrations');
 
 const reconciliationWorkflow = fs.readFileSync('.github/workflows/reconcile-supabase.yml', 'utf8');

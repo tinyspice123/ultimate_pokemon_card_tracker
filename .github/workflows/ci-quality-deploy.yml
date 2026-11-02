@@ -41,6 +41,7 @@ jobs:
       contents: read
     outputs:
       application: ${{ steps.diff.outputs.application }}
+      database: ${{ steps.diff.outputs.database }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -51,22 +52,30 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           MERGE_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
           DISPATCH_BASE: ${{ inputs.base_ref }}
         run: |
           set -euo pipefail
           base_sha="$PR_BASE_SHA"
           [[ -n "$base_sha" ]] || base_sha="$MERGE_BASE_SHA"
+          [[ -n "$base_sha" ]] || base_sha="$PUSH_BASE_SHA"
+          [[ "$base_sha" != "0000000000000000000000000000000000000000" ]] || base_sha=""
           if [[ -z "$base_sha" ]]; then
             git fetch origin "${DISPATCH_BASE:-main}"
             base_sha="$(git merge-base "origin/${DISPATCH_BASE:-main}" HEAD)"
           fi
           files="$(git diff --name-only "$base_sha" HEAD)"
           application=true
+          database=false
           if [[ -n "$files" ]] && ! grep -Ev '^(CHANGELOG\.md|README\.md|docs/)' <<< "$files" | grep -q .; then
             application=false
           fi
+          if grep -Eq '^(supabase/.*|scripts/(reconcile_supabase_history|check_supabase_migration_drift)\.sh|\.github/workflows/(ci-quality-deploy|production-canary|reconcile-supabase)\.yml)$' <<< "$files"; then
+            database=true
+          fi
           echo "application=$application" >> "$GITHUB_OUTPUT"
-          printf 'Application changes: %s\n%s\n' "$application" "$files"
+          echo "database=$database" >> "$GITHUB_OUTPUT"
+          printf 'Application changes: %s\nDatabase changes: %s\n%s\n' "$application" "$database" "$files"
 
   site-checks:
     name: Site checks + JavaScript unit tests
@@ -103,7 +112,7 @@ jobs:
             -shellcheck=shellcheck
           shellcheck scripts/*.sh
           shellcheck tests/shell/*.sh
-          bash tests/shell/test_upsert_generated_pr.sh
+          for test_script in tests/shell/test_*.sh; do bash "$test_script"; done
 
       - name: Install development tools
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -395,8 +404,8 @@ jobs:
 
   database-migrations:
     name: Deploy Supabase migrations
-    needs: [browser-tests, sonar]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.event_name != 'merge_group'
+    needs: [classify-changes, browser-tests, sonar]
+    if: needs.classify-changes.outputs.database == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.event_name != 'merge_group'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: supabase-production
@@ -431,7 +440,10 @@ jobs:
   package-pages:
     name: Package Pages artifact
     needs: [browser-tests, sonar, database-migrations]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: >-
+      always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' &&
+      needs.browser-tests.result == 'success' && needs.sonar.result == 'success' &&
+      (needs.database-migrations.result == 'success' || needs.database-migrations.result == 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
