@@ -444,7 +444,7 @@ async function updateQuantity(it,delta){
     undo.textContent=`Undo ${it.card}: ${previous} → ${next}`;
     markSynced();
     toast(`${it.card}: ${previous} → ${next}`);
-    await loadQuantityHistory();
+    void loadQuantityHistory();
   }catch(error){
     it.qty=previous;
     toast(`Could not save quantity: ${String(error.message||error)}`);
@@ -499,7 +499,7 @@ document.getElementById('bulkConfirm').addEventListener('click',async ()=>{
     if(result.status==='rejected'){ item.qty-=1; failures+=1; }
   });
   if(failures) toast(`${failures} addition${failures===1?'':'s'} could not be saved.`);
-  else { markSynced(); toast(`${selected.length} addition${selected.length===1?'':'s'} saved.`); await loadQuantityHistory(); }
+  else { markSynced(); toast(`${selected.length} addition${selected.length===1?'':'s'} saved.`); void loadQuantityHistory(); }
   setBulkMode(false);
 });
 
