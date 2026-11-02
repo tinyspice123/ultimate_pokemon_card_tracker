@@ -12,9 +12,13 @@ baseline="202611020001"
 for migration in supabase/migrations/*.sql; do
   version="$(basename "$migration")"
   version="${version%%_*}"
+  if [[ ! "$version" =~ ^[0-9]+$ ]]; then
+    echo "Migration filename does not start with a numeric version: $migration" >&2
+    exit 1
+  fi
   (( 10#$version > 10#$baseline )) && continue
-  applied="$(psql "$SUPABASE_DATABASE_URL" -XAt -v ON_ERROR_STOP=1 -v version="$version" \
-    -c "select exists(select 1 from supabase_migrations.schema_migrations where version = :'version')")"
+  applied="$(psql "$SUPABASE_DATABASE_URL" -XAt -v ON_ERROR_STOP=1 \
+    -c "select exists(select 1 from supabase_migrations.schema_migrations where version = '$version')")"
   if [[ "$applied" == "t" ]]; then
     echo "$version is already recorded."
     continue
