@@ -69,6 +69,9 @@ else ok('actionlint and shellcheck validate workflow code');
 
 const nl = String.raw`\r?\n`;
 const browserJob = workflow.match(new RegExp(`${nl}  browser-tests:${nl}([\\s\\S]*?)(?=${nl}  sonar:${nl})`))?.[1] || '';
+if (!browserJob.includes('/backups/'))
+  fail('browser-test checkout excludes the recovery snapshots used by browser fixtures');
+else ok('browser-test checkout includes recovery snapshots');
 const sonarJob = workflow.match(new RegExp(`${nl}  sonar:${nl}([\\s\\S]*?)(?=${nl}  package-pages:${nl})`))?.[1] || '';
 const packageJob = workflow.match(new RegExp(`${nl}  package-pages:${nl}([\\s\\S]*?)(?=${nl}  deploy:${nl})`))?.[1] || '';
 const deployJob = workflow.match(new RegExp(`${nl}  deploy:${nl}([\\s\\S]*)`))?.[1] || '';
