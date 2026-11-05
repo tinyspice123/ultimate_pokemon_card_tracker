@@ -9,6 +9,7 @@ test('Delta Reign has a local logo, progress, and a complete read-only fallback'
   }));
   await page.route('https://api.tcgdex.net/**', route => route.abort());
   await page.route('https://api.pokemontcg.io/**', route => route.abort());
+  await page.route('https://assets.tcgdex.net/**', route => route.abort());
   await page.route('**/backups/*.csv', route => route.fulfill({
     status: 200, contentType: 'text/csv', body: snapshot,
   }));
@@ -25,6 +26,10 @@ test('Delta Reign has a local logo, progress, and a complete read-only fallback'
   await expect(page.locator('.qtyedit')).toHaveCount(0);
   await page.getByRole('searchbox', { name: 'Search cards' }).fill('Heracross');
   await expect(page.locator('.item')).toHaveCount(2);
+  const heracross = page.locator('.item').first().getByRole('img', { name: 'Heracross', exact: true });
+  await heracross.scrollIntoViewIfNeeded();
+  await expect(heracross).toHaveAttribute('src', /img\/delta-reign\/001\.webp$/);
+  await expect.poll(() => heracross.evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
   await page.getByRole('searchbox', { name: 'Search cards' }).fill('Masquerain');
   await expect(page.locator('.item')).toHaveCount(3);
   await page.locator('.item').first().scrollIntoViewIfNeeded();

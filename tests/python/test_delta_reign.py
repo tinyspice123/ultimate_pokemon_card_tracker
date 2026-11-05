@@ -10,6 +10,20 @@ from import_supabase_cards import rows_for_set
 
 
 class DeltaReignTests(unittest.TestCase):
+    def test_every_variant_has_its_numbered_local_scan(self):
+        cards = rows_for_set('delta-reign', ROOT / 'backups/delta-reign.csv')
+        directory = ROOT / 'public/img/delta-reign'
+        entries = [line.split('|') for line in (directory / 'manifest.txt').read_text(encoding='utf-8').splitlines()]
+        expected = {(card['card_name'], card['collector_number'], card['variant']) for card in cards}
+        self.assertEqual({tuple(entry[:3]) for entry in entries}, expected)
+        self.assertEqual(len(entries), 234)
+        self.assertEqual(len({entry[3] for entry in entries}), 141)
+        for _, number, _, filename in entries:
+            self.assertEqual(filename, number.split('/')[0] + '.webp')
+            data = (directory / filename).read_bytes()
+            self.assertEqual(data[:4], b'RIFF')
+            self.assertEqual(data[8:12], b'WEBP')
+
     def test_seed_matches_snapshot_and_preserves_owned_quantities(self):
         cards = rows_for_set('delta-reign', ROOT / 'backups/delta-reign.csv')
         migration = (ROOT / 'supabase/migrations/202611050001_add_delta_reign.sql').read_text(encoding='utf-8')
