@@ -128,6 +128,9 @@ age and all protected checks. Major updates always require manual review.
 - `.github/workflows/ci-quality-deploy.yml` is the only normal production
   pipeline. It tests, packages backups, injects the service-worker version,
   deploys, and smoke-tests the result.
+- Pages deployment must explicitly accept a successful packaging job even when
+  the transitive database-migration job is skipped for non-database changes.
+  Preserve the `always()` evaluation and successful-package guard together.
 - Disabling maintenance mode dispatches that full pipeline; never restore by
   deploying raw `public/`.
 - `.github/workflows/rollback.yml` accepts a successful main pipeline run ID and

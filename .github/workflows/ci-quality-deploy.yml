@@ -502,7 +502,10 @@ jobs:
       group: pages
       cancel-in-progress: false
 
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    # Database-only prerequisites may be skipped for asset/browser changes.
+    # Evaluate the successful package explicitly instead of inheriting the
+    # default success() check over every transitive dependency.
+    if: always() && needs.package-pages.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
 
     permissions:
       contents: read
