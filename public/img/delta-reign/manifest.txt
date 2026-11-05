@@ -1,48 +1,179 @@
+Heracross|001/103|Regular|001.webp
+Heracross|001/103|Reverse holo|001.webp
+Surskit|002/103|Regular|002.webp
+Surskit|002/103|Reverse holo|002.webp
 Masquerain|003/103|Regular|003.webp
 Masquerain|003/103|Reverse holo|003.webp
+Cacnea|004/103|Regular|004.webp
+Cacnea|004/103|Reverse holo|004.webp
+Cacturne|005/103|Regular|005.webp
+Cacturne|005/103|Reverse holo|005.webp
+Combee|006/103|Regular|006.webp
+Combee|006/103|Reverse holo|006.webp
+Vespiquen|007/103|Regular|007.webp
+Vespiquen|007/103|Reverse holo|007.webp
+Shaymin|008/103|Regular|008.webp
+Shaymin|008/103|Reverse holo|008.webp
+Virizion|009/103|Regular|009.webp
+Virizion|009/103|Reverse holo|009.webp
+Wimpod|010/103|Regular|010.webp
+Wimpod|010/103|Reverse holo|010.webp
 Mega Golisopod ex|011/103|Regular|011.webp
 Sprigatito|012/103|Regular|012.webp
 Sprigatito|012/103|Reverse holo|012.webp
 Floragato|013/103|Regular|013.webp
 Floragato|013/103|Reverse holo|013.webp
 Meowscarada ex|014/103|Regular|014.webp
+Smoliv|015/103|Regular|015.webp
+Smoliv|015/103|Reverse holo|015.webp
+Dolliv|016/103|Regular|016.webp
+Dolliv|016/103|Reverse holo|016.webp
+Arboliva|017/103|Regular|017.webp
+Arboliva|017/103|Reverse holo|017.webp
+Growlithe|018/103|Regular|018.webp
+Growlithe|018/103|Reverse holo|018.webp
+Arcanine|019/103|Regular|019.webp
+Arcanine|019/103|Reverse holo|019.webp
+Magmar|020/103|Regular|020.webp
+Magmar|020/103|Reverse holo|020.webp
+Magmortar|021/103|Regular|021.webp
+Magmortar|021/103|Reverse holo|021.webp
+Torkoal|022/103|Regular|022.webp
+Torkoal|022/103|Reverse holo|022.webp
 Heat Rotom ex|023/103|Regular|023.webp
+Heatmor|024/103|Regular|024.webp
+Heatmor|024/103|Reverse holo|024.webp
+Mantine|025/103|Regular|025.webp
+Mantine|025/103|Reverse holo|025.webp
+Kyogre|026/103|Regular|026.webp
+Kyogre|026/103|Reverse holo|026.webp
+Frillish|027/103|Regular|027.webp
+Frillish|027/103|Reverse holo|027.webp
+Jellicent|028/103|Regular|028.webp
+Jellicent|028/103|Reverse holo|028.webp
+Wishiwashi ex|029/103|Regular|029.webp
+Electabuzz|030/103|Regular|030.webp
+Electabuzz|030/103|Reverse holo|030.webp
 Electivire|031/103|Regular|031.webp
 Electivire|031/103|Reverse holo|031.webp
+Jolteon|032/103|Regular|032.webp
+Jolteon|032/103|Reverse holo|032.webp
 Raikou ex|033/103|Regular|033.webp
+Rotom|034/103|Regular|034.webp
+Rotom|034/103|Reverse holo|034.webp
 Thundurus|035/103|Regular|035.webp
 Thundurus|035/103|Reverse holo|035.webp
 Pincurchin|036/103|Regular|036.webp
 Pincurchin|036/103|Reverse holo|036.webp
+Pawmi|037/103|Regular|037.webp
+Pawmi|037/103|Reverse holo|037.webp
+Pawmo|038/103|Regular|038.webp
+Pawmo|038/103|Reverse holo|038.webp
+Pawmot|039/103|Regular|039.webp
+Pawmot|039/103|Reverse holo|039.webp
+Wattrel|040/103|Regular|040.webp
+Wattrel|040/103|Reverse holo|040.webp
+Kilowattrel|041/103|Regular|041.webp
+Kilowattrel|041/103|Reverse holo|041.webp
+Miraidon|042/103|Regular|042.webp
+Miraidon|042/103|Reverse holo|042.webp
 Drowzee|043/103|Regular|043.webp
 Drowzee|043/103|Reverse holo|043.webp
 Hypno|044/103|Regular|044.webp
 Hypno|044/103|Reverse holo|044.webp
+Giratina|045/103|Regular|045.webp
+Giratina|045/103|Reverse holo|045.webp
+Golett|046/103|Regular|046.webp
+Golett|046/103|Reverse holo|046.webp
 Mega Golurk ex|047/103|Regular|047.webp
+Enamorus|048/103|Regular|048.webp
+Enamorus|048/103|Reverse holo|048.webp
+Sandshrew|049/103|Regular|049.webp
+Sandshrew|049/103|Reverse holo|049.webp
+Sandslash|050/103|Regular|050.webp
+Sandslash|050/103|Reverse holo|050.webp
+Onix|051/103|Regular|051.webp
+Onix|051/103|Reverse holo|051.webp
+Steelix|052/103|Regular|052.webp
+Steelix|052/103|Reverse holo|052.webp
 Groudon|053/103|Regular|053.webp
 Groudon|053/103|Reverse holo|053.webp
 Landorus|054/103|Regular|054.webp
 Landorus|054/103|Reverse holo|054.webp
 Nidoran ♀|055/103|Regular|055.webp
 Nidoran ♀|055/103|Reverse holo|055.webp
+Nidorina|056/103|Regular|056.webp
+Nidorina|056/103|Reverse holo|056.webp
+Nidoqueen|057/103|Regular|057.webp
+Nidoqueen|057/103|Reverse holo|057.webp
 Spinarak|058/103|Regular|058.webp
 Spinarak|058/103|Reverse holo|058.webp
+Ariados|059/103|Regular|059.webp
+Ariados|059/103|Reverse holo|059.webp
+Sableye|060/103|Regular|060.webp
+Sableye|060/103|Reverse holo|060.webp
+Carvanha|061/103|Regular|061.webp
+Carvanha|061/103|Reverse holo|061.webp
+Sharpedo|062/103|Regular|062.webp
+Sharpedo|062/103|Reverse holo|062.webp
+Darkrai|063/103|Regular|063.webp
+Darkrai|063/103|Reverse holo|063.webp
+Purrloin|064/103|Regular|064.webp
+Purrloin|064/103|Reverse holo|064.webp
+Liepard|065/103|Regular|065.webp
+Liepard|065/103|Reverse holo|065.webp
+Zorua|066/103|Regular|066.webp
+Zorua|066/103|Reverse holo|066.webp
+Zoroark ex|067/103|Regular|067.webp
+Inkay|068/103|Regular|068.webp
+Inkay|068/103|Reverse holo|068.webp
 Mega Malamar ex|069/103|Regular|069.webp
+Morpeko|070/103|Regular|070.webp
+Morpeko|070/103|Reverse holo|070.webp
 Zarude|071/103|Regular|071.webp
 Zarude|071/103|Reverse holo|071.webp
 Druddigon|072/103|Regular|072.webp
 Druddigon|072/103|Reverse holo|072.webp
+Jangmo-o|073/103|Regular|073.webp
+Jangmo-o|073/103|Reverse holo|073.webp
+Hakamo-o|074/103|Regular|074.webp
+Hakamo-o|074/103|Reverse holo|074.webp
 Kommo-o|075/103|Regular|075.webp
 Kommo-o|075/103|Reverse holo|075.webp
+Cyclizar|076/103|Regular|076.webp
+Cyclizar|076/103|Reverse holo|076.webp
+Tauros|077/103|Regular|077.webp
+Tauros|077/103|Reverse holo|077.webp
+Eevee|078/103|Regular|078.webp
+Eevee|078/103|Reverse holo|078.webp
 Delibird|079/103|Regular|079.webp
 Delibird|079/103|Reverse holo|079.webp
+Azurill|080/103|Regular|080.webp
+Azurill|080/103|Reverse holo|080.webp
+Swablu|081/103|Regular|081.webp
+Swablu|081/103|Reverse holo|081.webp
+Altaria|082/103|Regular|082.webp
+Altaria|082/103|Reverse holo|082.webp
 Kecleon|083/103|Regular|083.webp
 Kecleon|083/103|Reverse holo|083.webp
 Mega Rayquaza ex|084/103|Regular|084.webp
 Tornadus|085/103|Regular|085.webp
 Tornadus|085/103|Reverse holo|085.webp
+Fletchling|086/103|Regular|086.webp
+Fletchling|086/103|Reverse holo|086.webp
+Fletchinder|087/103|Regular|087.webp
+Fletchinder|087/103|Reverse holo|087.webp
+Talonflame ex|088/103|Regular|088.webp
+Aarune|089/103|Regular|089.webp
+Aarune|089/103|Reverse holo|089.webp
 Adventuring Lantern|090/103|Regular|090.webp
 Adventuring Lantern|090/103|Reverse holo|090.webp
+Customized Vest|091/103|Regular|091.webp
+Customized Vest|091/103|Reverse holo|091.webp
+Emcee's Hype|092/103|Regular|092.webp
+Emcee's Hype|092/103|Reverse holo|092.webp
+Grisham|093/103|Regular|093.webp
+Grisham|093/103|Reverse holo|093.webp
 Legendary Pyroduct (half 1)|094/103|Regular|094.webp
 Legendary Pyroduct (half 1)|094/103|Reverse holo|094.webp
 Legendary Pyroduct (half 2)|095/103|Regular|095.webp
@@ -51,19 +182,53 @@ Legendary Summit (half 1)|096/103|Regular|096.webp
 Legendary Summit (half 1)|096/103|Reverse holo|096.webp
 Legendary Summit (half 2)|097/103|Regular|097.webp
 Legendary Summit (half 2)|097/103|Reverse holo|097.webp
+Legendary Trench (half 1)|098/103|Regular|098.webp
+Legendary Trench (half 1)|098/103|Reverse holo|098.webp
+Legendary Trench (half 2)|099/103|Regular|099.webp
+Legendary Trench (half 2)|099/103|Reverse holo|099.webp
 Mega Rayquaza Cap|100/103|Regular|100.webp
 Mega Rayquaza Cap|100/103|Reverse holo|100.webp
+Tasty Rice Ball|101/103|Regular|101.webp
+Tasty Rice Ball|101/103|Reverse holo|101.webp
+Tate & Liza's Training|102/103|Regular|102.webp
+Tate & Liza's Training|102/103|Reverse holo|102.webp
 Zinnia's Trust|103/103|Regular|103.webp
 Zinnia's Trust|103/103|Reverse holo|103.webp
 Masquerain|104/103|Regular|104.webp
+Sprigatito|105/103|Regular|105.webp
+Growlithe|106/103|Regular|106.webp
 Magmortar|107/103|Regular|107.webp
+Electivire|108/103|Regular|108.webp
 Pincurchin|109/103|Regular|109.webp
 Enamorus|110/103|Regular|110.webp
 Groudon|111/103|Regular|111.webp
 Zorua|112/103|Regular|112.webp
+Inkay|113/103|Regular|113.webp
 Eevee|114/103|Regular|114.webp
 Azurill|115/103|Regular|115.webp
+Altaria|116/103|Regular|116.webp
 Kecleon|117/103|Regular|117.webp
+Mega Golisopod ex|118/103|Regular|118.webp
+Heat Rotom ex|119/103|Regular|119.webp
+Wishiwashi ex|120/103|Regular|120.webp
+Raikou ex|121/103|Regular|121.webp
+Mega Golurk ex|122/103|Regular|122.webp
+Mega Malamar ex|123/103|Regular|123.webp
+Talonflame ex|124/103|Regular|124.webp
+Aarune|125/103|Regular|125.webp
+Adventuring Lantern|126/103|Regular|126.webp
+Custom Vest|127/103|Regular|127.webp
+Emcee's Hype|128/103|Regular|128.webp
+Pokémon Catcher|129/103|Regular|129.webp
+Tate & Liza's Training|130/103|Regular|130.webp
+Zinnia's Trust|131/103|Regular|131.webp
+Bubbly Water Energy|132/103|Regular|132.webp
+Aromatic Grass Energy|133/103|Regular|133.webp
+Nitro Fire Energy|134/103|Regular|134.webp
+Mega Golisopod ex|135/103|Regular|135.webp
 Raikou ex|136/103|Regular|136.webp
+Mega Golurk ex|137/103|Regular|137.webp
 Mega Rayquaza ex|138/103|Regular|138.webp
 Aarune|139/103|Regular|139.webp
+Zinnia's Trust|140/103|Regular|140.webp
+Mega Rayquaza ex|141/103|Regular|141.webp
