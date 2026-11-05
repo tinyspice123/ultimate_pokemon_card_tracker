@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. New entries are generated from Conventional Commits when a release is published.
 
+## [v3.10.1] - 2026-11-05
+
+### Fixes
+- fix: bundle available Delta Reign English card images (#52) (5fe4f19)
+
+## [v3.10.0] - 2026-11-05
+
+### Features
+- feat: add Delta Reign set catalogue and local logo (#50) (64e0e40)
+
+### Other changes
+- chore(deps): update dependency minimatch to v11.0.4 (#48) (9e94e84)
+- docs: update changelog for v3.9.0 (#47) (3ffc01e)
+
 ## [v3.9.0] - 2026-11-02
 
 ### Features
