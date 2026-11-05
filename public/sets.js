@@ -201,6 +201,14 @@ const SETS = {
     cardmarketSet: "30C",
   },
 
+  "delta-reign": {             // Nov 2026
+    name: "Delta Reign",
+    homeGroup: "mega",
+    code: "ME06",
+    tcgdexSet: "me06",       // Provider catalogue pending; local logo is bundled.
+    cardmarketUrl: "https://www.cardmarket.com/en/Pokemon/Products/Search?category=-1&searchString=Delta%20Reign&searchMode=v2",
+  },
+
   "mew-collection": {
     name: "Mew Collection",
     homeGroup: "misc",
