@@ -1,0 +1,69 @@
+Masquerain|003/103|Regular|003.webp
+Masquerain|003/103|Reverse holo|003.webp
+Mega Golisopod ex|011/103|Regular|011.webp
+Sprigatito|012/103|Regular|012.webp
+Sprigatito|012/103|Reverse holo|012.webp
+Floragato|013/103|Regular|013.webp
+Floragato|013/103|Reverse holo|013.webp
+Meowscarada ex|014/103|Regular|014.webp
+Heat Rotom ex|023/103|Regular|023.webp
+Electivire|031/103|Regular|031.webp
+Electivire|031/103|Reverse holo|031.webp
+Raikou ex|033/103|Regular|033.webp
+Thundurus|035/103|Regular|035.webp
+Thundurus|035/103|Reverse holo|035.webp
+Pincurchin|036/103|Regular|036.webp
+Pincurchin|036/103|Reverse holo|036.webp
+Drowzee|043/103|Regular|043.webp
+Drowzee|043/103|Reverse holo|043.webp
+Hypno|044/103|Regular|044.webp
+Hypno|044/103|Reverse holo|044.webp
+Mega Golurk ex|047/103|Regular|047.webp
+Groudon|053/103|Regular|053.webp
+Groudon|053/103|Reverse holo|053.webp
+Landorus|054/103|Regular|054.webp
+Landorus|054/103|Reverse holo|054.webp
+Nidoran ♀|055/103|Regular|055.webp
+Nidoran ♀|055/103|Reverse holo|055.webp
+Spinarak|058/103|Regular|058.webp
+Spinarak|058/103|Reverse holo|058.webp
+Mega Malamar ex|069/103|Regular|069.webp
+Zarude|071/103|Regular|071.webp
+Zarude|071/103|Reverse holo|071.webp
+Druddigon|072/103|Regular|072.webp
+Druddigon|072/103|Reverse holo|072.webp
+Kommo-o|075/103|Regular|075.webp
+Kommo-o|075/103|Reverse holo|075.webp
+Delibird|079/103|Regular|079.webp
+Delibird|079/103|Reverse holo|079.webp
+Kecleon|083/103|Regular|083.webp
+Kecleon|083/103|Reverse holo|083.webp
+Mega Rayquaza ex|084/103|Regular|084.webp
+Tornadus|085/103|Regular|085.webp
+Tornadus|085/103|Reverse holo|085.webp
+Adventuring Lantern|090/103|Regular|090.webp
+Adventuring Lantern|090/103|Reverse holo|090.webp
+Legendary Pyroduct (half 1)|094/103|Regular|094.webp
+Legendary Pyroduct (half 1)|094/103|Reverse holo|094.webp
+Legendary Pyroduct (half 2)|095/103|Regular|095.webp
+Legendary Pyroduct (half 2)|095/103|Reverse holo|095.webp
+Legendary Summit (half 1)|096/103|Regular|096.webp
+Legendary Summit (half 1)|096/103|Reverse holo|096.webp
+Legendary Summit (half 2)|097/103|Regular|097.webp
+Legendary Summit (half 2)|097/103|Reverse holo|097.webp
+Mega Rayquaza Cap|100/103|Regular|100.webp
+Mega Rayquaza Cap|100/103|Reverse holo|100.webp
+Zinnia's Trust|103/103|Regular|103.webp
+Zinnia's Trust|103/103|Reverse holo|103.webp
+Masquerain|104/103|Regular|104.webp
+Magmortar|107/103|Regular|107.webp
+Pincurchin|109/103|Regular|109.webp
+Enamorus|110/103|Regular|110.webp
+Groudon|111/103|Regular|111.webp
+Zorua|112/103|Regular|112.webp
+Eevee|114/103|Regular|114.webp
+Azurill|115/103|Regular|115.webp
+Kecleon|117/103|Regular|117.webp
+Raikou ex|136/103|Regular|136.webp
+Mega Rayquaza ex|138/103|Regular|138.webp
+Aarune|139/103|Regular|139.webp
