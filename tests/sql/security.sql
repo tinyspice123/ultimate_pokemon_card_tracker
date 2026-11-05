@@ -1,5 +1,13 @@
 \set ON_ERROR_STOP on
 
+-- Catalogue seeds must be present before the application registry is deployed.
+do $$
+begin
+  if (select count(*) from public.pokemon_card_main where set_id='delta-reign') <> 234
+    or (select count(distinct collector_number) from public.pokemon_card_main where set_id='delta-reign') <> 141
+  then raise exception 'Delta Reign catalogue is incomplete'; end if;
+end $$;
+
 insert into auth.users(id) values
   ('00000000-0000-0000-0000-000000000001'),
   ('00000000-0000-0000-0000-000000000002');
