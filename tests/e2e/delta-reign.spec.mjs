@@ -23,6 +23,7 @@ test('Delta Reign has a local logo, progress, and a complete read-only fallback'
   await expect(tile).toContainText('0 / 234 owned');
   await tile.click();
   await expect(page.locator('.item')).toHaveCount(234);
+  await expect(page.getByRole('combobox', { name: 'Filter by group' }).locator('option')).toHaveText(['All groups', 'Base Set']);
   await expect(page.locator('.qtyedit')).toHaveCount(0);
   await page.getByRole('searchbox', { name: 'Search cards' }).fill('Heracross');
   await expect(page.locator('.item')).toHaveCount(2);

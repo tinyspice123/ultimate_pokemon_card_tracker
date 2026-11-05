@@ -26,7 +26,9 @@ class DeltaReignTests(unittest.TestCase):
 
     def test_seed_matches_snapshot_and_preserves_owned_quantities(self):
         cards = rows_for_set('delta-reign', ROOT / 'backups/delta-reign.csv')
-        migration = (ROOT / 'supabase/migrations/202611050001_add_delta_reign.sql').read_text(encoding='utf-8')
+        seed = (ROOT / 'supabase/migrations/202611050001_add_delta_reign.sql').read_text(encoding='utf-8')
+        grouping = (ROOT / 'supabase/migrations/202611050002_group_delta_reign_as_base_set.sql').read_text(encoding='utf-8')
+        migration = seed + '\n' + grouping
         with sqlite3.connect(':memory:') as db:
             db.execute("attach database ':memory:' as public")
             columns = ', '.join(f'{key} ' + ('integer' if key in {'sort_order', 'quantity'} else 'text')
@@ -36,6 +38,7 @@ class DeltaReignTests(unittest.TestCase):
             actual = db.execute('select * from public.pokemon_card_main order by sort_order').fetchall()
             self.assertEqual(actual, [tuple(card.values()) for card in cards])
             self.assertEqual(len(actual), 234)
+            self.assertEqual({card['group_name'] for card in cards}, {'Base Set'})
             self.assertEqual(len({card['collector_number'] for card in cards}), 141)
             db.execute('update public.pokemon_card_main set quantity=3 where sort_order=0')
             db.executescript(migration)

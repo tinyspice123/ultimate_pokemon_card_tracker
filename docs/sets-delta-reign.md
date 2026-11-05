@@ -4,6 +4,7 @@ The `delta-reign` registry entry follows the Mega Evolution set format (`ME06`).
 Its English pack checklist contains 141 numbered cards and 93 reverse holos,
 for 234 rows, all initially unowned. Store stamps and separately numbered
 promos are outside this pack checklist.
+All cards appear in a single `Base Set` section, including secret rares.
 
 Sources verified on November 5, 2026:
 
@@ -27,3 +28,7 @@ Migration `202611050001_add_delta_reign.sql` seeds only this set with the same
 stable IDs as the CSV importer. Existing IDs are skipped, preserving quantities.
 The protected production migration job applies it before Pages packaging.
 Do not run the full snapshot importer against production to add this set.
+
+Migration `202611050002_group_delta_reign_as_base_set.sql` consolidates the
+original rarity sections into `Base Set` without changing quantities or card
+identities. The recovery snapshot uses the same single section.

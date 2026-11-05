@@ -6,6 +6,8 @@ begin
   if (select count(*) from public.pokemon_card_main where set_id='delta-reign') <> 234
     or (select count(distinct collector_number) from public.pokemon_card_main where set_id='delta-reign') <> 141
   then raise exception 'Delta Reign catalogue is incomplete'; end if;
+  if exists (select 1 from public.pokemon_card_main where set_id='delta-reign' and group_name is distinct from 'Base Set')
+  then raise exception 'Delta Reign must use one Base Set section'; end if;
 end $$;
 
 insert into auth.users(id) values
