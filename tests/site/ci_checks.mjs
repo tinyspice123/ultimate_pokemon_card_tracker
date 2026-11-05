@@ -85,6 +85,10 @@ else if (/sonarqube-scan-action|upload-pages-artifact/.test(browserJob))
   fail('browser-tests still contains SonarQube analysis or Pages packaging');
 else ok('browser, SonarQube, packaging, and deployment jobs are separated');
 
+if (!deployJob.includes("if: always() && needs.package-pages.result == 'success'"))
+  fail('Pages deploy must run after successful packaging even when database migrations are skipped');
+else ok('Pages deployment handles skipped database migrations without bypassing packaging');
+
 if (!packageJob.includes('retention-days: 30'))
   fail('Pages deployment artifact is not retained for releases and rollback');
 else ok('Pages artifact is retained for release provenance and rollback');
