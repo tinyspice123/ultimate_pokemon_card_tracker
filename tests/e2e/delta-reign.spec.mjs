@@ -25,4 +25,12 @@ test('Delta Reign has a local logo, progress, and a complete read-only fallback'
   await expect(page.locator('.qtyedit')).toHaveCount(0);
   await page.getByRole('searchbox', { name: 'Search cards' }).fill('Heracross');
   await expect(page.locator('.item')).toHaveCount(2);
+  await page.getByRole('searchbox', { name: 'Search cards' }).fill('Masquerain');
+  await expect(page.locator('.item')).toHaveCount(3);
+  await page.locator('.item').first().scrollIntoViewIfNeeded();
+  // Main-set regular and reverse-holo rows share the same local English scan.
+  const scans = page.locator('.item img[src$="/003.webp"], .item img[data-src$="/003.webp"]');
+  await expect(scans).toHaveCount(2);
+  await scans.first().scrollIntoViewIfNeeded();
+  await expect.poll(() => scans.first().evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
 });
