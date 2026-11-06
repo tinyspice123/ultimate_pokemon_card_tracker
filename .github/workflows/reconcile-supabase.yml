@@ -33,7 +33,7 @@ jobs:
             /supabase/migrations/
             /supabase/production_schema_contract.sql
       - name: Install Supabase CLI
-        uses: supabase/setup-cli@a9de0f0e1ffcf6ec895b135e292ddc76592d3c83 # main
+        uses: supabase/setup-cli@9f97a8880aff8507123eac41a95501b846a3976f # main
         with:
           version: 3.0.0
       - name: Verify the deployed baseline schema
