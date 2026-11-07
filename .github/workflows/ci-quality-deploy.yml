@@ -310,7 +310,7 @@ jobs:
         if: needs.classify-changes.outputs.application == 'true'
         continue-on-error: true
         # v8.2.1, pinned to prevent a mutable tag from changing CI code.
-        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
+        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -346,7 +346,7 @@ jobs:
       - name: Retry timed-out SonarQube analysis once
         if: steps.sonar-retry.outputs.should_retry == 'true'
         # v8.2.1, pinned to prevent a mutable tag from changing CI code.
-        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
+        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -428,7 +428,7 @@ jobs:
             /supabase/migrations/
             /supabase/production_schema_contract.sql
       - name: Install Supabase CLI
-        uses: supabase/setup-cli@a9de0f0e1ffcf6ec895b135e292ddc76592d3c83 # main
+        uses: supabase/setup-cli@9f97a8880aff8507123eac41a95501b846a3976f # main
         with:
           version: 3.0.0
       - name: Verify and reconcile the manually applied baseline
