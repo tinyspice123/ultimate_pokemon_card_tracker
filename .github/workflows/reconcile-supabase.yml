@@ -33,9 +33,9 @@ jobs:
             /supabase/migrations/
             /supabase/production_schema_contract.sql
       - name: Install Supabase CLI
-        uses: supabase/setup-cli@9f97a8880aff8507123eac41a95501b846a3976f # main
+        uses: supabase/setup-cli@f184ee70492d0e9192a1cfbf68487773ca7699a1 # main
         with:
-          version: 3.0.0
+          version: 3.2.0
       - name: Verify the deployed baseline schema
         run: psql "$SUPABASE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/production_schema_contract.sql
       - name: Record verified dashboard-applied migrations
