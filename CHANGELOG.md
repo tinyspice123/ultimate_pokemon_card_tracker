@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here. New entries are generated from Conventional Commits when a release is published.
 
+## [v3.10.4] - 2026-11-05
+
+### Fixes
+- fix: show Delta Reign in one Base Set section (#57) (61481d0)
+
+## [v3.10.3] - 2026-11-05
+
+### Fixes
+- fix: complete Delta Reign official English image coverage (#56) (ae93028)
+
+## [v3.10.2] - 2026-11-05
+
+### Fixes
+- fix: deploy Pages when database migrations are skipped (#54) (aa09f54)
+
+### Other changes
+- docs: update changelog for v3.10.1 (#51) (2a3d08a)
+
 ## [v3.10.1] - 2026-11-05
 
 ### Fixes
